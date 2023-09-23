@@ -3,11 +3,10 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from datetime import datetime
 
-BASE_URL = "https://www.zhipin.com/web/geek/job?query=软件测试&city=100010000&experience=102,101,103,104&degree=209,208,206,202,203&scale=303,304,305,306,302&salary=404&page="
+BASE_URL = "https://www.zhipin.com/web/geek/job?query=Java软件测试&city=100010000&experience=102,101,103,104&degree=209,208,206,202,203&scale=303,304,305,306,302&salary=404&page="
 
-driver = webdriver.Chrome()
+driver = webdriver.Firefox()
 WAIT = WebDriverWait(driver,30)
 
 def resumeSubmission(url):
@@ -23,7 +22,7 @@ def resumeSubmission(url):
             driver.get(s)
             WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[class*='btn btn-startchat']")))
             btn = driver.find_element(By.CSS_SELECTOR, "[class*='btn btn-startchat']")
-            if checkActiveTime() or checkGraduationYear() or checkTitle() or checkCompany() or not isReadyToCommunicate(btn):
+            if checkActiveTime() or checkSec() or checkTitle() or checkCompany() or checkCity() or checkIndustry() or checkRes() or not isReadyToCommunicate(btn):
                 continue
             btn.click()
             WAIT.until(EC.presence_of_element_located((By.CLASS_NAME, "dialog-con")))
@@ -43,20 +42,37 @@ def checkActiveTime():
         return any(item in activeTimeText for item in activeTimeList)
     except:
         return False
-
-def checkGraduationYear():
+    
+def checkCity():
     try:
-        element = driver.find_element(By.CSS_SELECTOR, ".job-sec-text")
-        text = element.text
-        lowerCaseText = text.lower()
+        cityElement = driver.find_element(By.XPATH, "/html/body/div[1]/div[2]/div[1]/div/div/div[1]/p/a")
+        cityText = cityElement.text
+        cityList = ["沈阳", "乌鲁木齐", "乌兰察布", "大连"]
+        return any(item in cityText for item in cityList)
+    except:
+        return False
+
+def checkIndustry():
+    try:
+        industryElement = driver.find_element(By.CSS_SELECTOR, ".sider-company > p:nth-child(5) > a:nth-child(2)")
+        industryText = industryElement.text
+        industryList = ["培训"]
+        return any(item in industryText for item in industryList)
+    except:
+        return False
+
+def checkSec():
+    try:
+        element = driver.find_element(By.CSS_SELECTOR, "div.job-detail-section:nth-child(1)")
+        text = element.text.lower()
         KEYWORDS = ["java", "python", "spring", "sql", "linux", "j2ee", "web", "bug", "数据库", "后端", "软件测试", "开发", "计算机", "编程"]
-        if not any(item in lowerCaseText for item in KEYWORDS):
+        if not any(item in text for item in KEYWORDS):
             return True
         if "毕业时间" in text:
             graduationTime = text[text.index("毕业时间"):text.index("毕业时间") + 15]
             if "2020" in graduationTime or "2021" in graduationTime or "2022" in graduationTime:
                 return True
-        if "日语" in text:
+        if "日语" in text or "精通c#" in text or "node开发经验" in text or "用户界面编程" in text or "mcu" in text or "dsp" in text or "硬件控制" in text or "上位" in text:
             return True
         if "23届" in text or "23年" in text:
             return False
@@ -67,8 +83,12 @@ def checkGraduationYear():
         if "截止日期" in text:
             try:
                 dateFormat = "%Y.%m.%d"
-                return datetime.strptime(text[text.index("截止日期") + 5:text.index("截止日期") + 15], dateFormat) < datetime.now()
+                print('计算截止日期')
+                print('截止时间'+time.mktime(time.strptime(text[text.index("截止日期") + 5:text.index("截止日期") + 15], dateFormat)))
+                return time.mktime(time.strptime(text[text.index("截止日期") + 5:text.index("截止日期") + 15], dateFormat)) < time.time()
             except:
+                print('截止日期异常')
+                print(text[text.index("截止日期") + 5:text.index("截止日期")+15])
                 pass
         if "不接受应届" in text:
             return True
@@ -83,8 +103,8 @@ def checkGraduationYear():
 def checkTitle():
     try:
         element = driver.find_element(By.CSS_SELECTOR, "div.name:nth-child(2) > h1:nth-child(1)")
-        text = element.text
-        return "助教" in text or "销售" in text or "日" in text or "游戏" in text or "实验" in text or "弱电" in text  or "IC" in text  or "硬件" in text or "教师" in text or "讲师" in text or "推广" in text or "培训" in text or "残" in text or "高级" in text
+        text = element.text.lower()
+        return "助教" in text or "销售" in text or "日" in text or "员" in text or "产品开发" in text or "嵌入式开发" in text or "单片机" in text or "游戏" in text  or "电话" in text  or "选址" in text   or "外贸" in text or "网络优化" in text or "客服" in text or "实验" in text or "弱电" in text or "电气" in text or "ic" in text  or "硬件" in text or "教师" in text or "讲师" in text or "推广" in text or "培训" in text or "残" in text or "高级" in text or "创业" in text or "合伙" in text
     except:
         return False
 
@@ -93,6 +113,15 @@ def checkCompany():
         element = driver.find_element(By.CSS_SELECTOR, "div.company-info:nth-child(2) > a:nth-child(2)")
         text = element.text
         return "培训" in text or "学校" in text or "教育" in text
+    except:
+        return False
+    
+def checkRes():
+    try:
+        element = driver.find_element(By.CSS_SELECTOR, ".res-time")
+        text = element.text[-10:]
+        dateFormat = "%Y-%m-%d"
+        return time.mktime(time.strptime(text, dateFormat)) > (time.time()-31536000)
     except:
         return False
 

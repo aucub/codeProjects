@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-BASE_URL = "https://www.zhipin.com/web/geek/job?query=Java测试开发&city=100010000&experience=102,101,103,104&degree=209,208,206,202,203&scale=303,304,305,306,302&salary=403&page="
+BASE_URL = "https://www.zhipin.com/web/geek/job?query=Java&city=100010000&experience=102,101,103,104&degree=209,208,206,202,203&scale=303,304,305,306,302&salary=404&page="
 
 driver = webdriver.Firefox()
 WAIT = WebDriverWait(driver, 30)
@@ -56,7 +56,7 @@ def checkIndustry():
     try:
         industryElement = driver.find_element(By.CSS_SELECTOR, ".sider-company > p:nth-child(5) > a:nth-child(2)")
         industryText = industryElement.text
-        industryBlackList = ["培训"]
+        industryBlackList = ["培训","房产","经纪","中介"]
         return not any(item in industryText for item in industryBlackList)
     except:
         return True

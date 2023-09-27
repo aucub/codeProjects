@@ -16,7 +16,7 @@ URL4 = "https://www.zhipin.com/wapi/zpgeek/job/card.json?securityId="
 URL5 = "&lid="
 URL6 = "&sessionId="
 
-driver = webdriver.Firefox()
+driver = webdriver.Chrome()
 WAIT = WebDriverWait(driver, 30)
 
 def resumeSubmission(url):
@@ -24,35 +24,39 @@ def resumeSubmission(url):
     time.sleep(15)
     WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[class*='job-title clearfix']")))
     jobList = []
+    urlList = []
     jobElements = driver.find_elements(By.CSS_SELECTOR, "[class*='job-card-body clearfix']")
     for jobElement in jobElements:
             if(checkTitle(jobElement.find_element(By.CLASS_NAME, 'job-name').text) and checkCity(jobElement.find_element(By.CLASS_NAME, 'job-area').text) and checkCompany(jobElement.find_element(By.CLASS_NAME, 'company-name').find_element(By.TAG_NAME,'a').text) and checkIndustry(jobElement.find_element(By.CLASS_NAME, 'company-tag-list').find_element(By.TAG_NAME,'li').text) and isReadyToCommunicate(jobElement.find_element(By.CSS_SELECTOR,"[class*='job-info clearfix']").get_attribute('innerHTML'))):
-                url = jobElement.find_element(By.CLASS_NAME, 'job-card-left').get_attribute("href")
-                resume = url.split("/")[-1].split(".")[0]
-                if resume not in resumes:
-                    time.sleep(3)
-                    resumes.add(resume)
-                    try:
-                        parsed_url = urlparse(url)
-                        query_params = parse_qs(parsed_url.query)
-                        lid = query_params.get('lid', [None])[0]
-                        security_id = query_params.get('securityId', [None])[0]
-                        print('jsonurl为'+URL4 + security_id + URL5 + lid + URL6)
-                        response = requests.get(URL4 + security_id + URL5 + lid + URL6)
-                        print('发送请求')
-                        if(response.status_code == 200):
-                            data = response.json()
-                            print(data)
-                            if(data["message"]=="Success"):
-                                description = data["zpData"]["jobCard"]["postDescription"]
-                                active = data["zpData"]["jobCard"]["activeTimeDesc"]
-                                print('描述为'+description)
-                                print('活跃时间为'+active)
-                                if not (checkSec(description) and checkActiveTime(active)):
-                                    continue
-                    except:
-                        pass
-                    jobList.append(url)
+                urlList.append(jobElement.find_element(By.CLASS_NAME, 'job-card-left').get_attribute("href"))
+    for url in urlList:
+        resume = url.split("/")[-1].split(".")[0]
+        if resume not in resumes:
+            time.sleep(3)
+            resumes.add(resume)
+            try:
+                parsed_url = urlparse(url)
+                query_params = parse_qs(parsed_url.query)
+                lid = query_params.get('lid', [None])[0]
+                security_id = query_params.get('securityId', [None])[0]
+                print('jsonurl为'+URL4 + security_id + URL5 + lid + URL6)
+                driver.get(URL4 + security_id + URL5 + lid + URL6)
+                time.sleep(3)
+                print('发送请求')
+                page_source = driver.find_element(By.TAG_NAME, "pre").text
+                print(page_source)
+                data = json.loads(page_source)
+                print(data)
+                if(data["message"]=="Success"):
+                    description = data["zpData"]["jobCard"]["postDescription"]
+                    active = data["zpData"]["jobCard"]["activeTimeDesc"]
+                    print('描述为'+description)
+                    print('活跃时间为'+active)
+                    if not (checkSec(description) and checkActiveTime(active)):
+                        continue
+            except:
+                pass
+            jobList.append(url)
     with open("resume.txt", "w") as file:
         file.write("\n".join(resumes))
     for job in jobList:
@@ -186,7 +190,7 @@ driver.find_element(By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']").cl
 time.sleep(20)
 Query = ["软件测试开发实施运维技术文档PythonLinux","Java运维开发", "Java软件实施","Java软件测试", "Java测试开发", "Java"]
 for item in Query:
-        for  i in range(1, 7):
+        for  i in range(3, 7):
             if resumeSubmission(URL1 +item+URL2+"404"+URL3 + str(i)) == -1:
                 break
         for  i in range(1, 7):

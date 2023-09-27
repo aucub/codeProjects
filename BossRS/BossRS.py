@@ -3,10 +3,12 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import os
 
 URL1 = "https://www.zhipin.com/web/geek/job?query="
 URL2 = "&city=100010000&experience=102,101,103,104&degree=209,208,206,202,203&scale=303,304,305,306,302&salary="
 URL3 = "&page="
+resumes = set()
 
 driver = webdriver.Firefox()
 WAIT = WebDriverWait(driver, 30)
@@ -19,7 +21,13 @@ def resumeSubmission(url):
     jobElements = driver.find_elements(By.CSS_SELECTOR, "[class*='job-card-body clearfix']")
     for jobElement in jobElements:
             if(checkTitle(jobElement.find_element(By.CLASS_NAME, 'job-name').text) and checkCity(jobElement.find_element(By.CLASS_NAME, 'job-area').text) and checkCompany(jobElement.find_element(By.CLASS_NAME, 'company-name').find_element(By.TAG_NAME,'a').text) and checkIndustry(jobElement.find_element(By.CLASS_NAME, 'company-tag-list').find_element(By.TAG_NAME,'li').text) and isReadyToCommunicate(jobElement.find_element(By.CSS_SELECTOR,"[class*='job-info clearfix']").get_attribute('innerHTML'))):
-                jobList.append(jobElement.find_element(By.CLASS_NAME, 'job-card-left').get_attribute("href"))
+                url = jobElement.find_element(By.CLASS_NAME, 'job-card-left').get_attribute("href")
+                resume = url.split("/")[-1].split(".")[0]
+                if resume not in resumes:
+                    jobList.append(url)
+                    resumes.add(resume)
+    with open("resume.txt", "w") as file:
+        file.write("\n".join(resumes))
     for job in jobList:
         try:
             driver.get(job)
@@ -140,6 +148,13 @@ def isReadyToCommunicate(btnText):
     print("立即" in btnText)
     return "立即" in btnText
 
+if not os.path.exists("resume.txt"):
+    open("resume.txt", "w").close()
+with open("resume.txt", "r") as file:
+    for line in file:
+        string = line.strip()
+        if string not in resumes:
+            resumes.add(string)
 driver.get("https://www.zhipin.com/web/user/?ka=header-login")
 WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']")))
 driver.find_element(By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']").click()

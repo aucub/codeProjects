@@ -20,61 +20,64 @@ WAIT = WebDriverWait(driver, 30)
 
 
 def resumeSubmission(url):
-    driver.get(url)
-    time.sleep(15)
-    WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[class*='job-title clearfix']")))
-    jobList = []
-    urlList = []
-    jobElements = driver.find_elements(
-        By.CSS_SELECTOR, "[class*='job-card-body clearfix']")
-    for jobElement in jobElements:
-        try:
-            if (checkTitle(jobElement.find_element(By.CLASS_NAME, 'job-name').text) and checkCity(jobElement.find_element(By.CLASS_NAME, 'job-area').text) and checkCompany(jobElement.find_element(By.CLASS_NAME, 'company-name').find_element(By.TAG_NAME, 'a').text) and checkIndustry(jobElement.find_element(By.CLASS_NAME, 'company-tag-list').find_element(By.TAG_NAME, 'li').text) and isReadyToCommunicate(jobElement.find_element(By.CSS_SELECTOR, "[class*='job-info clearfix']").get_attribute('innerHTML'))):
-                urlList.append(jobElement.find_element(By.CLASS_NAME, 'job-card-left').get_attribute("href"))
-        except:
-            pass
-    for url in urlList:
-        resume = url.split("/")[-1].split(".")[0]
-        if resume not in resumes:
-            resumes.add(resume)
+    try:
+        driver.get(url)
+        time.sleep(15)
+        WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[class*='job-title clearfix']")))
+        jobList = []
+        urlList = []
+        jobElements = driver.find_elements(
+            By.CSS_SELECTOR, "[class*='job-card-body clearfix']")
+        for jobElement in jobElements:
             try:
-                parsed_url = urlparse(url)
-                query_params = parse_qs(parsed_url.query)
-                lid = query_params.get('lid', [None])[0]
-                security_id = query_params.get('securityId', [None])[0]
-                driver.get(URL4 + security_id + URL5 + lid + URL6)
-                time.sleep(3)
-                page_source = driver.find_element(By.TAG_NAME, "pre").text
-                data = json.loads(page_source)
-                if (data["message"] == "Success"):
-                    description = data["zpData"]["jobCard"]["postDescription"]
-                    active = data["zpData"]["jobCard"]["activeTimeDesc"]
-                    if not (checkSec(description) and checkActiveTime(active)):
-                        continue
+                if (checkTitle(jobElement.find_element(By.CLASS_NAME, 'job-name').text) and checkCity(jobElement.    find_element(By.CLASS_NAME, 'job-area').text) and checkCompany(jobElement.find_element(By.    CLASS_NAME, 'company-name').find_element(By.TAG_NAME, 'a').text) and checkIndustry(jobElement.    find_element(By.CLASS_NAME, 'company-tag-list').find_element(By.TAG_NAME, 'li').text) and     isReadyToCommunicate(jobElement.find_element(By.CSS_SELECTOR, "[class*='job-info clearfix']").    get_attribute('innerHTML'))):
+                    urlList.append(jobElement.find_element(By.CLASS_NAME, 'job-card-left').get_attribute("href"))
             except:
                 pass
-            jobList.append(url)
-    with open("resume.txt", "w") as file:
-        file.write("\n".join(resumes))
-    for job in jobList:
-        try:
-            driver.get(job)
-            WAIT.until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, "[class*='btn btn-startchat']")))
-            btn = driver.find_element(
-                By.CSS_SELECTOR, "[class*='btn btn-startchat']")
-            if not (checkActiveTime() and checkRes() and checkSec() and isReadyToCommunicate(btn.text)):
-                continue
-            btn.click()
-            WAIT.until(EC.presence_of_element_located(
-                (By.CLASS_NAME, "dialog-con")))
-            dialogText = driver.find_element(By.CLASS_NAME, "dialog-con").text
-            if "已达上限" in dialogText:
-                return -1
-            time.sleep(3)
-        except:
-            pass
-    return 0
+        for url in urlList:
+            resume = url.split("/")[-1].split(".")[0]
+            if resume not in resumes:
+                resumes.add(resume)
+                try:
+                    parsed_url = urlparse(url)
+                    query_params = parse_qs(parsed_url.query)
+                    lid = query_params.get('lid', [None])[0]
+                    security_id = query_params.get('securityId', [None])[0]
+                    driver.get(URL4 + security_id + URL5 + lid + URL6)
+                    time.sleep(3)
+                    page_source = driver.find_element(By.TAG_NAME, "pre").text
+                    data = json.loads(page_source)
+                    if (data["message"] == "Success"):
+                        description = data["zpData"]["jobCard"]["postDescription"]
+                        active = data["zpData"]["jobCard"]["activeTimeDesc"]
+                        if not (checkSec(description) and checkActiveTime(active)):
+                            continue
+                except:
+                    pass
+                jobList.append(url)
+        with open("resume.txt", "w") as file:
+            file.write("\n".join(resumes))
+        for job in jobList:
+            try:
+                driver.get(job)
+                WAIT.until(EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, "[class*='btn btn-startchat']")))
+                btn = driver.find_element(
+                    By.CSS_SELECTOR, "[class*='btn btn-startchat']")
+                if not (checkActiveTime() and checkRes() and checkSec() and isReadyToCommunicate(btn.text)):
+                    continue
+                btn.click()
+                WAIT.until(EC.presence_of_element_located(
+                    (By.CLASS_NAME, "dialog-con")))
+                dialogText = driver.find_element(By.CLASS_NAME, "dialog-con").text
+                if "已达上限" in dialogText:
+                    return -1
+                time.sleep(3)
+            except:
+                pass
+        return 0
+    except:
+        return 0
 
 
 def checkActiveTime():

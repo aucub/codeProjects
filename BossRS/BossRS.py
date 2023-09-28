@@ -10,7 +10,7 @@ URL2 = "&city=100010000&experience=102,101,103,104&degree=209,208,206,202,203&sc
 URL3 = "&page="
 resumes = set()
 
-driver = webdriver.Chrome()
+driver = webdriver.Firefox()
 WAIT = WebDriverWait(driver, 30)
 
 
@@ -114,8 +114,7 @@ def checkSec():
             return "23" in secText[secText.index("24届") - 5:secText.index("24届")]
         if "24年" in secText and secText.index("24年") >= 5:
             return "23" in secText[secText.index("24年") - 5:secText.index("24年")]
-        secBlackList1 = ["年以上", "年及以上", "年或以上", "1-2年",
-                         "1-3年", "1年-3年", "2-3年", "3-5年", "年(含)以上"]
+        secBlackList1 = ["年以上", "年及以上", "年或以上", "1-2年","1-3年", "1年-3年", "2-3年", "3-5年", "年(含)以上"]
         return not any(item in secText for item in secBlackList1)
     except:
         return True
@@ -124,8 +123,7 @@ def checkSec():
 def checkTitle(titleText):
     try:
         titleText = titleText.lower()
-        titleBlackList = ["助教", "销售", "日", "员", "产品开发", "嵌入式开发", "单片机", "游戏", "电话", "选址", "外贸", "网络优化", "客服",
-                          "实验", "弱电", "电气", "ic", "硬件", "教师", "讲师", "推广", "培训", "残", "高级", "创业", "合伙", "光学", "顾问", "仿真", "cam"]
+        titleBlackList = ["助教", "销售", "日", "员", "产品开发", "嵌入式开发", "单片机", "游戏", "电话", "选址", "外贸", "网络优化", "客服","实验", "弱电", "电气", "ic", "硬件", "教师", "讲师", "推广", "培训", "残", "高级", "创业", "合伙", "光学", "顾问", "仿真", "cam"]
         return not any(item in titleText for item in titleBlackList)
     except:
         return True
@@ -166,13 +164,12 @@ WAIT.until(EC.presence_of_element_located(
 driver.find_element(
     By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']").click()
 time.sleep(20)
-Query = ["Java", "Java测试开发", "Java软件测试", "Java运维开发",
-         "Java软件实施", "软件测试开发实施运维技术文档PythonLinux"]
+Query = [ "Java测试开发", "Java软件测试", "Java运维开发","Java软件实施", "软件测试开发实施运维技术文档PythonLinux","Java"]
 for item in Query:
-    for i in range(1, 7):
-        if resumeSubmission(URL1 + item+URL2+"404"+URL3 + str(i)) == -1:
-            exit()
-    for i in range(1, 7):
+    for i in range(1, 4):
         if resumeSubmission(URL1 + item+URL2+"403"+URL3 + str(i)) == -1:
+            exit()
+    for i in range(1, 4):
+        if resumeSubmission(URL1 + item+URL2+"404"+URL3 + str(i)) == -1:
             exit()
 driver.quit()

@@ -22,16 +22,17 @@ WAIT = WebDriverWait(driver, 30)
 def resumeSubmission(url):
     driver.get(url)
     time.sleep(15)
-    WAIT.until(EC.presence_of_element_located(
-        (By.CSS_SELECTOR, "[class*='job-title clearfix']")))
+    WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[class*='job-title clearfix']")))
     jobList = []
     urlList = []
     jobElements = driver.find_elements(
         By.CSS_SELECTOR, "[class*='job-card-body clearfix']")
     for jobElement in jobElements:
-        if (checkTitle(jobElement.find_element(By.CLASS_NAME, 'job-name').text) and checkCity(jobElement.find_element(By.CLASS_NAME, 'job-area').text) and checkCompany(jobElement.find_element(By.CLASS_NAME, 'company-name').find_element(By.TAG_NAME, 'a').text) and checkIndustry(jobElement.find_element(By.CLASS_NAME, 'company-tag-list').find_element(By.TAG_NAME, 'li').text) and isReadyToCommunicate(jobElement.find_element(By.CSS_SELECTOR, "[class*='job-info clearfix']").get_attribute('innerHTML'))):
-            urlList.append(jobElement.find_element(
-                By.CLASS_NAME, 'job-card-left').get_attribute("href"))
+        try:
+            if (checkTitle(jobElement.find_element(By.CLASS_NAME, 'job-name').text) and checkCity(jobElement.find_element(By.CLASS_NAME, 'job-area').text) and checkCompany(jobElement.find_element(By.CLASS_NAME, 'company-name').find_element(By.TAG_NAME, 'a').text) and checkIndustry(jobElement.find_element(By.CLASS_NAME, 'company-tag-list').find_element(By.TAG_NAME, 'li').text) and isReadyToCommunicate(jobElement.find_element(By.CSS_SELECTOR, "[class*='job-info clearfix']").get_attribute('innerHTML'))):
+                urlList.append(jobElement.find_element(By.CLASS_NAME, 'job-card-left').get_attribute("href"))
+        except:
+            pass
     for url in urlList:
         resume = url.split("/")[-1].split(".")[0]
         if resume not in resumes:
@@ -137,8 +138,7 @@ def checkSec():
             return "23" in secText[secText.index("24届") - 5:secText.index("24届")]
         if "24年" in secText and secText.index("24年") >= 5:
             return "23" in secText[secText.index("24年") - 5:secText.index("24年")]
-        secBlackList1 = ["年以上", "年及以上", "年或以上", "1-2年",
-                         "1-3年", "1年-3年", "2-3年", "3-5年", "年(含)以上"]
+        secBlackList1 = ["年以上", "年及以上", "年或以上", "1-2年", "1-3年", "1年-3年", "2-3年", "3-5年", "年(含)以上"]
         return not any(item in secText for item in secBlackList1)
     except:
         return True
@@ -147,8 +147,7 @@ def checkSec():
 def checkTitle(titleText):
     try:
         titleText = titleText.lower()
-        titleBlackList = ["助教", "销售", "日", "员", "产品开发", "嵌入式开发", "单片机", "游戏", "电话", "选址", "外贸", "网络优化", "客服",
-                          "实验", "弱电", "电气", "ic", "硬件", "教师", "讲师", "推广", "培训", "残", "高级", "创业", "合伙", "光学", "顾问", "仿真", "cam"]
+        titleBlackList = ["助教", "销售", "日", "员", "产品开发", "嵌入式开发", "单片机", "游戏", "电话", "选址", "外贸", "网络优化", "客服", "实验", "弱电", "电气", "ic", "硬件", "教师", "讲师", "推广", "培训", "残", "高级", "创业", "合伙", "光学", "顾问", "仿真", "cam"]
         return not any(item in titleText for item in titleBlackList)
     except:
         return True
@@ -171,10 +170,8 @@ def checkRes():
     except:
         return True
 
-
 def isReadyToCommunicate(btnText):
     return "立即" in btnText
-
 
 if not os.path.exists("resume.txt"):
     open("resume.txt", "w").close()
@@ -184,18 +181,21 @@ with open("resume.txt", "r") as file:
         if string not in resumes:
             resumes.add(string)
 driver.get("https://www.zhipin.com/web/user/?ka=header-login")
-WAIT.until(EC.presence_of_element_located(
-    (By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']")))
-driver.find_element(
-    By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']").click()
+WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']")))
+driver.find_element(By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']").click()
 time.sleep(20)
-Query = ["Java", "Java测试开发", "Java软件测试", "Java运维开发",
-         "Java软件实施", "软件测试开发实施运维技术文档PythonLinux"]
+Query = ["Java", "Java测试开发", "Java软件测试", "Java运维开发", "Java软件实施", "软件测试开发实施运维技术文档PythonLinux"]
 for item in Query:
     for i in range(1, 7):
-        if resumeSubmission(URL1 + item+URL2+"404"+URL3 + str(i)) == -1:
-            exit()
+        try:
+            if resumeSubmission(URL1 + item+URL2+"404"+URL3 + str(i)) == -1:
+                continue
+        except:
+            continue
     for i in range(1, 7):
-        if resumeSubmission(URL1 + item+URL2+"403"+URL3 + str(i)) == -1:
-            exit()
+        try:
+            if resumeSubmission(URL1 + item+URL2+"403"+URL3 + str(i)) == -1:
+                continue
+        except:
+            continue
 driver.quit()

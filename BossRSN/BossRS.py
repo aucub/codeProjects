@@ -15,7 +15,7 @@ URL4 = "https://www.zhipin.com/wapi/zpgeek/job/card.json?securityId="
 URL5 = "&lid="
 URL6 = "&sessionId="
 
-driver = webdriver.Firefox()
+driver = webdriver.Chrome()
 WAIT = WebDriverWait(driver, 30)
 
 
@@ -187,7 +187,7 @@ driver.get("https://www.zhipin.com/web/user/?ka=header-login")
 WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']")))
 driver.find_element(By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']").click()
 time.sleep(20)
-Query = ["软件测试","测试开发","Python软件测试","软件实施","Java", "Java测试开发", "Java软件测试", "Java运维开发", "Java软件实施", "软件测试开发实施运维技术文档PythonLinux"]
+Query = ["Java","软件测试", "Java测试开发", "Java软件测试", "测试开发","Python软件测试","软件实施","Java运维开发", "Java软件实施", "软件测试开发实施运维技术文档PythonLinux"]
 for item in Query:
     for i in range(1, 4):
         try:

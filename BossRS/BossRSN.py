@@ -36,8 +36,7 @@ def resumeSubmission(url):
         for jobElement in jobElements:
             try:
                 if (
-                    checkTitle(jobElement.find_element(
-                        By.CLASS_NAME, "job-name").text)
+                    checkTitle(jobElement.find_element(By.CLASS_NAME, "job-name").text)
                     and checkCity(
                         jobElement.find_element(By.CLASS_NAME, "job-area").text
                     )
@@ -47,8 +46,7 @@ def resumeSubmission(url):
                         .text
                     )
                     and checkIndustry(
-                        jobElement.find_element(
-                            By.CLASS_NAME, "company-tag-list")
+                        jobElement.find_element(By.CLASS_NAME, "company-tag-list")
                         .find_element(By.TAG_NAME, "li")
                         .text
                     )
@@ -108,11 +106,9 @@ def resumeSubmission(url):
                     continue
                 btn.click()
                 WAIT.until(
-                    EC.presence_of_element_located(
-                        (By.CLASS_NAME, "dialog-con"))
+                    EC.presence_of_element_located((By.CLASS_NAME, "dialog-con"))
                 )
-                dialogText = driver.find_element(
-                    By.CLASS_NAME, "dialog-con").text
+                dialogText = driver.find_element(By.CLASS_NAME, "dialog-con").text
                 if "已达上限" in dialogText:
                     return -1
                 time.sleep(3)
@@ -125,8 +121,7 @@ def resumeSubmission(url):
 
 def checkActiveTime():
     try:
-        activeTimeElement = driver.find_element(
-            By.CLASS_NAME, "boss-active-time")
+        activeTimeElement = driver.find_element(By.CLASS_NAME, "boss-active-time")
         activeTimeText = activeTimeElement.text
         activeTimeBlackList = ["半年", "月内", "周内", "7日内", "本月", "本周"]
         return not any(item in activeTimeText for item in activeTimeBlackList)
@@ -187,14 +182,13 @@ def checkSec():
             return False
         if "毕业时间" in secText:
             graduationTimeBlackList = ["2020", "2021", "2022"]
-            graduationTime = secText[secText.index(
-                "毕业时间"): secText.index("毕业时间") + 15]
+            graduationTime = secText[secText.index("毕业时间") : secText.index("毕业时间") + 15]
             if any(item in graduationTime for item in graduationTimeBlackList):
                 return False
         if "截止日期" in secText:
             try:
                 expDateText = secText[
-                    secText.index("截止日期") + 5: secText.index("截止日期") + 15
+                    secText.index("截止日期") + 5 : secText.index("截止日期") + 15
                 ]
                 dateFormat = "%Y.%m.%d"
                 if time.mktime(time.strptime(expDateText, dateFormat)) < time.time():
@@ -205,9 +199,9 @@ def checkSec():
         if any(item in secText for item in secList):
             return True
         if "24届" in secText and secText.index("24届") >= 5:
-            return "23" in secText[secText.index("24届") - 5: secText.index("24届")]
+            return "23" in secText[secText.index("24届") - 5 : secText.index("24届")]
         if "24年" in secText and secText.index("24年") >= 5:
-            return "23" in secText[secText.index("24年") - 5: secText.index("24年")]
+            return "23" in secText[secText.index("24年") - 5 : secText.index("24年")]
         secBlackList1 = [
             "年以上",
             "年及以上",
@@ -301,8 +295,7 @@ WAIT.until(
         (By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']")
     )
 )
-driver.find_element(
-    By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']").click()
+driver.find_element(By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']").click()
 time.sleep(20)
 Query = [
     "Java",

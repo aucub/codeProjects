@@ -123,7 +123,7 @@ def checkActiveTime():
     try:
         activeTimeElement = driver.find_element(By.CLASS_NAME, "boss-active-time")
         activeTimeText = activeTimeElement.text
-        activeTimeBlackList = ["半年", "月内", "周内", "7日内", "本月", "本周"]
+        activeTimeBlackList = ["半年", "月内", "周内", "7日", "本月", "本周"]
         return not any(item in activeTimeText for item in activeTimeBlackList)
     except:
         return True
@@ -177,6 +177,7 @@ def checkSec():
             "dsp",
             "硬件控制",
             "上位",
+            "销售",
         ]
         if any(item in secText for item in secBlackList):
             return False
@@ -252,6 +253,7 @@ def checkTitle(titleText):
             "顾问",
             "仿真",
             "cam",
+            "座舱",
         ]
         return not any(item in titleText for item in titleBlackList)
     except:

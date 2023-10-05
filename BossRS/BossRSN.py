@@ -98,9 +98,13 @@ def resumeSubmission(url):
                     By.CSS_SELECTOR, "[class*='btn btn-startchat']"
                 )
                 if not (
-                    checkActiveTime()
+                    checkActiveTime(
+                        driver.find_element(By.CLASS_NAME, "boss-active-time").text
+                    )
                     and checkRes()
-                    and checkSec()
+                    and checkSec(
+                        driver.find_element(By.CLASS_NAME, "job-detail-section").text
+                    )
                     and isReadyToCommunicate(btn.text)
                 ):
                     continue
@@ -119,10 +123,8 @@ def resumeSubmission(url):
         return 0
 
 
-def checkActiveTime():
+def checkActiveTime(activeTimeText):
     try:
-        activeTimeElement = driver.find_element(By.CLASS_NAME, "boss-active-time")
-        activeTimeText = activeTimeElement.text
         activeTimeBlackList = ["半年", "月内", "周内", "7日", "本月", "本周"]
         return not any(item in activeTimeText for item in activeTimeBlackList)
     except:
@@ -145,10 +147,9 @@ def checkIndustry(industryText):
         return True
 
 
-def checkSec():
+def checkSec(secText):
     try:
-        secElement = driver.find_element(By.CLASS_NAME, "job-detail-section")
-        secText = secElement.text.lower()
+        secText = secText.lower()
         KEYWORDS = [
             "java",
             "python",
@@ -175,7 +176,12 @@ def checkSec():
             "用户界面编程",
             "mcu",
             "dsp",
+            "硬件测试",
+            "汽车",
+            "车厂",
+            "机器人",
             "硬件控制",
+            "串口",
             "上位",
             "销售",
         ]
@@ -254,6 +260,7 @@ def checkTitle(titleText):
             "仿真",
             "cam",
             "座舱",
+            "主管",
         ]
         return not any(item in titleText for item in titleBlackList)
     except:

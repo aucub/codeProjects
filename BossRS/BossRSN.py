@@ -84,8 +84,6 @@ def resumeSubmission(url):
                 except:
                     pass
                 jobList.append(url)
-        with open("resume.txt", "w") as file:
-            file.write("\n".join(resumes))
         for job in jobList:
             try:
                 driver.get(job)
@@ -118,6 +116,8 @@ def resumeSubmission(url):
                 time.sleep(3)
             except:
                 pass
+        with open("resume.txt", "w") as file:
+            file.write("\n".join(resumes))
         return 0
     except:
         return 0
@@ -184,6 +184,10 @@ def checkSec(secText):
             "串口",
             "上位",
             "销售",
+            "车间",
+            "家具",
+            "售前",
+            "电路",
         ]
         if any(item in secText for item in secBlackList):
             return False
@@ -261,6 +265,8 @@ def checkTitle(titleText):
             "cam",
             "座舱",
             "主管",
+            "三维",
+            "芯片",
         ]
         return not any(item in titleText for item in titleBlackList)
     except:

@@ -4,89 +4,128 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import os
+from urllib.parse import urlparse, parse_qs
+import json
 
 URL1 = "https://www.zhipin.com/web/geek/job?query="
 URL2 = "&city=100010000&experience=102,101,103,104&degree=209,208,206,202,203&scale=303,304,305,306,302&salary="
 URL3 = "&page="
 resumes = set()
+URL4 = "https://www.zhipin.com/wapi/zpgeek/job/card.json?securityId="
+URL5 = "&lid="
+URL6 = "&sessionId="
 
-driver = webdriver.Firefox()
+driver = webdriver.Chrome()
 WAIT = WebDriverWait(driver, 30)
 
 
 def resumeSubmission(url):
-    driver.get(url)
-    time.sleep(15)
-    WAIT.until(
-        EC.presence_of_element_located(
-            (By.CSS_SELECTOR, "[class*='job-title clearfix']")
+    try:
+        driver.get(url)
+        time.sleep(15)
+        WAIT.until(
+            EC.presence_of_element_located(
+                (By.CSS_SELECTOR, "[class*='job-title clearfix']")
+            )
         )
-    )
-    jobList = []
-    jobElements = driver.find_elements(
-        By.CSS_SELECTOR, "[class*='job-card-body clearfix']"
-    )
-    for jobElement in jobElements:
-        if (
-            checkTitle(jobElement.find_element(By.CLASS_NAME, "job-name").text)
-            and checkCity(jobElement.find_element(By.CLASS_NAME, "job-area").text)
-            and checkCompany(
-                jobElement.find_element(By.CLASS_NAME, "company-name")
-                .find_element(By.TAG_NAME, "a")
-                .text
-            )
-            and checkIndustry(
-                jobElement.find_element(By.CLASS_NAME, "company-tag-list")
-                .find_element(By.TAG_NAME, "li")
-                .text
-            )
-            and isReadyToCommunicate(
-                jobElement.find_element(
-                    By.CSS_SELECTOR, "[class*='job-info clearfix']"
-                ).get_attribute("innerHTML")
-            )
-        ):
-            url = jobElement.find_element(By.CLASS_NAME, "job-card-left").get_attribute(
-                "href"
-            )
+        jobList = []
+        urlList = []
+        jobElements = driver.find_elements(
+            By.CSS_SELECTOR, "[class*='job-card-body clearfix']"
+        )
+        for jobElement in jobElements:
+            try:
+                if (
+                    checkTitle(jobElement.find_element(By.CLASS_NAME, "job-name").text)
+                    and checkCity(
+                        jobElement.find_element(By.CLASS_NAME, "job-area").text
+                    )
+                    and checkCompany(
+                        jobElement.find_element(By.CLASS_NAME, "company-name")
+                        .find_element(By.TAG_NAME, "a")
+                        .text
+                    )
+                    and checkIndustry(
+                        jobElement.find_element(By.CLASS_NAME, "company-tag-list")
+                        .find_element(By.TAG_NAME, "li")
+                        .text
+                    )
+                    and isReadyToCommunicate(
+                        jobElement.find_element(
+                            By.CSS_SELECTOR, "[class*='job-info clearfix']"
+                        ).get_attribute("innerHTML")
+                    )
+                ):
+                    urlList.append(
+                        jobElement.find_element(
+                            By.CLASS_NAME, "job-card-left"
+                        ).get_attribute("href")
+                    )
+            except:
+                pass
+        for url in urlList:
             resume = url.split("/")[-1].split(".")[0]
             if resume not in resumes:
-                jobList.append(url)
                 resumes.add(resume)
-    with open("resume.txt", "w") as file:
-        file.write("\n".join(resumes))
-    for job in jobList:
-        try:
-            driver.get(job)
-            WAIT.until(
-                EC.presence_of_element_located(
-                    (By.CSS_SELECTOR, "[class*='btn btn-startchat']")
+                try:
+                    parsed_url = urlparse(url)
+                    query_params = parse_qs(parsed_url.query)
+                    lid = query_params.get("lid", [None])[0]
+                    security_id = query_params.get("securityId", [None])[0]
+                    driver.get(URL4 + security_id + URL5 + lid + URL6)
+                    time.sleep(3)
+                    page_source = driver.find_element(By.TAG_NAME, "pre").text
+                    data = json.loads(page_source)
+                    if data["message"] == "Success":
+                        description = data["zpData"]["jobCard"]["postDescription"]
+                        active = data["zpData"]["jobCard"]["activeTimeDesc"]
+                        if not (checkSec(description) and checkActiveTime(active)):
+                            continue
+                except:
+                    pass
+                jobList.append(url)
+        for job in jobList:
+            try:
+                driver.get(job)
+                WAIT.until(
+                    EC.presence_of_element_located(
+                        (By.CSS_SELECTOR, "[class*='btn btn-startchat']")
+                    )
                 )
-            )
-            btn = driver.find_element(By.CSS_SELECTOR, "[class*='btn btn-startchat']")
-            if not (
-                checkActiveTime()
-                and checkRes()
-                and checkSec()
-                and isReadyToCommunicate(btn.text)
-            ):
-                continue
-            btn.click()
-            WAIT.until(EC.presence_of_element_located((By.CLASS_NAME, "dialog-con")))
-            dialogText = driver.find_element(By.CLASS_NAME, "dialog-con").text
-            if "已达上限" in dialogText:
-                return -1
-            time.sleep(3)
-        except:
-            pass
-    return 0
+                btn = driver.find_element(
+                    By.CSS_SELECTOR, "[class*='btn btn-startchat']"
+                )
+                if not (
+                    checkActiveTime(
+                        driver.find_element(By.CLASS_NAME, "boss-active-time").text
+                    )
+                    and checkRes()
+                    and checkSec(
+                        driver.find_element(By.CLASS_NAME, "job-detail-section").text
+                    )
+                    and isReadyToCommunicate(btn.text)
+                ):
+                    continue
+                btn.click()
+                WAIT.until(
+                    EC.presence_of_element_located((By.CLASS_NAME, "dialog-con"))
+                )
+                dialogText = driver.find_element(By.CLASS_NAME, "dialog-con").text
+                if "已达上限" in dialogText:
+                    return -1
+                time.sleep(3)
+            except:
+                pass
+        with open("resume.txt", "w") as file:
+            file.write("\n".join(resumes))
+        return 0
+    except:
+        return 0
 
 
-def checkActiveTime():
+def checkActiveTime(activeTimeText):
     try:
-        activeTimeElement = driver.find_element(By.CLASS_NAME, "boss-active-time")
-        activeTimeText = activeTimeElement.text
-        activeTimeBlackList = ["半年", "月内", "周内", "7日内", "本月", "本周"]
+        activeTimeBlackList = ["半年", "月内", "周内", "7日", "本月", "本周"]
         return not any(item in activeTimeText for item in activeTimeBlackList)
     except:
         return True
@@ -108,10 +147,9 @@ def checkIndustry(industryText):
         return True
 
 
-def checkSec():
+def checkSec(secText):
     try:
-        secElement = driver.find_element(By.CLASS_NAME, "job-detail-section")
-        secText = secElement.text.lower()
+        secText = secText.lower()
         KEYWORDS = [
             "java",
             "python",
@@ -138,8 +176,28 @@ def checkSec():
             "用户界面编程",
             "mcu",
             "dsp",
+            "硬件测试",
+            "汽车",
+            "车厂",
+            "机器人",
             "硬件控制",
+            "串口",
+            "布线",
             "上位",
+            "销售",
+            "营销",
+            "车间",
+            "家具",
+            "售前",
+            "电路",
+            "电气",
+            "变频",
+            "plc",
+            "pms",
+            "配电",
+            "电力",
+            "家电",
+            "电能",
         ]
         if any(item in secText for item in secBlackList):
             return False
@@ -215,6 +273,10 @@ def checkTitle(titleText):
             "顾问",
             "仿真",
             "cam",
+            "座舱",
+            "主管",
+            "三维",
+            "芯片",
         ]
         return not any(item in titleText for item in titleBlackList)
     except:
@@ -261,18 +323,55 @@ WAIT.until(
 driver.find_element(By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']").click()
 time.sleep(20)
 Query = [
+    # "Java",
     "Java测试开发",
     "Java软件测试",
-    "Java运维开发",
+    "软件测试开发",
+    "软件测试",
+    "Python软件测试",
     "Java软件实施",
+    "软件实施",
+    "Java运维开发",
+    "软件自动化测试",
+    "软件功能测试",
+    "软件开发",
+    "后端开发",
+    "全栈工程师",
+    "软件需求分析",
+    "软件性能测试",
+    "Python",
+    "Node.js",
+    "数据分析",
+    "数据挖掘",
+    "DBA",
+    "Hadoop",
+    "JavaScript",
+    "软件技术文档",
     "软件测试开发实施运维技术文档PythonLinux",
-    "Java",
 ]
+for i in range(1, 7):
+    try:
+        if resumeSubmission(URL1 + "Java" + URL2 + "404" + URL3 + str(i)) == -1:
+            continue
+    except:
+        continue
+for i in range(1, 7):
+    try:
+        if resumeSubmission(URL1 + "Java" + URL2 + "403" + URL3 + str(i)) == -1:
+            continue
+    except:
+        continue
 for item in Query:
     for i in range(1, 4):
-        if resumeSubmission(URL1 + item + URL2 + "403" + URL3 + str(i)) == -1:
-            exit()
+        try:
+            if resumeSubmission(URL1 + item + URL2 + "404" + URL3 + str(i)) == -1:
+                continue
+        except:
+            continue
     for i in range(1, 4):
-        if resumeSubmission(URL1 + item + URL2 + "404" + URL3 + str(i)) == -1:
-            exit()
+        try:
+            if resumeSubmission(URL1 + item + URL2 + "403" + URL3 + str(i)) == -1:
+                continue
+        except:
+            continue
 driver.quit()

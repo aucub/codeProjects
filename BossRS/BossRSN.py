@@ -182,12 +182,22 @@ def checkSec(secText):
             "机器人",
             "硬件控制",
             "串口",
+            "布线",
             "上位",
             "销售",
+            "营销",
             "车间",
             "家具",
             "售前",
             "电路",
+            "电气",
+            "变频",
+            "plc",
+            "pms",
+            "配电",
+            "电力",
+            "家电",
+            "电能",
         ]
         if any(item in secText for item in secBlackList):
             return False

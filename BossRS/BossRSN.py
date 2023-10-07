@@ -313,17 +313,44 @@ WAIT.until(
 driver.find_element(By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']").click()
 time.sleep(20)
 Query = [
-    "Java",
+    # "Java",
     "Java测试开发",
     "Java软件测试",
-    "Java软件实施",
-    "测试开发",
+    "软件测试开发",
     "软件测试",
     "Python软件测试",
+    "Java软件实施",
     "软件实施",
     "Java运维开发",
+    "软件自动化测试",
+    "软件功能测试",
+    "软件开发",
+    "后端开发",
+    "全栈工程师",
+    "软件需求分析",
+    "软件性能测试",
+    "Python",
+    "Node.js",
+    "数据分析",
+    "数据挖掘",
+    "DBA",
+    "Hadoop",
+    "JavaScript",
+    "软件技术文档",
     "软件测试开发实施运维技术文档PythonLinux",
 ]
+for i in range(1, 7):
+    try:
+        if resumeSubmission(URL1 + "Java" + URL2 + "404" + URL3 + str(i)) == -1:
+            continue
+    except:
+        continue
+for i in range(1, 7):
+    try:
+        if resumeSubmission(URL1 + "Java" + URL2 + "403" + URL3 + str(i)) == -1:
+            continue
+    except:
+        continue
 for item in Query:
     for i in range(1, 4):
         try:

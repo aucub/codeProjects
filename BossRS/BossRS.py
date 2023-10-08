@@ -198,6 +198,8 @@ def checkSec(secText):
             "电力",
             "家电",
             "电能",
+            "采购",
+            "美妆",
         ]
         if any(item in secText for item in secBlackList):
             return False
@@ -263,6 +265,7 @@ def checkTitle(titleText):
             "硬件",
             "教师",
             "讲师",
+            "老师",
             "推广",
             "培训",
             "残",
@@ -277,6 +280,9 @@ def checkTitle(titleText):
             "主管",
             "三维",
             "芯片",
+            "布料",
+            ".NET",
+            "市场",
         ]
         return not any(item in titleText for item in titleBlackList)
     except:

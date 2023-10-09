@@ -141,7 +141,7 @@ def checkCity(cityText):
 
 def checkIndustry(industryText):
     try:
-        industryBlackList = ["培训", "房产", "经纪", "中介"]
+        industryBlackList = ["培训", "院校", "房产", "经纪", "中介"]
         return not any(item in industryText for item in industryBlackList)
     except:
         return True
@@ -200,6 +200,9 @@ def checkSec(secText):
             "电能",
             "采购",
             "美妆",
+            "污染",
+            "大气",
+            "危废",
         ]
         if any(item in secText for item in secBlackList):
             return False
@@ -281,8 +284,11 @@ def checkTitle(titleText):
             "三维",
             "芯片",
             "布料",
-            ".NET",
+            ".net",
             "市场",
+            "c++",
+            "高性能",
+            "环保",
         ]
         return not any(item in titleText for item in titleBlackList)
     except:

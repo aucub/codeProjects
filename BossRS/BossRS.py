@@ -10,7 +10,7 @@ import json
 URL1 = "https://www.zhipin.com/web/geek/job?query="
 URL2 = "&city=100010000&experience=102,101,103,104&degree=209,208,206,202,203&scale=303,304,305,306,302&salary="
 URL3 = "&page="
-resumes = set()
+resumesr = set()
 URL4 = "https://www.zhipin.com/wapi/zpgeek/job/card.json?securityId="
 URL5 = "&lid="
 URL6 = "&sessionId="
@@ -20,6 +20,7 @@ WAIT = WebDriverWait(driver, 30)
 
 
 def resumeSubmission(url):
+    resumesw = set()
     try:
         driver.get(url)
         time.sleep(15)
@@ -65,8 +66,9 @@ def resumeSubmission(url):
                 pass
         for url in urlList:
             resume = url.split("/")[-1].split(".")[0]
-            if resume not in resumes:
-                resumes.add(resume)
+            if resume not in resumesr:
+                resumesw.add(resume)
+                resumesr.add(resume)
                 try:
                     parsed_url = urlparse(url)
                     query_params = parse_qs(parsed_url.query)
@@ -116,8 +118,9 @@ def resumeSubmission(url):
                 time.sleep(3)
             except:
                 pass
-        with open("resume.txt", "w") as file:
-            file.write("\n".join(resumes))
+        with open("resume.txt", "a") as file:
+            file.write("\n")
+            file.write("\n".join(resumesw))
         return 0
     except:
         return 0
@@ -221,7 +224,7 @@ def checkSec(secText):
                     return False
             except:
                 pass
-        secList = ["23届", "23年", "应届", "应往届", "毕业", "0-1年", "0-2年", "0-3年"]
+        secList = ["23届", "23年", "应届", "往届", "毕业", "0-1年", "0-2年", "0-3年"]
         if any(item in secText for item in secList):
             return True
         if "24届" in secText and secText.index("24届") >= 5:
@@ -289,6 +292,10 @@ def checkTitle(titleText):
             "c++",
             "高性能",
             "环保",
+            "内部",
+            "财务",
+            "人士",
+            "管家",
         ]
         return not any(item in titleText for item in titleBlackList)
     except:
@@ -324,8 +331,8 @@ if not os.path.exists("resume.txt"):
 with open("resume.txt", "r") as file:
     for line in file:
         string = line.strip()
-        if string not in resumes:
-            resumes.add(string)
+        if string not in resumesr:
+            resumesr.add(string)
 driver.get("https://www.zhipin.com/web/user/?ka=header-login")
 WAIT.until(
     EC.presence_of_element_located(
@@ -338,16 +345,16 @@ Query = [
     # "Java",
     "Java测试开发",
     "Java软件测试",
+    "Java软件实施",
+    "Java运维开发",
     "软件测试开发",
     "软件测试",
-    "Python软件测试",
-    "Java软件实施",
-    "软件实施",
-    "Java运维开发",
     "软件自动化测试",
     "软件功能测试",
-    "软件开发",
+    "Python软件测试",
+    "软件实施",
     "后端开发",
+    "软件开发",
     "全栈工程师",
     "软件需求分析",
     "软件性能测试",
@@ -359,31 +366,30 @@ Query = [
     "Hadoop",
     "JavaScript",
     "软件技术文档",
-    "软件测试开发实施运维技术文档PythonLinux",
 ]
-for i in range(1, 7):
+for i in range(1, 10):
     try:
         if resumeSubmission(URL1 + "Java" + URL2 + "404" + URL3 + str(i)) == -1:
-            continue
+            break
     except:
         continue
-for i in range(1, 7):
+for i in range(1, 10):
     try:
         if resumeSubmission(URL1 + "Java" + URL2 + "403" + URL3 + str(i)) == -1:
-            continue
+            break
     except:
         continue
 for item in Query:
     for i in range(1, 4):
         try:
             if resumeSubmission(URL1 + item + URL2 + "404" + URL3 + str(i)) == -1:
-                continue
+                break
         except:
             continue
     for i in range(1, 4):
         try:
             if resumeSubmission(URL1 + item + URL2 + "403" + URL3 + str(i)) == -1:
-                continue
+                break
         except:
             continue
 driver.quit()

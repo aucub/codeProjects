@@ -297,6 +297,7 @@ def checkTitle(titleText):
             "环保",
             "内部",
             "财务",
+            "采购",
             "人士",
             "管家",
         ]
@@ -383,13 +384,13 @@ for i in range(1, 10):
     except:
         continue
 for item in Query:
-    for i in range(1, 4):
+    for i in range(1, 7):
         try:
             if resumeSubmission(URL1 + item + URL2 + "404" + URL3 + str(i)) == -1:
                 break
         except:
             continue
-    for i in range(1, 4):
+    for i in range(1, 7):
         try:
             if resumeSubmission(URL1 + item + URL2 + "403" + URL3 + str(i)) == -1:
                 break

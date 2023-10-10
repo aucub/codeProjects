@@ -206,6 +206,9 @@ def checkSec(secText):
             "污染",
             "大气",
             "危废",
+            "气动",
+            "液压",
+            "电控",
         ]
         if any(item in secText for item in secBlackList):
             return False

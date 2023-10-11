@@ -194,6 +194,7 @@ def checkSec(secText):
             "售前",
             "电路",
             "电气",
+            "弱电",
             "变频",
             "plc",
             "pms",
@@ -209,6 +210,13 @@ def checkSec(secText):
             "气动",
             "液压",
             "电控",
+            "给排水",
+            "水利",
+            "水务",
+            "水文",
+            "水资源",
+            "化工",
+            "石油",
         ]
         if any(item in secText for item in secBlackList):
             return False
@@ -300,6 +308,8 @@ def checkTitle(titleText):
             "采购",
             "人士",
             "管家",
+            "架构师",
+            "水务",
         ]
         return not any(item in titleText for item in titleBlackList)
     except:
@@ -349,10 +359,10 @@ Query = [
     # "Java",
     "Java测试开发",
     "Java软件测试",
-    "Java软件实施",
-    "Java运维开发",
     "软件测试开发",
     "软件测试",
+    "Java软件实施",
+    "Java运维开发",
     "软件自动化测试",
     "软件功能测试",
     "Python软件测试",
@@ -383,6 +393,12 @@ for i in range(1, 10):
             break
     except:
         continue
+for i in range(1, 10):
+    try:
+        if resumeSubmission(URL1 + "Java" + URL2 + "402" + URL3 + str(i)) == -1:
+            break
+    except:
+        continue
 for item in Query:
     for i in range(1, 7):
         try:
@@ -393,6 +409,12 @@ for item in Query:
     for i in range(1, 7):
         try:
             if resumeSubmission(URL1 + item + URL2 + "403" + URL3 + str(i)) == -1:
+                break
+        except:
+            continue
+    for i in range(1, 7):
+        try:
+            if resumeSubmission(URL1 + item + URL2 + "402" + URL3 + str(i)) == -1:
                 break
         except:
             continue

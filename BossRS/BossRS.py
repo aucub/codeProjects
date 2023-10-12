@@ -295,6 +295,8 @@ def checkTitle(titleText):
             "cam",
             "座舱",
             "主管",
+            "经理",
+            "基金",
             "三维",
             "芯片",
             "布料",
@@ -310,6 +312,7 @@ def checkTitle(titleText):
             "管家",
             "架构师",
             "水务",
+            "英语",
         ]
         return not any(item in titleText for item in titleBlackList)
     except:

@@ -8,9 +8,9 @@ from urllib.parse import urlparse, parse_qs
 import json
 
 URL1 = "https://www.zhipin.com/web/geek/job?query="
-URL2 = "&city=100010000&experience=102,101,103,104&degree=209,208,206,202,203&scale=303,304,305,306,302&salary="
+URL2 = "&city=100010000&experience=102,101,103,104&scale=303,304,305,306,302&degree=209,208,206,202,203&salary="
 URL3 = "&page="
-resumesr = set()
+resumes = set()
 URL4 = "https://www.zhipin.com/wapi/zpgeek/job/card.json?securityId="
 URL5 = "&lid="
 URL6 = "&sessionId="
@@ -20,7 +20,6 @@ WAIT = WebDriverWait(driver, 30)
 
 
 def resumeSubmission(url):
-    resumesw = set()
     try:
         driver.get(url)
         time.sleep(15)
@@ -66,9 +65,8 @@ def resumeSubmission(url):
                 pass
         for url in urlList:
             resume = url.split("/")[-1].split(".")[0]
-            if resume not in resumesr:
-                resumesw.add(resume)
-                resumesr.add(resume)
+            if resume not in resumes:
+                resumes.add(resume)
                 try:
                     parsed_url = urlparse(url)
                     query_params = parse_qs(parsed_url.query)
@@ -118,9 +116,8 @@ def resumeSubmission(url):
                 time.sleep(3)
             except:
                 pass
-        with open("resume.txt", "a") as file:
-            file.write("\n")
-            file.write("\n".join(resumesw))
+        with open("resume.txt", "w") as file:
+            file.write("\n".join(resumes))
         return 0
     except:
         return 0
@@ -179,6 +176,10 @@ def checkSec(secText):
             "用户界面编程",
             "mcu",
             "dsp",
+            "ecu",
+            "uds",
+            "cdd",
+            "diva",
             "硬件测试",
             "汽车",
             "车厂",
@@ -190,6 +191,7 @@ def checkSec(secText):
             "销售",
             "营销",
             "车间",
+            "车型",
             "家具",
             "售前",
             "电路",
@@ -217,6 +219,9 @@ def checkSec(secText):
             "水资源",
             "化工",
             "石油",
+            "土建",
+            "手机厂商",
+            "请勿联系",
         ]
         if any(item in secText for item in secBlackList):
             return False
@@ -313,6 +318,10 @@ def checkTitle(titleText):
             "架构师",
             "水务",
             "英语",
+            "渗透",
+            "01",
+            "资深",
+            "兼职",
         ]
         return not any(item in titleText for item in titleBlackList)
     except:
@@ -348,8 +357,8 @@ if not os.path.exists("resume.txt"):
 with open("resume.txt", "r") as file:
     for line in file:
         string = line.strip()
-        if string not in resumesr:
-            resumesr.add(string)
+        if string not in resumes:
+            resumes.add(string)
 driver.get("https://www.zhipin.com/web/user/?ka=header-login")
 WAIT.until(
     EC.presence_of_element_located(
@@ -359,66 +368,42 @@ WAIT.until(
 driver.find_element(By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']").click()
 time.sleep(20)
 Query = [
-    # "Java",
+    "Java",
     "Java测试开发",
     "Java软件测试",
     "软件测试开发",
     "软件测试",
     "Java软件实施",
-    "Java运维开发",
+    # "Java运维开发",
     "软件自动化测试",
     "软件功能测试",
-    "Python软件测试",
+    # "Python软件测试",
     "软件实施",
-    "后端开发",
-    "软件开发",
-    "全栈工程师",
-    "软件需求分析",
-    "软件性能测试",
-    "Python",
-    "Node.js",
-    "数据分析",
-    "数据挖掘",
-    "DBA",
-    "Hadoop",
-    "JavaScript",
-    "软件技术文档",
+    # "后端开发",
+    # "软件开发",
+    # "全栈工程师",
+    # "软件需求分析",
+    # "软件性能测试",
+    # "Python",
+    # "Node.js",
+    # "数据分析",
+    # "数据挖掘",
+    # "DBA",
+    # "Hadoop",
+    # "JavaScript",
+    # "软件技术文档",
 ]
-for i in range(1, 10):
-    try:
-        if resumeSubmission(URL1 + "Java" + URL2 + "404" + URL3 + str(i)) == -1:
-            break
-    except:
-        continue
-for i in range(1, 10):
-    try:
-        if resumeSubmission(URL1 + "Java" + URL2 + "403" + URL3 + str(i)) == -1:
-            break
-    except:
-        continue
-for i in range(1, 10):
-    try:
-        if resumeSubmission(URL1 + "Java" + URL2 + "402" + URL3 + str(i)) == -1:
-            break
-    except:
-        continue
 for item in Query:
-    for i in range(1, 7):
+    for i in range(1, 10):
         try:
             if resumeSubmission(URL1 + item + URL2 + "404" + URL3 + str(i)) == -1:
-                break
+                exit()
         except:
             continue
-    for i in range(1, 7):
+    for i in range(1, 10):
         try:
             if resumeSubmission(URL1 + item + URL2 + "403" + URL3 + str(i)) == -1:
-                break
-        except:
-            continue
-    for i in range(1, 7):
-        try:
-            if resumeSubmission(URL1 + item + URL2 + "402" + URL3 + str(i)) == -1:
-                break
+                exit()
         except:
             continue
 driver.quit()

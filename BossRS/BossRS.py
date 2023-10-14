@@ -1,11 +1,11 @@
 import time
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import os
 from urllib.parse import urlparse, parse_qs
 import json
+import undetected_chromedriver as uc
 
 URL1 = "https://www.zhipin.com/web/geek/job?query="
 URL2 = "&city=100010000&experience=102,101,103,104&scale=303,304,305,306,302&degree=209,208,206,202,203&salary="
@@ -15,7 +15,7 @@ URL4 = "https://www.zhipin.com/wapi/zpgeek/job/card.json?securityId="
 URL5 = "&lid="
 URL6 = "&sessionId="
 
-driver = webdriver.Chrome()
+driver = uc.Chrome(headless=False, version_main=118)
 WAIT = WebDriverWait(driver, 30)
 
 
@@ -141,7 +141,7 @@ def checkCity(cityText):
 
 def checkIndustry(industryText):
     try:
-        industryBlackList = ["培训", "院校", "房产", "经纪", "中介"]
+        industryBlackList = ["培训", "院校", "房产", "经纪", "工程施工", "中介"]
         return not any(item in industryText for item in industryBlackList)
     except:
         return True
@@ -322,6 +322,7 @@ def checkTitle(titleText):
             "01",
             "资深",
             "兼职",
+            "台湾",
         ]
         return not any(item in titleText for item in titleBlackList)
     except:
@@ -374,11 +375,11 @@ Query = [
     "软件测试开发",
     "软件测试",
     "Java软件实施",
-    # "Java运维开发",
     "软件自动化测试",
     "软件功能测试",
-    # "Python软件测试",
     "软件实施",
+    # "Java运维开发",
+    # "Python软件测试",
     # "后端开发",
     # "软件开发",
     # "全栈工程师",

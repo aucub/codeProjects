@@ -1,11 +1,11 @@
-import time
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-import os
-from urllib.parse import urlparse, parse_qs
 import json
+import os
+import time
 import undetected_chromedriver as uc
+from urllib.parse import urlparse, parse_qs
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.wait import WebDriverWait
 
 URL1 = "https://www.zhipin.com/web/geek/job?query="
 URL2 = "&city=100010000&experience=102,101,103,104&scale=303,304,305,306,302&degree=209,208,206,202,203&salary="
@@ -19,51 +19,51 @@ driver = uc.Chrome(headless=False, version_main=118)
 WAIT = WebDriverWait(driver, 30)
 
 
-def resumeSubmission(url):
+def resume_submission(url):
     try:
         driver.get(url)
         time.sleep(15)
         WAIT.until(
-            EC.presence_of_element_located(
+            ec.presence_of_element_located(
                 (By.CSS_SELECTOR, "[class*='job-title clearfix']")
             )
         )
-        jobList = []
-        urlList = []
-        jobElements = driver.find_elements(
+        jobs = []
+        urls = []
+        job_elements = driver.find_elements(
             By.CSS_SELECTOR, "[class*='job-card-body clearfix']"
         )
-        for jobElement in jobElements:
+        for jobElement in job_elements:
             try:
                 if (
-                    checkTitle(jobElement.find_element(By.CLASS_NAME, "job-name").text)
-                    and checkCity(
+                    check_title(jobElement.find_element(By.CLASS_NAME, "job-name").text)
+                    and check_city(
                         jobElement.find_element(By.CLASS_NAME, "job-area").text
                     )
-                    and checkCompany(
+                    and check_company(
                         jobElement.find_element(By.CLASS_NAME, "company-name")
                         .find_element(By.TAG_NAME, "a")
                         .text
                     )
-                    and checkIndustry(
+                    and check_industry(
                         jobElement.find_element(By.CLASS_NAME, "company-tag-list")
                         .find_element(By.TAG_NAME, "li")
                         .text
                     )
-                    and isReadyToCommunicate(
+                    and is_ready_to_communicate(
                         jobElement.find_element(
                             By.CSS_SELECTOR, "[class*='job-info clearfix']"
                         ).get_attribute("innerHTML")
                     )
                 ):
-                    urlList.append(
+                    urls.append(
                         jobElement.find_element(
                             By.CLASS_NAME, "job-card-left"
                         ).get_attribute("href")
                     )
             except:
                 pass
-        for url in urlList:
+        for url in urls:
             resume = url.split("/")[-1].split(".")[0]
             if resume not in resumes:
                 resumes.add(resume)
@@ -79,16 +79,16 @@ def resumeSubmission(url):
                     if data["message"] == "Success":
                         description = data["zpData"]["jobCard"]["postDescription"]
                         active = data["zpData"]["jobCard"]["activeTimeDesc"]
-                        if not (checkSec(description) and checkActiveTime(active)):
+                        if not (check_sec(description) and check_active_time(active)):
                             continue
                 except:
                     pass
-                jobList.append(url)
-        for job in jobList:
+                jobs.append(url)
+        for job in jobs:
             try:
                 driver.get(job)
                 WAIT.until(
-                    EC.presence_of_element_located(
+                    ec.presence_of_element_located(
                         (By.CSS_SELECTOR, "[class*='btn btn-startchat']")
                     )
                 )
@@ -96,22 +96,22 @@ def resumeSubmission(url):
                     By.CSS_SELECTOR, "[class*='btn btn-startchat']"
                 )
                 if not (
-                    checkActiveTime(
+                    check_active_time(
                         driver.find_element(By.CLASS_NAME, "boss-active-time").text
                     )
-                    and checkRes()
-                    and checkSec(
+                    and check_res()
+                    and check_sec(
                         driver.find_element(By.CLASS_NAME, "job-detail-section").text
                     )
-                    and isReadyToCommunicate(btn.text)
+                    and is_ready_to_communicate(btn.text)
                 ):
                     continue
                 btn.click()
                 WAIT.until(
-                    EC.presence_of_element_located((By.CLASS_NAME, "dialog-con"))
+                    ec.presence_of_element_located((By.CLASS_NAME, "dialog-con"))
                 )
-                dialogText = driver.find_element(By.CLASS_NAME, "dialog-con").text
-                if "已达上限" in dialogText:
+                dialog_text = driver.find_element(By.CLASS_NAME, "dialog-con").text
+                if "已达上限" in dialog_text:
                     return -1
                 time.sleep(3)
             except:
@@ -123,34 +123,34 @@ def resumeSubmission(url):
         return 0
 
 
-def checkActiveTime(activeTimeText):
+def check_active_time(active_time_text):
     try:
-        activeTimeBlackList = ["半年", "月内", "周内", "7日", "本月", "本周"]
-        return not any(item in activeTimeText for item in activeTimeBlackList)
+        active_time_blacks = ["半年", "月内", "周内", "7日", "本月", "本周"]
+        return not any(item in active_time_text for item in active_time_blacks)
     except:
         return True
 
 
-def checkCity(cityText):
+def check_city(city_text):
     try:
-        cityBlackList = ["沈阳", "乌鲁木齐", "乌兰察布", "大连", "哈尔滨", "呼和浩特"]
-        return not any(item in cityText for item in cityBlackList)
+        city_blacks = ["沈阳", "乌鲁木齐", "乌兰察布", "大连", "哈尔滨", "呼和浩特"]
+        return not any(item in city_text for item in city_blacks)
     except:
         return True
 
 
-def checkIndustry(industryText):
+def check_industry(industry_text):
     try:
-        industryBlackList = ["培训", "院校", "房产", "经纪", "工程施工", "中介"]
-        return not any(item in industryText for item in industryBlackList)
+        industry_blacks = ["培训", "院校", "房产", "经纪", "工程施工", "中介"]
+        return not any(item in industry_text for item in industry_blacks)
     except:
         return True
 
 
-def checkSec(secText):
+def check_sec(sec_text):
     try:
-        secText = secText.lower()
-        KEYWORDS = [
+        sec_text = sec_text.lower()
+        sec_keywords = [
             "java",
             "python",
             "spring",
@@ -166,10 +166,11 @@ def checkSec(secText):
             "计算机",
             "编程",
         ]
-        if not any(item in secText for item in KEYWORDS):
+        if not any(item in sec_text for item in sec_keywords):
             return False
-        secBlackList = [
+        sec_blacks = [
             "不接受应届",
+            "应届生勿",
             "日语",
             "精通c#",
             "node开发经验",
@@ -223,31 +224,36 @@ def checkSec(secText):
             "手机厂商",
             "请勿联系",
         ]
-        if any(item in secText for item in secBlackList):
+        if any(item in sec_text for item in sec_blacks):
             return False
-        if "毕业时间" in secText:
-            graduationTimeBlackList = ["2020", "2021", "2022"]
-            graduationTime = secText[secText.index("毕业时间") : secText.index("毕业时间") + 15]
-            if any(item in graduationTime for item in graduationTimeBlackList):
+        if "毕业时间" in sec_text:
+            graduation_time_blacks = ["2020", "2021", "2022"]
+            graduation_time = sec_text[
+                sec_text.index("毕业时间") : sec_text.index("毕业时间") + 15
+            ]
+            if any(item in graduation_time for item in graduation_time_blacks):
                 return False
-        if "截止日期" in secText:
+        if "截止日期" in sec_text:
             try:
-                expDateText = secText[
-                    secText.index("截止日期") + 5 : secText.index("截止日期") + 15
+                exp_date_text = sec_text[
+                    sec_text.index("截止日期") + 5 : sec_text.index("截止日期") + 15
                 ]
-                dateFormat = "%Y.%m.%d"
-                if time.mktime(time.strptime(expDateText, dateFormat)) < time.time():
+                date_format = "%Y.%m.%d"
+                if time.mktime(time.strptime(exp_date_text, date_format)) < time.time():
                     return False
             except:
                 pass
-        secList = ["23届", "23年", "应届", "往届", "毕业", "0-1年", "0-2年", "0-3年"]
-        if any(item in secText for item in secList):
+        secs = ["23届", "23年", "往届", "0-1年", "0-2年", "0-3年"]
+        if any(item in sec_text for item in secs):
             return True
-        if "24届" in secText and secText.index("24届") >= 5:
-            return "23" in secText[secText.index("24届") - 5 : secText.index("24届")]
-        if "24年" in secText and secText.index("24年") >= 5:
-            return "23" in secText[secText.index("24年") - 5 : secText.index("24年")]
-        secBlackList1 = [
+        if "24届" in sec_text and sec_text.index("24届") >= 5:
+            return "23" in sec_text[sec_text.index("24届") - 5 : sec_text.index("24届")]
+        if "24年" in sec_text and sec_text.index("24年") >= 5:
+            return "23" in sec_text[sec_text.index("24年") - 5 : sec_text.index("24年")]
+        secs1 = ["应届", "毕业"]
+        if any(item in sec_text for item in secs1):
+            return True
+        sec_blacks1 = [
             "年以上",
             "年及以上",
             "年或以上",
@@ -258,15 +264,15 @@ def checkSec(secText):
             "3-5年",
             "年(含)以上",
         ]
-        return not any(item in secText for item in secBlackList1)
+        return not any(item in sec_text for item in sec_blacks1)
     except:
         return True
 
 
-def checkTitle(titleText):
+def check_title(title_text):
     try:
-        titleText = titleText.lower()
-        titleBlackList = [
+        title_text = title_text.lower()
+        title_blacks = [
             "助教",
             "销售",
             "日",
@@ -290,6 +296,7 @@ def checkTitle(titleText):
             "老师",
             "推广",
             "培训",
+            "训练",
             "残",
             "高级",
             "创业",
@@ -324,33 +331,33 @@ def checkTitle(titleText):
             "兼职",
             "台湾",
         ]
-        return not any(item in titleText for item in titleBlackList)
+        return not any(item in title_text for item in title_blacks)
     except:
         return True
 
 
-def checkCompany(companyText):
+def check_company(company_text):
     try:
-        companyBlackList = ["培训", "学校", "教育"]
-        return not any(item in companyText for item in companyBlackList)
+        company_blacks = ["培训", "学校", "教育"]
+        return not any(item in company_text for item in company_blacks)
     except:
         return True
 
 
-def checkRes():
+def check_res():
     try:
-        resElement = driver.find_element(By.CSS_SELECTOR, ".res-time")
-        resText = resElement.text[-10:]
-        dateFormat = "%Y-%m-%d"
-        return time.mktime(time.strptime(resText, dateFormat)) < (
+        res_element = driver.find_element(By.CSS_SELECTOR, ".res-time")
+        res_text = res_element.text[-10:]
+        date_format = "%Y-%m-%d"
+        return time.mktime(time.strptime(res_text, date_format)) < (
             time.time() - 31536000
         )
     except:
         return True
 
 
-def isReadyToCommunicate(btnText):
-    return "立即" in btnText
+def is_ready_to_communicate(btn_text):
+    return "立即" in btn_text
 
 
 if not os.path.exists("resume.txt"):
@@ -362,7 +369,7 @@ with open("resume.txt", "r") as file:
             resumes.add(string)
 driver.get("https://www.zhipin.com/web/user/?ka=header-login")
 WAIT.until(
-    EC.presence_of_element_located(
+    ec.presence_of_element_located(
         (By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']")
     )
 )
@@ -397,13 +404,13 @@ Query = [
 for item in Query:
     for i in range(1, 10):
         try:
-            if resumeSubmission(URL1 + item + URL2 + "404" + URL3 + str(i)) == -1:
+            if resume_submission(URL1 + item + URL2 + "404" + URL3 + str(i)) == -1:
                 exit()
         except:
             continue
     for i in range(1, 10):
         try:
-            if resumeSubmission(URL1 + item + URL2 + "403" + URL3 + str(i)) == -1:
+            if resume_submission(URL1 + item + URL2 + "403" + URL3 + str(i)) == -1:
                 exit()
         except:
             continue

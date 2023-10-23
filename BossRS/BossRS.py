@@ -1,5 +1,4 @@
 import json
-import os
 import time
 import undetected_chromedriver as uc
 from urllib.parse import urlparse, parse_qs
@@ -10,19 +9,18 @@ from selenium.webdriver.support.wait import WebDriverWait
 URL1 = "https://www.zhipin.com/web/geek/job?query="
 URL2 = "&city=100010000&experience=102,101,103,104&scale=303,304,305,306,302&degree=209,208,206,202,203&salary="
 URL3 = "&page="
-resumes = set()
 URL4 = "https://www.zhipin.com/wapi/zpgeek/job/card.json?securityId="
 URL5 = "&lid="
 URL6 = "&sessionId="
 
 driver = uc.Chrome(headless=False, version_main=118)
-WAIT = WebDriverWait(driver, 30)
+WAIT = WebDriverWait(driver, 20)
 
 
 def resume_submission(url):
     try:
         driver.get(url)
-        time.sleep(15)
+        time.sleep(3)
         WAIT.until(
             ec.presence_of_element_located(
                 (By.CSS_SELECTOR, "[class*='job-title clearfix']")
@@ -64,26 +62,23 @@ def resume_submission(url):
             except:
                 pass
         for url in urls:
-            resume = url.split("/")[-1].split(".")[0]
-            if resume not in resumes:
-                resumes.add(resume)
-                try:
-                    parsed_url = urlparse(url)
-                    query_params = parse_qs(parsed_url.query)
-                    lid = query_params.get("lid", [None])[0]
-                    security_id = query_params.get("securityId", [None])[0]
-                    driver.get(URL4 + security_id + URL5 + lid + URL6)
-                    time.sleep(3)
-                    page_source = driver.find_element(By.TAG_NAME, "pre").text
-                    data = json.loads(page_source)
-                    if data["message"] == "Success":
-                        description = data["zpData"]["jobCard"]["postDescription"]
-                        active = data["zpData"]["jobCard"]["activeTimeDesc"]
-                        if not (check_sec(description) and check_active_time(active)):
-                            continue
-                except:
-                    pass
-                jobs.append(url)
+            try:
+                parsed_url = urlparse(url)
+                query_params = parse_qs(parsed_url.query)
+                lid = query_params.get("lid", [None])[0]
+                security_id = query_params.get("securityId", [None])[0]
+                driver.get(URL4 + security_id + URL5 + lid + URL6)
+                time.sleep(3)
+                page_source = driver.find_element(By.TAG_NAME, "pre").text
+                data = json.loads(page_source)
+                if data["message"] == "Success":
+                    description = data["zpData"]["jobCard"]["postDescription"]
+                    active = data["zpData"]["jobCard"]["activeTimeDesc"]
+                    if not (check_sec(description) and check_active_time(active)):
+                        continue
+            except:
+                pass
+            jobs.append(url)
         for job in jobs:
             try:
                 driver.get(job)
@@ -116,8 +111,6 @@ def resume_submission(url):
                 time.sleep(3)
             except:
                 pass
-        with open("resume.txt", "w") as file:
-            file.write("\n".join(resumes))
         return 0
     except:
         return 0
@@ -125,7 +118,7 @@ def resume_submission(url):
 
 def check_active_time(active_time_text):
     try:
-        active_time_blacks = ["半年", "月内", "周内", "7日", "本月", "本周"]
+        active_time_blacks = ["半年", "月内", "周内", "7日", "本月"]
         return not any(item in active_time_text for item in active_time_blacks)
     except:
         return True
@@ -133,7 +126,7 @@ def check_active_time(active_time_text):
 
 def check_city(city_text):
     try:
-        city_blacks = ["沈阳", "乌鲁木齐", "乌兰察布", "大连", "哈尔滨", "呼和浩特"]
+        city_blacks = ["沈阳", "乌鲁木齐", "拉萨", "乌兰察布", "大连", "哈尔滨", "呼和浩特"]
         return not any(item in city_text for item in city_blacks)
     except:
         return True
@@ -153,15 +146,17 @@ def check_sec(sec_text):
         sec_keywords = [
             "java",
             "python",
+            "c++",
             "spring",
             "sql",
             "linux",
             "j2ee",
             "web",
+            "app",
             "bug",
             "数据库",
             "后端",
-            "软件测试",
+            "软件",
             "开发",
             "计算机",
             "编程",
@@ -174,7 +169,6 @@ def check_sec(sec_text):
             "日语",
             "精通c#",
             "node开发经验",
-            "用户界面编程",
             "mcu",
             "dsp",
             "ecu",
@@ -194,7 +188,6 @@ def check_sec(sec_text):
             "车间",
             "车型",
             "家具",
-            "售前",
             "电路",
             "电气",
             "弱电",
@@ -247,10 +240,8 @@ def check_sec(sec_text):
         secs = ["23届", "23年", "往届", "0-1年", "0-2年", "0-3年"]
         if any(item in sec_text for item in secs):
             return True
-        if "24届" in sec_text and sec_text.index("24届") >= 5:
-            return "23" in sec_text[sec_text.index("24届") - 5 : sec_text.index("24届")]
-        if "24年" in sec_text and sec_text.index("24年") >= 5:
-            return "23" in sec_text[sec_text.index("24年") - 5 : sec_text.index("24年")]
+        if "24届" in sec_text or "24年" in sec_text:
+            return "23" in sec_text
         secs1 = ["应届", "毕业"]
         if any(item in sec_text for item in secs1):
             return True
@@ -278,8 +269,6 @@ def check_title(title_text):
             "销售",
             "日",
             "员",
-            "产品开发",
-            "嵌入式开发",
             "单片机",
             "游戏",
             "电话",
@@ -315,9 +304,7 @@ def check_title(title_text):
             "芯片",
             "布料",
             ".net",
-            "python开发",
             "市场",
-            "c++",
             "obc",
             "高性能",
             "环保",
@@ -364,13 +351,6 @@ def is_ready_to_communicate(btn_text):
     return "立即" in btn_text
 
 
-if not os.path.exists("resume.txt"):
-    open("resume.txt", "w").close()
-with open("resume.txt", "r") as file:
-    for line in file:
-        string = line.strip()
-        if string not in resumes:
-            resumes.add(string)
 driver.get("https://www.zhipin.com/web/user/?ka=header-login")
 WAIT.until(
     ec.presence_of_element_located(

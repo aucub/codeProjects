@@ -14,7 +14,7 @@ URL5 = "&lid="
 URL6 = "&sessionId="
 
 driver = uc.Chrome(headless=False, version_main=118)
-WAIT = WebDriverWait(driver, 20)
+WAIT = WebDriverWait(driver, 30)
 
 
 def resume_submission(url):
@@ -68,7 +68,7 @@ def resume_submission(url):
                 lid = query_params.get("lid", [None])[0]
                 security_id = query_params.get("securityId", [None])[0]
                 driver.get(URL4 + security_id + URL5 + lid + URL6)
-                time.sleep(3)
+                time.sleep(2)
                 page_source = driver.find_element(By.TAG_NAME, "pre").text
                 data = json.loads(page_source)
                 if data["message"] == "Success":
@@ -108,7 +108,7 @@ def resume_submission(url):
                 dialog_text = driver.find_element(By.CLASS_NAME, "dialog-con").text
                 if "已达上限" in dialog_text:
                     return -1
-                time.sleep(3)
+                time.sleep(2)
             except:
                 pass
         return 0
@@ -176,6 +176,7 @@ def check_sec(sec_text):
             "cdd",
             "diva",
             "硬件测试",
+            "游戏测试",
             "汽车",
             "车厂",
             "机器人",
@@ -315,10 +316,13 @@ def check_title(title_text):
             "管家",
             "架构师",
             "水务",
+            "棋牌",
+            "组长",
             "英语",
             "渗透",
             "01",
             "资深",
+            "专家",
             "兼职",
             "台湾",
         ]

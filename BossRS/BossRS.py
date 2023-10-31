@@ -1,5 +1,6 @@
 import json
 import time
+import re
 import undetected_chromedriver as uc
 from urllib.parse import urlparse, parse_qs
 from selenium.webdriver.common.by import By
@@ -91,7 +92,37 @@ def resume_submission(url):
                     By.CSS_SELECTOR, "[class*='btn btn-startchat']"
                 )
                 if not (
-                    check_active_time(
+                    check_company(
+                        driver.find_element(
+                            By.CSS_SELECTOR,
+                            "div.company-info:nth-child(2) > a:nth-child(2)",
+                        ).text
+                    )
+                    and check_placeholder(
+                        driver.find_element(
+                            By.CSS_SELECTOR,
+                            ".sider-company > p:nth-child(4)",
+                        ).text
+                    )
+                    and check_experiece(
+                        driver.find_element(
+                            By.CSS_SELECTOR,
+                            "span.text-desc:nth-child(2)",
+                        ).text
+                    )
+                    and check_degree(
+                        driver.find_element(
+                            By.CSS_SELECTOR,
+                            "span.text-desc:nth-child(3)",
+                        ).text
+                    )
+                    and check_salary(
+                        driver.find_element(
+                            By.CSS_SELECTOR,
+                            "span.salary",
+                        ).text
+                    )
+                    and check_active_time(
                         driver.find_element(By.CLASS_NAME, "boss-active-time").text
                     )
                     and check_res()
@@ -121,6 +152,37 @@ def check_active_time(active_time_text):
         active_time_blacks = ["半年", "月内", "周内", "7日", "本月"]
         return not any(item in active_time_text for item in active_time_blacks)
     except:
+        return True
+
+
+def check_placeholder(placeholder_text):
+    try:
+        return "-20" not in placeholder_text
+    except:
+        return True
+
+
+def check_experiece(experiece_text):
+    try:
+        return "5" not in experiece_text and "10" not in experiece_text
+    except:
+        return True
+
+
+def check_degree(degree_text):
+    try:
+        return "硕" not in degree_text and "博" not in degree_text
+    except:
+        return True
+
+
+def check_salary(salary_text):
+    pattern = r"(\d+)-(\d+)K"
+    match = re.search(pattern, salary_text)
+    if match:
+        high_salary = int(match.group(2))
+        return high_salary < 12
+    else:
         return True
 
 

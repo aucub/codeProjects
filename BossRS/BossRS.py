@@ -180,8 +180,8 @@ def check_salary(salary_text):
     pattern = r"(\d+)-(\d+)K"
     match = re.search(pattern, salary_text)
     if match:
-        high_salary = int(match.group(2))
-        return high_salary < 12
+        low_salary = int(match.group(1))
+        return low_salary < 13
     else:
         return True
 

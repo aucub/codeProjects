@@ -20,7 +20,7 @@ WAIT = WebDriverWait(driver, 30)
 def resume_submission(url):
     try:
         driver.get(url)
-        time.sleep(3)
+        time.sleep(1)
         WAIT.until(
             ec.presence_of_element_located(
                 (By.CSS_SELECTOR, "[class*='job-title clearfix']")
@@ -68,7 +68,7 @@ def resume_submission(url):
                 lid = query_params.get("lid", [None])[0]
                 security_id = query_params.get("securityId", [None])[0]
                 driver.get(URL4 + security_id + URL5 + lid + URL6)
-                time.sleep(2)
+                time.sleep(0.5)
                 page_source = driver.find_element(By.TAG_NAME, "pre").text
                 data = json.loads(page_source)
                 if data["message"] == "Success":
@@ -108,7 +108,7 @@ def resume_submission(url):
                 dialog_text = driver.find_element(By.CLASS_NAME, "dialog-con").text
                 if "已达上限" in dialog_text:
                     return -1
-                time.sleep(2)
+                time.sleep(1)
             except:
                 pass
         return 0
@@ -126,7 +126,7 @@ def check_active_time(active_time_text):
 
 def check_city(city_text):
     try:
-        city_blacks = ["沈阳", "乌鲁木齐", "拉萨", "乌兰察布", "大连", "哈尔滨", "呼和浩特"]
+        city_blacks = ["沈阳", "齐齐哈尔", "毕节", "乌鲁木齐", "拉萨", "乌兰察布", "大连", "哈尔滨", "呼和浩特"]
         return not any(item in city_text for item in city_blacks)
     except:
         return True
@@ -280,7 +280,14 @@ def check_title(title_text):
             "实验",
             "弱电",
             "电气",
+            "机电",
+            "售前",
+            "售后",
             "ic",
+            "英文",
+            "可靠",
+            "仪器",
+            "耗材",
             "硬件",
             "教师",
             "讲师",
@@ -370,10 +377,11 @@ Query = [
     "软件测试开发",
     "软件测试",
     "Java软件实施",
-    "软件自动化测试",
-    "软件功能测试",
+    "Java运维开发",
+    "Python软件测试",
     "软件实施",
-    # "Java运维开发",
+    # "软件自动化测试",
+    # "软件功能测试",
     # "Python软件测试",
     # "后端开发",
     # "软件开发",

@@ -126,7 +126,18 @@ def check_active_time(active_time_text):
 
 def check_city(city_text):
     try:
-        city_blacks = ["沈阳", "齐齐哈尔", "毕节", "乌鲁木齐", "拉萨", "乌兰察布", "大连", "哈尔滨", "呼和浩特"]
+        city_blacks = [
+            "沈阳",
+            "齐齐哈尔",
+            "塔城",
+            "毕节",
+            "乌鲁木齐",
+            "拉萨",
+            "乌兰察布",
+            "大连",
+            "哈尔滨",
+            "呼和浩特",
+        ]
         return not any(item in city_text for item in city_blacks)
     except:
         return True
@@ -216,6 +227,7 @@ def check_sec(sec_text):
             "化工",
             "石油",
             "土建",
+            "安防产品",
             "手机厂商",
             "请勿联系",
         ]
@@ -279,6 +291,8 @@ def check_title(title_text):
             "客服",
             "实验",
             "弱电",
+            "消防",
+            "暖通",
             "电气",
             "机电",
             "售前",
@@ -340,7 +354,7 @@ def check_title(title_text):
 
 def check_company(company_text):
     try:
-        company_blacks = ["培训", "学校", "教育"]
+        company_blacks = ["培训", "学校", "人才", "教育"]
         return not any(item in company_text for item in company_blacks)
     except:
         return True

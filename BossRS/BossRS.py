@@ -192,9 +192,12 @@ def check_city(city_text):
             "沈阳",
             "齐齐哈尔",
             "塔城",
+            "长春",
             "毕节",
             "乌鲁木齐",
             "拉萨",
+            "锡林",
+            "葫芦",
             "乌兰察布",
             "大连",
             "哈尔滨",
@@ -215,6 +218,8 @@ def check_industry(industry_text):
 
 def check_sec(sec_text):
     try:
+        if len(sec_text) < 55:
+            return False
         sec_text = sec_text.lower()
         sec_keywords = [
             "java",
@@ -363,6 +368,10 @@ def check_title(title_text):
             "英文",
             "可靠",
             "仪器",
+            "机械",
+            "器械",
+            "前端",
+            "android",
             "耗材",
             "硬件",
             "教师",
@@ -380,7 +389,7 @@ def check_title(title_text):
             "仿真",
             "cam",
             "座舱",
-            "车载",
+            "车",
             "主管",
             "经理",
             "基金",
@@ -408,6 +417,7 @@ def check_title(title_text):
             "专家",
             "兼职",
             "台湾",
+            "海外",
         ]
         return not any(item in title_text for item in title_blacks)
     except:
@@ -452,10 +462,10 @@ Query = [
     "Java软件测试",
     "软件测试开发",
     "软件测试",
-    "Java软件实施",
     "Java运维开发",
     "Python软件测试",
-    "软件实施",
+    # "Java软件实施",
+    # "软件实施",
     # "软件自动化测试",
     # "软件功能测试",
     # "Python软件测试",

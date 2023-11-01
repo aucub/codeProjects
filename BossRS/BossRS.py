@@ -14,7 +14,7 @@ URL4 = "https://www.zhipin.com/wapi/zpgeek/job/card.json?securityId="
 URL5 = "&lid="
 URL6 = "&sessionId="
 
-driver = uc.Chrome(headless=False, version_main=118)
+driver = uc.Chrome(headless=False, version_main=119)
 WAIT = WebDriverWait(driver, 30)
 
 
@@ -462,8 +462,8 @@ Query = [
     "Java软件测试",
     "软件测试开发",
     "软件测试",
-    "Java运维开发",
     "Python软件测试",
+    # "Java运维开发",
     # "Java软件实施",
     # "软件实施",
     # "软件自动化测试",
@@ -484,13 +484,13 @@ Query = [
     # "软件技术文档",
 ]
 for item in Query:
-    for i in range(1, 10):
+    for i in range(1, 20):
         try:
             if resume_submission(URL1 + item + URL2 + "404" + URL3 + str(i)) == -1:
                 exit()
         except:
             continue
-    for i in range(1, 10):
+    for i in range(1, 20):
         try:
             if resume_submission(URL1 + item + URL2 + "403" + URL3 + str(i)) == -1:
                 exit()

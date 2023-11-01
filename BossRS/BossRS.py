@@ -254,6 +254,7 @@ def check_sec(sec_text):
             "uds",
             "cdd",
             "diva",
+            "通过cet-6",
             "硬件测试",
             "游戏测试",
             "汽车",
@@ -332,10 +333,12 @@ def check_sec(sec_text):
             "年或以上",
             "1-2年",
             "1-3年",
+            "1至3年",
             "1年-3年",
             "2-3年",
             "3-5年",
             "年(含)以上",
+            "22年及之前",
         ]
         return not any(item in sec_text for item in sec_blacks1)
     except:
@@ -439,7 +442,7 @@ def check_res():
         res_text = res_element.text[-10:]
         date_format = "%Y-%m-%d"
         return time.mktime(time.strptime(res_text, date_format)) < (
-            time.time() - 31536000
+            time.time() - 63072000
         )
     except:
         return True

@@ -244,6 +244,10 @@ def check_sec(sec_text):
             return False
         sec_blacks = [
             "不接受应届",
+            "不考虑应届",
+            "20-21年",
+            "能直播",
+            "直播经验",
             "应届生勿",
             "日语",
             "精通c#",
@@ -256,6 +260,7 @@ def check_sec(sec_text):
             "diva",
             "通过cet-6",
             "硬件测试",
+            "整机测试",
             "游戏测试",
             "汽车",
             "车厂",
@@ -302,13 +307,6 @@ def check_sec(sec_text):
         ]
         if any(item in sec_text for item in sec_blacks):
             return False
-        if "毕业时间" in sec_text:
-            graduation_time_blacks = ["2020", "2021", "2022"]
-            graduation_time = sec_text[
-                sec_text.index("毕业时间") : sec_text.index("毕业时间") + 15
-            ]
-            if any(item in graduation_time for item in graduation_time_blacks):
-                return False
         if "截止日期" in sec_text:
             try:
                 exp_date_text = sec_text[
@@ -319,6 +317,16 @@ def check_sec(sec_text):
                     return False
             except:
                 pass
+        if "毕业时间" in sec_text:
+            graduation_time_blacks = ["2020", "2021", "2022"]
+            graduation_time = sec_text[
+                sec_text.index("毕业时间") : sec_text.index("毕业时间") + 15
+            ]
+            if any(item in graduation_time for item in graduation_time_blacks):
+                return False
+            graduation_time_blacks1 = ["不限", "23"]
+            if any(item in graduation_time for item in graduation_time_blacks1):
+                return True
         secs = ["23届", "23年", "往届", "0-1年", "0-2年", "0-3年"]
         if any(item in sec_text for item in secs):
             return True

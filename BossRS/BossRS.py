@@ -181,7 +181,7 @@ def check_salary(salary_text):
     match = re.search(pattern, salary_text)
     if match:
         low_salary = int(match.group(1))
-        return low_salary < 13
+        return low_salary < 10
     else:
         return True
 
@@ -246,6 +246,7 @@ def check_sec(sec_text):
             "不接受应届",
             "不考虑应届",
             "20-21年",
+            "22年及之前",
             "能直播",
             "直播经验",
             "应届生勿",
@@ -324,8 +325,8 @@ def check_sec(sec_text):
             ]
             if any(item in graduation_time for item in graduation_time_blacks):
                 return False
-            graduation_time_blacks1 = ["不限", "23"]
-            if any(item in graduation_time for item in graduation_time_blacks1):
+            graduation_times = ["不限", "23"]
+            if any(item in graduation_time for item in graduation_times):
                 return True
         secs = ["23届", "23年", "往届", "0-1年", "0-2年", "0-3年"]
         if any(item in sec_text for item in secs):
@@ -346,7 +347,6 @@ def check_sec(sec_text):
             "2-3年",
             "3-5年",
             "年(含)以上",
-            "22年及之前",
         ]
         return not any(item in sec_text for item in sec_blacks1)
     except:

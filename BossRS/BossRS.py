@@ -246,13 +246,17 @@ def check_sec(sec_text):
             "不接受应届",
             "不考虑应届",
             "20-21年",
+            "20年毕业",
             "22年及之前",
             "能直播",
+            "保管与申购",
+            "车模",
             "直播经验",
             "应届生勿",
             "日语",
             "精通c#",
             "node开发经验",
+            "3年工作",
             "mcu",
             "dsp",
             "ecu",
@@ -262,6 +266,8 @@ def check_sec(sec_text):
             "通过cet-6",
             "硬件测试",
             "整机测试",
+            "设备及仪器",
+            "蓝牙耳机",
             "游戏测试",
             "汽车",
             "车厂",
@@ -305,6 +311,7 @@ def check_sec(sec_text):
             "安防产品",
             "手机厂商",
             "请勿联系",
+            "兼职",
         ]
         if any(item in sec_text for item in sec_blacks):
             return False
@@ -333,7 +340,7 @@ def check_sec(sec_text):
             return True
         if "24届" in sec_text or "24年" in sec_text:
             return "23" in sec_text
-        secs1 = ["应届", "毕业"]
+        secs1 = ["应届"]
         if any(item in sec_text for item in secs1):
             return True
         sec_blacks1 = [
@@ -384,6 +391,7 @@ def check_title(title_text):
             "器械",
             "前端",
             "android",
+            "蓝牙耳机",
             "耗材",
             "硬件",
             "教师",
@@ -496,15 +504,21 @@ Query = [
     # "软件技术文档",
 ]
 for item in Query:
-    for i in range(1, 20):
+    for i in range(1, 15):
         try:
             if resume_submission(URL1 + item + URL2 + "404" + URL3 + str(i)) == -1:
                 exit()
         except:
             continue
-    for i in range(1, 20):
+    for i in range(1, 15):
         try:
             if resume_submission(URL1 + item + URL2 + "403" + URL3 + str(i)) == -1:
+                exit()
+        except:
+            continue
+    for i in range(1, 15):
+        try:
+            if resume_submission(URL1 + item + URL2 + "402" + URL3 + str(i)) == -1:
                 exit()
         except:
             continue

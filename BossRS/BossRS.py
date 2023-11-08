@@ -14,7 +14,7 @@ URL4 = "https://www.zhipin.com/wapi/zpgeek/job/card.json?securityId="
 URL5 = "&lid="
 URL6 = "&sessionId="
 
-driver = uc.Chrome(headless=False, version_main=119)
+driver = uc.Chrome(headless=False)
 WAIT = WebDriverWait(driver, 30)
 
 
@@ -203,6 +203,7 @@ def check_city(city_text):
             "大连",
             "哈尔滨",
             "呼和浩特",
+            "鄂尔多斯",
         ]
         return not any(item in city_text for item in city_blacks)
     except:
@@ -211,7 +212,7 @@ def check_city(city_text):
 
 def check_industry(industry_text):
     try:
-        industry_blacks = ["培训", "院校", "房产", "经纪", "工程施工", "中介"]
+        industry_blacks = ["培训", "教育", "院校", "房产", "经纪", "工程施工", "中介"]
         return not any(item in industry_text for item in industry_blacks)
     except:
         return True
@@ -248,6 +249,8 @@ def check_sec(sec_text):
             "20-21年",
             "20年毕业",
             "22年及之前",
+            "22年之前",
+            "21年之前",
             "能直播",
             "保管与申购",
             "车模",
@@ -255,6 +258,7 @@ def check_sec(sec_text):
             "应届生勿",
             "日语",
             "精通c#",
+            "精通lab",
             "node开发经验",
             "3年工作",
             "mcu",
@@ -273,6 +277,8 @@ def check_sec(sec_text):
             "车厂",
             "机器人",
             "硬件控制",
+            "单片",
+            "电机",
             "串口",
             "布线",
             "上位",
@@ -308,10 +314,19 @@ def check_sec(sec_text):
             "化工",
             "石油",
             "土建",
+            "进行培训",
             "安防产品",
             "手机厂商",
             "请勿联系",
             "兼职",
+            "质检员",
+            "退货",
+            "水泵",
+            "原标题",
+            "软著",
+            "不是软件",
+            "毕业3年",
+            "毕业5年",
         ]
         if any(item in sec_text for item in sec_blacks):
             return False
@@ -322,6 +337,17 @@ def check_sec(sec_text):
                 ]
                 date_format = "%Y.%m.%d"
                 if time.mktime(time.strptime(exp_date_text, date_format)) < time.time():
+                    return False
+            except:
+                pass
+        if "不支持在线" in sec_text:
+            try:
+                sec_Citys = ["上海", "苏州"]
+                if not any(
+                    item
+                    in driver.find_element(By.CLASS_NAME, "text-desc text-city").text
+                    for item in sec_Citys
+                ):
                     return False
             except:
                 pass
@@ -398,6 +424,9 @@ def check_title(title_text):
             "讲师",
             "老师",
             "推广",
+            "实训",
+            "网络",
+            "支持",
             "培训",
             "训练",
             "残",
@@ -438,6 +467,21 @@ def check_title(title_text):
             "兼职",
             "台湾",
             "海外",
+            "c++",
+            "实施运维",
+            "实施",
+            "运维",
+            "shell",
+            "电子",
+            "驾驶",
+            "c#",
+            "win",
+            "无人",
+            "招聘",
+            "高薪",
+            "egp",
+            "通信",
+            "培养",
         ]
         return not any(item in title_text for item in title_blacks)
     except:
@@ -458,7 +502,7 @@ def check_res():
         res_text = res_element.text[-10:]
         date_format = "%Y-%m-%d"
         return time.mktime(time.strptime(res_text, date_format)) < (
-            time.time() - 63072000
+            time.time() - 31536000
         )
     except:
         return True
@@ -486,14 +530,14 @@ Query = [
     # "Java运维开发",
     # "Java软件实施",
     # "软件实施",
-    # "软件自动化测试",
-    # "软件功能测试",
-    # "Python软件测试",
-    # "后端开发",
-    # "软件开发",
-    # "全栈工程师",
+    "软件自动化测试",
+    "软件功能测试",
+    "Python软件测试",
+    "后端开发",
+    "软件开发",
+    "全栈工程师",
     # "软件需求分析",
-    # "软件性能测试",
+    "软件性能测试",
     # "Python",
     # "Node.js",
     # "数据分析",

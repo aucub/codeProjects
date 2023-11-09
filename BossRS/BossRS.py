@@ -14,7 +14,7 @@ URL4 = "https://www.zhipin.com/wapi/zpgeek/job/card.json?securityId="
 URL5 = "&lid="
 URL6 = "&sessionId="
 
-driver = uc.Chrome(headless=False)
+driver = uc.Chrome(headless=False, version_main=119)
 WAIT = WebDriverWait(driver, 30)
 
 

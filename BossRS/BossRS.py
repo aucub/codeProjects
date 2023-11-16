@@ -295,6 +295,9 @@ def check_sec(sec_text):
             "pms",
             "配电",
             "电力",
+            "电子工艺",
+            "新材料",
+            "物料",
             "家电",
             "电能",
             "采购",
@@ -324,6 +327,9 @@ def check_sec(sec_text):
             "水泵",
             "原标题",
             "软著",
+            "课程",
+            "老师",
+            "家长",
             "不是软件",
             "毕业3年",
             "毕业5年",
@@ -342,7 +348,7 @@ def check_sec(sec_text):
                 pass
         if "不支持在线" in sec_text:
             try:
-                sec_Citys = ["上海", "苏州"]
+                sec_Citys = ["上海", "苏州", "杭州"]
                 if not any(
                     item
                     in driver.find_element(By.CLASS_NAME, "text-desc text-city").text
@@ -378,6 +384,7 @@ def check_sec(sec_text):
             "1至3年",
             "1年-3年",
             "2-3年",
+            "2年左右",
             "3-5年",
             "年(含)以上",
         ]
@@ -418,6 +425,7 @@ def check_title(title_text):
             "前端",
             "android",
             "蓝牙耳机",
+            "相机",
             "耗材",
             "硬件",
             "教师",
@@ -446,6 +454,7 @@ def check_title(title_text):
             "芯片",
             "布料",
             ".net",
+            "php",
             "市场",
             "obc",
             "高性能",
@@ -482,6 +491,14 @@ def check_title(title_text):
             "egp",
             "通信",
             "培养",
+            "外派",
+            "企点",
+            "造价",
+            "期刊",
+            "玩具",
+            "电动",
+            "爬虫",
+            "运营",
         ]
         return not any(item in title_text for item in title_blacks)
     except:
@@ -522,22 +539,26 @@ driver.find_element(By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']").cl
 time.sleep(20)
 Query = [
     "Java",
+    "Java开发",
+    "Java后端",
+    "Java工程",
+    "Java软件",
+    "Java软件工程",
+    "Java软件开发",
     "Java测试开发",
     "Java软件测试",
     "软件测试开发",
     "软件测试",
-    "Python软件测试",
-    # "Java运维开发",
-    # "Java软件实施",
-    # "软件实施",
     "软件自动化测试",
     "软件功能测试",
     "Python软件测试",
-    "后端开发",
-    "软件开发",
-    "全栈工程师",
+    "Python测试",
+    # "Java运维开发",
+    # "Java软件实施",
+    # "软件实施",
+    # "全栈工程师",
     # "软件需求分析",
-    "软件性能测试",
+    # "软件性能测试",
     # "Python",
     # "Node.js",
     # "数据分析",

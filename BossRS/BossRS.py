@@ -212,7 +212,7 @@ def check_city(city_text):
 
 def check_industry(industry_text):
     try:
-        industry_blacks = ["培训", "教育", "院校", "房产", "经纪", "工程施工", "中介"]
+        industry_blacks = ["培训", "教育", "院校", "房产", "经纪", "工程施工", "中介", "区块链"]
         return not any(item in industry_text for item in industry_blacks)
     except:
         return True
@@ -330,6 +330,12 @@ def check_sec(sec_text):
             "课程",
             "老师",
             "家长",
+            "酷家乐",
+            "全屋定制",
+            "华广软件",
+            "定制家具",
+            "驻店设计师",
+            "造诣软件",
             "不是软件",
             "毕业3年",
             "毕业5年",

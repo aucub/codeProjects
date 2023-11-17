@@ -8,7 +8,7 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 
 URL1 = "https://www.zhipin.com/web/geek/job?query="
-URL2 = "&city=100010000&experience=102,101,103,104&scale=303,304,305,306,302&degree=209,208,206,202,203&salary="
+URL2 = "&city=100010000&experience=102,101,103,104&scale=304,305,306,302&degree=209,208,206,202,203&salary="  # 303,
 URL3 = "&page="
 URL4 = "https://www.zhipin.com/wapi/zpgeek/job/card.json?securityId="
 URL5 = "&lid="
@@ -571,20 +571,18 @@ Query = [
     "Java",
     "Java开发",
     "Java后端",
-    "Java工程",
-    "Java软件",
-    "Java软件工程",
     "Java软件开发",
+    "Java软件工程师",
     "Java测试开发",
     "Java软件测试",
     "软件测试开发",
     "软件测试",
-    "软件自动化测试",
-    "软件功能测试",
+    "Java运维开发",
+    "Java软件实施",
     "Python软件测试",
-    "Python测试",
-    # "Java运维开发",
-    # "Java软件实施",
+    # "软件自动化测试",
+    # "软件功能测试",
+    # "Python测试",
     # "软件实施",
     # "全栈工程师",
     # "软件需求分析",
@@ -599,21 +597,15 @@ Query = [
     # "软件技术文档",
 ]
 for item in Query:
-    for i in range(1, 15):
+    for i in range(1, 10):
         try:
             if resume_submission(URL1 + item + URL2 + "404" + URL3 + str(i)) == -1:
                 exit()
         except:
             continue
-    for i in range(1, 15):
+    for i in range(1, 10):
         try:
             if resume_submission(URL1 + item + URL2 + "403" + URL3 + str(i)) == -1:
-                exit()
-        except:
-            continue
-    for i in range(1, 15):
-        try:
-            if resume_submission(URL1 + item + URL2 + "402" + URL3 + str(i)) == -1:
                 exit()
         except:
             continue

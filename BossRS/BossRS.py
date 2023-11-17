@@ -330,13 +330,28 @@ def check_sec(sec_text):
             "课程",
             "老师",
             "家长",
+            "样衣",
+            "面辅料",
+            "3d设计",
+            "3d渲染",
+            "犀牛软件",
+            "三维建模",
+            "频谱",
+            "示波器",
+            "万用表",
+            "分析仪",
+            "车载",
             "酷家乐",
+            "面料",
+            "女装",
             "全屋定制",
             "华广软件",
             "定制家具",
             "驻店设计师",
             "造诣软件",
+            "网络交换机",
             "不是软件",
+            "大学2字",
             "毕业3年",
             "毕业5年",
         ]
@@ -352,7 +367,7 @@ def check_sec(sec_text):
                     return False
             except:
                 pass
-        if "不支持在线" in sec_text:
+        if "不支持在线" in sec_text or "线下面试" in sec_text:
             try:
                 sec_Citys = ["上海", "苏州", "杭州"]
                 if not any(
@@ -364,7 +379,7 @@ def check_sec(sec_text):
             except:
                 pass
         if "毕业时间" in sec_text:
-            graduation_time_blacks = ["2020", "2021", "2022"]
+            graduation_time_blacks = ["2020", "21", "22"]
             graduation_time = sec_text[
                 sec_text.index("毕业时间") : sec_text.index("毕业时间") + 15
             ]
@@ -376,7 +391,14 @@ def check_sec(sec_text):
         secs = ["23届", "23年", "往届", "0-1年", "0-2年", "0-3年"]
         if any(item in sec_text for item in secs):
             return True
-        if "24届" in sec_text or "24年" in sec_text:
+        if "毕业时间" in sec_text:
+            new_sec_text = (
+                sec_text[: sec_text.index("毕业时间")]
+                + sec_text[sec_text.index("毕业时间") + 15 :]
+            )
+        else:
+            new_sec_text = sec_text
+        if "24届" in new_sec_text or "24年" in new_sec_text:
             return "23" in sec_text
         secs1 = ["应届"]
         if any(item in sec_text for item in secs1):
@@ -505,6 +527,8 @@ def check_title(title_text):
             "电动",
             "爬虫",
             "运营",
+            "护士",
+            "面料",
         ]
         return not any(item in title_text for item in title_blacks)
     except:

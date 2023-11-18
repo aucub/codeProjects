@@ -8,7 +8,7 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 
 URL1 = "https://www.zhipin.com/web/geek/job?query="
-URL2 = "&city=100010000&experience=102,101,103,104&scale=304,305,306,302&degree=209,208,206,202,203&salary="  # 303,
+URL2 = "&city=100010000&experience=102,101,103,104&scale=302,303,304,305,306,302&degree=209,208,206,202,203&salary="
 URL3 = "&page="
 URL4 = "https://www.zhipin.com/wapi/zpgeek/job/card.json?securityId="
 URL5 = "&lid="
@@ -152,7 +152,7 @@ def check_active_time(active_time_text):
         active_time_blacks = ["半年", "月内", "周内", "7日", "本月"]
         return not any(item in active_time_text for item in active_time_blacks)
     except:
-        return True
+        return False
 
 
 def check_placeholder(placeholder_text):
@@ -367,7 +367,7 @@ def check_sec(sec_text):
                     return False
             except:
                 pass
-        if "不支持在线" in sec_text or "线下面试" in sec_text:
+        if "不支持在线" in sec_text or "线下面试" in sec_text or "不接受线上" in sec_text:
             try:
                 sec_Citys = ["上海", "苏州", "杭州"]
                 if not any(
@@ -399,7 +399,7 @@ def check_sec(sec_text):
         else:
             new_sec_text = sec_text
         if "24届" in new_sec_text or "24年" in new_sec_text:
-            return "23" in sec_text
+            return "23" in new_sec_text
         secs1 = ["应届"]
         if any(item in sec_text for item in secs1):
             return True
@@ -409,16 +409,19 @@ def check_sec(sec_text):
             "年或以上",
             "1-2年",
             "1-3年",
+            "一到三年",
             "1至3年",
             "1年-3年",
             "2-3年",
             "2年左右",
+            "3年左右",
+            "2-4年",
             "3-5年",
             "年(含)以上",
         ]
         return not any(item in sec_text for item in sec_blacks1)
     except:
-        return True
+        return False
 
 
 def check_title(title_text):
@@ -529,10 +532,11 @@ def check_title(title_text):
             "运营",
             "护士",
             "面料",
+            "粤语",
         ]
         return not any(item in title_text for item in title_blacks)
     except:
-        return True
+        return False
 
 
 def check_company(company_text):
@@ -540,7 +544,7 @@ def check_company(company_text):
         company_blacks = ["培训", "学校", "人才", "教育"]
         return not any(item in company_text for item in company_blacks)
     except:
-        return True
+        return False
 
 
 def check_res():

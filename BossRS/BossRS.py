@@ -2,11 +2,11 @@ import json
 import sys
 import time
 import re
-import undetected_chromedriver as uc
 from urllib.parse import urlparse, parse_qs
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
+import undetected_chromedriver as uc
 
 URL1 = "https://www.zhipin.com/web/geek/job?query="
 URL2 = "&city=100010000&experience=102,101,103,104&scale=302,303,304,305,306,302&degree=209,208,206,202,203&salary="
@@ -20,9 +20,11 @@ WAIT = WebDriverWait(driver, 30)
 
 
 def resume_submission(url):
+    """
+    投递简历
+    """
     try:
         driver.get(url)
-        time.sleep(1)
         WAIT.until(
             ec.presence_of_element_located(
                 (By.CSS_SELECTOR, "[class*='job-title clearfix']")
@@ -61,7 +63,7 @@ def resume_submission(url):
                             By.CLASS_NAME, "job-card-left"
                         ).get_attribute("href")
                     )
-            except:
+            except Exception:
                 pass
         for url in urls:
             try:
@@ -70,7 +72,7 @@ def resume_submission(url):
                 lid = query_params.get("lid", [None])[0]
                 security_id = query_params.get("securityId", [None])[0]
                 driver.get(URL4 + security_id + URL5 + lid + URL6)
-                time.sleep(0.5)
+                WAIT.until(ec.presence_of_element_located((By.TAG_NAME, "pre")))
                 page_source = driver.find_element(By.TAG_NAME, "pre").text
                 data = json.loads(page_source)
                 if data["message"] == "Success":
@@ -78,7 +80,7 @@ def resume_submission(url):
                     active = data["zpData"]["jobCard"]["activeTimeDesc"]
                     if not (check_sec(description) and check_active_time(active)):
                         continue
-            except:
+            except Exception:
                 pass
             jobs.append(url)
         for job in jobs:
@@ -105,7 +107,7 @@ def resume_submission(url):
                             ".sider-company > p:nth-child(4)",
                         ).text
                     )
-                    and check_experiece(
+                    and check_experience(
                         driver.find_element(
                             By.CSS_SELECTOR,
                             "span.text-desc:nth-child(2)",
@@ -141,43 +143,58 @@ def resume_submission(url):
                 if "已达上限" in dialog_text:
                     return -1
                 time.sleep(1)
-            except:
+            except Exception:
                 pass
         return 0
-    except:
+    except Exception:
         return 0
 
 
 def check_active_time(active_time_text):
+    """
+    检查活跃时间
+    """
     try:
         active_time_blacks = ["半年", "月内", "周内", "7日", "本月"]
         return not any(item in active_time_text for item in active_time_blacks)
-    except:
+    except Exception:
         return False
 
 
 def check_placeholder(placeholder_text):
+    """
+    检查规模
+    """
     try:
         return "-20" not in placeholder_text
-    except:
+    except Exception:
         return True
 
 
-def check_experiece(experiece_text):
+def check_experience(experience_text):
+    """
+    检查经验
+    """
     try:
-        return "5" not in experiece_text and "10" not in experiece_text
-    except:
+        return "5" not in experience_text and "10" not in experience_text
+    except Exception:
         return True
 
 
 def check_degree(degree_text):
+    """
+    检查学位
+    """
     try:
         return "硕" not in degree_text and "博" not in degree_text
-    except:
+    except Exception:
         return True
 
 
 def check_salary(salary_text):
+    """
+    检查薪资
+    """
     pattern = r"(\d+)-(\d+)K"
     match = re.search(pattern, salary_text)
     if match:
@@ -187,6 +204,9 @@ def check_salary(salary_text):
 
 
 def check_city(city_text):
+    """
+    检查城市
+    """
     try:
         city_blacks = [
             "沈阳",
@@ -201,241 +221,244 @@ def check_city(city_text):
             "葫芦",
             "乌兰察布",
             "大连",
+            "大庆",
             "哈尔滨",
             "呼和浩特",
             "鄂尔多斯",
         ]
         return not any(item in city_text for item in city_blacks)
-    except:
+    except Exception:
         return True
 
 
 def check_industry(industry_text):
+    """
+    检查行业
+    """
     try:
         industry_blacks = ["培训", "教育", "院校", "房产", "经纪", "工程施工", "中介", "区块链"]
         return not any(item in industry_text for item in industry_blacks)
-    except:
+    except Exception:
         return True
 
 
 def check_sec(sec_text):
-    try:
-        if len(sec_text) < 55:
-            return False
-        sec_text = sec_text.lower()
-        sec_keywords = [
-            "java",
-            "python",
-            "c++",
-            "spring",
-            "sql",
-            "linux",
-            "j2ee",
-            "web",
-            "app",
-            "bug",
-            "数据库",
-            "后端",
-            "软件",
-            "开发",
-            "计算机",
-            "编程",
-        ]
-        if not any(item in sec_text for item in sec_keywords):
-            return False
-        sec_blacks = [
-            "java勿扰",
-            "不接受应届",
-            "不考虑应届",
-            "20-21年",
-            "20年毕业",
-            "22年及之前",
-            "22年之前",
-            "21年之前",
-            "22应届",
-            "能直播",
-            "保管与申购",
-            "车模",
-            "直播经验",
-            "应届生勿",
-            "日语",
-            "精通c#",
-            "精通lab",
-            "node开发经验",
-            "3年工作",
-            "mcu",
-            "dsp",
-            "ecu",
-            "uds",
-            "cdd",
-            "diva",
-            "通过cet-6",
-            "硬件测试",
-            "整机测试",
-            "设备及仪器",
-            "蓝牙耳机",
-            "游戏测试",
-            "汽车",
-            "车厂",
-            "机器人",
-            "硬件控制",
-            "单片",
-            "电机",
-            "串口",
-            "布线",
-            "上位",
-            "销售",
-            "营销",
-            "车间",
-            "车型",
-            "家具",
-            "电路",
-            "电气",
-            "弱电",
-            "变频",
-            "plc",
-            "pms",
-            "配电",
-            "电力",
-            "电子工艺",
-            "新材料",
-            "物料",
-            "家电",
-            "电能",
-            "采购",
-            "美妆",
-            "污染",
-            "大气",
-            "危废",
-            "气动",
-            "液压",
-            "电控",
-            "电池",
-            "给排水",
-            "水利",
-            "水务",
-            "水文",
-            "水资源",
-            "化工",
-            "石油",
-            "土建",
-            "进行培训",
-            "安防产品",
-            "手机厂商",
-            "请勿联系",
-            "兼职",
-            "质检员",
-            "退货",
-            "水泵",
-            "原标题",
-            "软著",
-            "课程",
-            "老师",
-            "家长",
-            "样衣",
-            "面辅料",
-            "3d设计",
-            "3d渲染",
-            "犀牛软件",
-            "三维建模",
-            "频谱",
-            "示波器",
-            "万用表",
-            "分析仪",
-            "焊接",
-            "电子元器件",
-            "车载",
-            "机房维护",
-            "网络保障",
-            "硬件运维",
-            "酷家乐",
-            "面料",
-            "女装",
-            "全屋定制",
-            "华广软件",
-            "定制家具",
-            "驻店设计师",
-            "造诣软件",
-            "网络交换机",
-            "不是软件",
-            "大学2字",
-            "211以上",
-            "毕业3年",
-            "毕业5年",
-        ]
-        if any(item in sec_text for item in sec_blacks):
-            return False
-        if "截止日期" in sec_text:
-            try:
-                exp_date_text = sec_text[
-                    sec_text.index("截止日期") + 5 : sec_text.index("截止日期") + 15
-                ]
-                date_format = "%Y.%m.%d"
-                if time.mktime(time.strptime(exp_date_text, date_format)) < time.time():
-                    return False
-            except:
-                pass
-        if "不支持在线" in sec_text or "线下面试" in sec_text or "不接受线上" in sec_text:
-            try:
-                sec_Citys = ["上海", "苏州", "杭州"]
-                if not any(
-                    item
-                    in driver.find_element(By.CLASS_NAME, "text-desc text-city").text
-                    for item in sec_Citys
-                ):
-                    return False
-            except:
-                pass
-        if "毕业时间" in sec_text:
-            graduation_time_blacks = ["2020", "21", "22"]
-            graduation_time = sec_text[
-                sec_text.index("毕业时间") : sec_text.index("毕业时间") + 15
-            ]
-            if any(item in graduation_time for item in graduation_time_blacks):
-                return False
-            graduation_times = ["不限", "23"]
-            if any(item in graduation_time for item in graduation_times):
-                return True
-        secs = ["23届", "23年", "往届", "0-1年", "0-2年", "0-3年"]
-        if any(item in sec_text for item in secs):
-            return True
-        if "毕业时间" in sec_text:
-            new_sec_text = (
-                sec_text[: sec_text.index("毕业时间")]
-                + sec_text[sec_text.index("毕业时间") + 15 :]
-            )
-        else:
-            new_sec_text = sec_text
-        if "24届" in new_sec_text or "24年" in new_sec_text:
-            return "23" in new_sec_text
-        secs1 = ["应届"]
-        if any(item in sec_text for item in secs1):
-            return True
-        sec_blacks1 = [
-            "年以上",
-            "年及以上",
-            "年或以上",
-            "1-2年",
-            "1～2年",
-            "1-3年",
-            "一到三年",
-            "1至3年",
-            "1年-3年",
-            "2-3年",
-            "2年左右",
-            "2年相关工作",
-            "3年左右",
-            "2-4年",
-            "2-5年",
-            "3-5年",
-            "年(含)以上",
-        ]
-        return not any(item in sec_text for item in sec_blacks1)
-    except:
+    """
+    检查职位描述
+    """
+    if len(sec_text) < 55:
         return False
+    sec_text = sec_text.lower()
+    sec_keywords = [
+        "java",
+        "python",
+        "c++",
+        "spring",
+        "sql",
+        "linux",
+        "j2ee",
+        "web",
+        "app",
+        "bug",
+        "数据库",
+        "后端",
+        "软件",
+        "开发",
+        "计算机",
+        "编程",
+    ]
+    if not any(item in sec_text for item in sec_keywords):
+        return False
+    sec_blacks = [
+        "java勿扰",
+        "不接受应届",
+        "不考虑应届",
+        "20-21年",
+        "20年毕业",
+        "22年及之前",
+        "22年之前",
+        "21年之前",
+        "22应届",
+        "能直播",
+        "保管与申购",
+        "车模",
+        "直播经验",
+        "应届生勿",
+        "日语",
+        "精通c#",
+        "精通lab",
+        "node开发经验",
+        "3年工作",
+        "mcu",
+        "dsp",
+        "ecu",
+        "uds",
+        "cdd",
+        "diva",
+        "通过cet-6",
+        "硬件测试",
+        "整机测试",
+        "设备及仪器",
+        "蓝牙耳机",
+        "游戏测试",
+        "汽车",
+        "车厂",
+        "机器人",
+        "硬件控制",
+        "单片",
+        "电机",
+        "串口",
+        "布线",
+        "上位",
+        "销售",
+        "营销",
+        "车间",
+        "车型",
+        "家具",
+        "电路",
+        "电气",
+        "弱电",
+        "变频",
+        "plc",
+        "pms",
+        "配电",
+        "电力",
+        "电子工艺",
+        "新材料",
+        "物料",
+        "家电",
+        "电能",
+        "采购",
+        "美妆",
+        "污染",
+        "大气",
+        "危废",
+        "气动",
+        "液压",
+        "电控",
+        "电池",
+        "给排水",
+        "水利",
+        "水务",
+        "水文",
+        "水资源",
+        "化工",
+        "石油",
+        "土建",
+        "进行培训",
+        "安防产品",
+        "手机厂商",
+        "请勿联系",
+        "兼职",
+        "质检员",
+        "退货",
+        "水泵",
+        "原标题",
+        "软著",
+        "课程",
+        "老师",
+        "家长",
+        "样衣",
+        "面辅料",
+        "3d设计",
+        "3d渲染",
+        "犀牛软件",
+        "三维建模",
+        "频谱",
+        "示波器",
+        "万用表",
+        "分析仪",
+        "焊接",
+        "电子元器件",
+        "车载",
+        "机房维护",
+        "网络保障",
+        "硬件运维",
+        "酷家乐",
+        "面料",
+        "女装",
+        "全屋定制",
+        "华广软件",
+        "定制家具",
+        "驻店设计师",
+        "造诣软件",
+        "网络交换机",
+        "不是软件",
+        "大学2字",
+        "211以上",
+        "毕业3年",
+        "毕业5年",
+    ]
+    if any(item in sec_text for item in sec_blacks):
+        return False
+    if "截止日期" in sec_text:
+        exp_date_text = sec_text[
+            sec_text.index("截止日期") + 5 : sec_text.index("截止日期") + 15
+        ]
+        try:
+            date_format = "%Y.%m.%d"
+            if time.mktime(time.strptime(exp_date_text, date_format)) < time.time():
+                return False
+        except Exception:
+            pass
+    if "不支持在线" in sec_text or "线下面试" in sec_text or "不接受线上" in sec_text:
+        sec_Citys = ["上海", "苏州", "杭州"]
+        try:
+            if not any(
+                item in driver.find_element(By.CLASS_NAME, "text-desc text-city").text
+                for item in sec_Citys
+            ):
+                return False
+        except Exception:
+            pass
+    if "毕业时间" in sec_text:
+        graduation_time_blacks = ["2020", "21", "22"]
+        graduation_time = sec_text[sec_text.index("毕业时间") : sec_text.index("毕业时间") + 15]
+        if any(item in graduation_time for item in graduation_time_blacks):
+            return False
+        graduation_times = ["不限", "23"]
+        if any(item in graduation_time for item in graduation_times):
+            return True
+    secs = ["23届", "23年", "往届", "0-1年", "0-2年", "0-3年"]
+    if any(item in sec_text for item in secs):
+        return True
+    if "毕业时间" in sec_text:
+        new_sec_text = (
+            sec_text[: sec_text.index("毕业时间")] + sec_text[sec_text.index("毕业时间") + 15 :]
+        )
+    else:
+        new_sec_text = sec_text
+    if "24届" in new_sec_text or "24年" in new_sec_text:
+        return "23" in new_sec_text
+    secs1 = ["应届"]
+    if any(item in sec_text for item in secs1):
+        return True
+    sec_blacks1 = [
+        "年以上",
+        "年及以上",
+        "年或以上",
+        "1-2年",
+        "1～2年",
+        "1-3年",
+        "一到三年",
+        "1至3年",
+        "1年-3年",
+        "2-3年",
+        "2年左右",
+        "2年相关工作",
+        "3年左右",
+        "2-4年",
+        "2-5年",
+        "3-5年",
+        "年(含)以上",
+    ]
+    return not any(item in sec_text for item in sec_blacks1)
 
 
 def check_title(title_text):
+    """
+    检查标题
+    """
     try:
         title_text = title_text.lower()
         title_blacks = [
@@ -555,19 +578,25 @@ def check_title(title_text):
             "金融",
         ]
         return not any(item in title_text for item in title_blacks)
-    except:
+    except Exception:
         return False
 
 
 def check_company(company_text):
+    """
+    检查公司名称
+    """
     try:
         company_blacks = ["培训", "学校", "人才", "教育"]
         return not any(item in company_text for item in company_blacks)
-    except:
+    except Exception:
         return False
 
 
 def check_res():
+    """
+    检查成立时间
+    """
     try:
         res_element = driver.find_element(By.CSS_SELECTOR, ".res-time")
         res_text = res_element.text[-10:]
@@ -575,11 +604,14 @@ def check_res():
         return time.mktime(time.strptime(res_text, date_format)) < (
             time.time() - 31536000
         )
-    except:
+    except Exception:
         return True
 
 
 def is_ready_to_communicate(btn_text):
+    """
+    检查能否沟通
+    """
     return "立即" in btn_text
 
 
@@ -591,6 +623,7 @@ WAIT.until(
 )
 driver.find_element(By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']").click()
 time.sleep(20)
+
 Query = [
     "Java",
     "Java开发",
@@ -620,17 +653,14 @@ Query = [
     # "JavaScript",
     # "软件技术文档",
 ]
+
 for item in Query:
-    for i in range(1, 10):
-        try:
-            if resume_submission(URL1 + item + URL2 + "404" + URL3 + str(i)) == -1:
-                sys.exit()
-        except:
-            continue
-    for i in range(1, 10):
-        try:
-            if resume_submission(URL1 + item + URL2 + "403" + URL3 + str(i)) == -1:
-                sys.exit()
-        except:
-            continue
+    for salary in ["404", "403"]:
+        for i in range(1, 10):
+            try:
+                if resume_submission(URL1 + item + URL2 + salary + URL3 + str(i)) == -1:
+                    sys.exit()
+            except Exception:
+                continue
+
 driver.quit()

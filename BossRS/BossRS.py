@@ -72,6 +72,7 @@ def resume_submission(url):
                 lid = query_params.get("lid", [None])[0]
                 security_id = query_params.get("securityId", [None])[0]
                 driver.get(URL4 + security_id + URL5 + lid + URL6)
+                time.sleep(0.5)
                 WAIT.until(ec.presence_of_element_located((By.TAG_NAME, "pre")))
                 page_source = driver.find_element(By.TAG_NAME, "pre").text
                 data = json.loads(page_source)
@@ -622,7 +623,7 @@ WAIT.until(
     )
 )
 driver.find_element(By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']").click()
-time.sleep(20)
+WAIT.until(ec.url_changes(driver.current_url))
 
 Query = [
     "Java",

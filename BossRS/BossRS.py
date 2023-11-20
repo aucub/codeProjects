@@ -1,4 +1,5 @@
 import json
+import sys
 import time
 import re
 import undetected_chromedriver as uc
@@ -624,13 +625,13 @@ for item in Query:
     for i in range(1, 10):
         try:
             if resume_submission(URL1 + item + URL2 + "404" + URL3 + str(i)) == -1:
-                exit()
+                sys.exit()
         except:
             continue
     for i in range(1, 10):
         try:
             if resume_submission(URL1 + item + URL2 + "403" + URL3 + str(i)) == -1:
-                exit()
+                sys.exit()
         except:
             continue
 driver.quit()

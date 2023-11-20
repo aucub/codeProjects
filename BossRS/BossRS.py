@@ -35,31 +35,33 @@ def resume_submission(url):
         job_elements = driver.find_elements(
             By.CSS_SELECTOR, "[class*='job-card-body clearfix']"
         )
-        for jobElement in job_elements:
+        for job_element in job_elements:
             try:
                 if (
-                    check_title(jobElement.find_element(By.CLASS_NAME, "job-name").text)
+                    check_title(
+                        job_element.find_element(By.CLASS_NAME, "job-name").text
+                    )
                     and check_city(
-                        jobElement.find_element(By.CLASS_NAME, "job-area").text
+                        job_element.find_element(By.CLASS_NAME, "job-area").text
                     )
                     and check_company(
-                        jobElement.find_element(By.CLASS_NAME, "company-name")
+                        job_element.find_element(By.CLASS_NAME, "company-name")
                         .find_element(By.TAG_NAME, "a")
                         .text
                     )
                     and check_industry(
-                        jobElement.find_element(By.CLASS_NAME, "company-tag-list")
+                        job_element.find_element(By.CLASS_NAME, "company-tag-list")
                         .find_element(By.TAG_NAME, "li")
                         .text
                     )
                     and is_ready_to_communicate(
-                        jobElement.find_element(
+                        job_element.find_element(
                             By.CSS_SELECTOR, "[class*='job-info clearfix']"
                         ).get_attribute("innerHTML")
                     )
                 ):
                     urls.append(
-                        jobElement.find_element(
+                        job_element.find_element(
                             By.CLASS_NAME, "job-card-left"
                         ).get_attribute("href")
                     )
@@ -643,8 +645,8 @@ Query = [
     "Python测试",
     "软件性能测试",
     "全栈工程师",
-    "数据分析",
     "软件实施",
+    # "数据分析",
     # "数据挖掘",
     # "Python",
     # "软件需求分析",

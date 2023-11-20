@@ -183,8 +183,7 @@ def check_salary(salary_text):
     if match:
         low_salary = int(match.group(1))
         return low_salary < 10
-    else:
-        return True
+    return True
 
 
 def check_city(city_text):

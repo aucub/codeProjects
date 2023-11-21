@@ -9,7 +9,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 import undetected_chromedriver as uc
 
 URL1 = "https://www.zhipin.com/web/geek/job?query="
-URL2 = "&city=100010000&experience=102,101,103,104&scale=302,303,304,305,306,302&degree=209,208,206,202,203&salary="
+URL2 = "&city=100010000&experience=102,101,103&scale=302,303,304,305,306,302&degree=209,208,206,202,203&salary="  # ,104
 URL3 = "&page="
 URL4 = "https://www.zhipin.com/wapi/zpgeek/job/card.json?securityId="
 URL5 = "&lid="
@@ -119,6 +119,12 @@ def resume_submission(url):
             )
             and check_res()
             and check_sec(driver.find_element(By.CLASS_NAME, "job-detail-section").text)
+            and check_method(
+                driver.find_element(By.CLASS_NAME, "job-detail-section").text,
+                driver.find_element(
+                    By.CSS_SELECTOR, "[class*='text-desc text-city']"
+                ).text,
+            )
             and is_ready_to_communicate(btn.text)
         ):
             continue
@@ -194,6 +200,16 @@ def check_city(city_text):
         "鄂尔多斯",
     ]
     return not any(item in city_text for item in city_blacks)
+
+
+def check_method(sec_text, city_text):
+    """
+    检查面试方式
+    """
+    citys = ["上海", "苏州", "杭州"]
+    if "不支持在线" in sec_text or "线下面试" in sec_text or "不接受线上" in sec_text:
+        return any(item in city_text for item in citys)
+    return True
 
 
 def check_industry(industry_text):
@@ -369,13 +385,6 @@ def check_sec(sec_text):
         ]
         date_format = "%Y.%m.%d"
         if time.mktime(time.strptime(exp_date_text, date_format)) < time.time():
-            return False
-    if "不支持在线" in sec_text or "线下面试" in sec_text or "不接受线上" in sec_text:
-        sec_Citys = ["上海", "苏州", "杭州"]
-        if not any(
-            item in driver.find_element(By.CLASS_NAME, "text-desc text-city").text
-            for item in sec_Citys
-        ):
             return False
     if "毕业时间" in sec_text:
         graduation_time_blacks = ["2020", "21", "22", "24年-"]
@@ -611,8 +620,8 @@ Query = [
     # "软件技术文档",
 ]
 for item in Query:
-    for salary in ["404", "403"]:
-        for i in range(1, 10):
+    for salary in ["404", "403", "402"]:
+        for i in range(1, 15):
             if resume_submission(URL1 + item + URL2 + salary + URL3 + str(i)) == -1:
                 sys.exit()
             continue

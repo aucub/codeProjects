@@ -569,10 +569,15 @@ def check_res():
     """
     检查成立时间
     """
-    res_element = driver.find_element(By.CSS_SELECTOR, ".res-time")
-    res_text = res_element.text[-10:]
-    date_format = "%Y-%m-%d"
-    return time.mktime(time.strptime(res_text, date_format)) < (time.time() - 31536000)
+    try:
+        res_element = driver.find_element(By.CSS_SELECTOR, ".res-time")
+        res_text = res_element.text[-10:]
+        date_format = "%Y-%m-%d"
+        return time.mktime(time.strptime(res_text, date_format)) < (
+            time.time() - 31536000
+        )
+    except Exception:
+        return False
 
 
 def is_ready_to_communicate(btn_text):

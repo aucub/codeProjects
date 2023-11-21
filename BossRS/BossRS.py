@@ -23,175 +23,141 @@ def resume_submission(url):
     """
     投递简历
     """
-    try:
-        driver.get(url)
+    driver.get(url)
+    WAIT.until(
+        ec.presence_of_element_located(
+            (By.CSS_SELECTOR, "[class*='job-title clearfix']")
+        )
+    )
+    jobs = []
+    urls = []
+    job_elements = driver.find_elements(
+        By.CSS_SELECTOR, "[class*='job-card-body clearfix']"
+    )
+    for job_element in job_elements:
+        if (
+            check_title(job_element.find_element(By.CLASS_NAME, "job-name").text)
+            and check_city(job_element.find_element(By.CLASS_NAME, "job-area").text)
+            and check_company(
+                job_element.find_element(By.CLASS_NAME, "company-name")
+                .find_element(By.TAG_NAME, "a")
+                .text
+            )
+            and check_industry(
+                job_element.find_element(By.CLASS_NAME, "company-tag-list")
+                .find_element(By.TAG_NAME, "li")
+                .text
+            )
+            and is_ready_to_communicate(
+                job_element.find_element(
+                    By.CSS_SELECTOR, "[class*='job-info clearfix']"
+                ).get_attribute("innerHTML")
+            )
+        ):
+            urls.append(
+                job_element.find_element(By.CLASS_NAME, "job-card-left").get_attribute(
+                    "href"
+                )
+            )
+    for url in urls:
+        parsed_url = urlparse(url)
+        query_params = parse_qs(parsed_url.query)
+        lid = query_params.get("lid", [None])[0]
+        security_id = query_params.get("securityId", [None])[0]
+        driver.get(URL4 + security_id + URL5 + lid + URL6)
+        time.sleep(0.5)
+        WAIT.until(ec.presence_of_element_located((By.TAG_NAME, "pre")))
+        page_source = driver.find_element(By.TAG_NAME, "pre").text
+        data = json.loads(page_source)
+        if data["message"] == "Success":
+            description = data["zpData"]["jobCard"]["postDescription"]
+            active = data["zpData"]["jobCard"]["activeTimeDesc"]
+            if not (check_sec(description) and check_active_time(active)):
+                continue
+        jobs.append(url)
+    for job in jobs:
+        driver.get(job)
         WAIT.until(
             ec.presence_of_element_located(
-                (By.CSS_SELECTOR, "[class*='job-title clearfix']")
+                (By.CSS_SELECTOR, "[class*='btn btn-startchat']")
             )
         )
-        jobs = []
-        urls = []
-        job_elements = driver.find_elements(
-            By.CSS_SELECTOR, "[class*='job-card-body clearfix']"
-        )
-        for job_element in job_elements:
-            try:
-                if (
-                    check_title(
-                        job_element.find_element(By.CLASS_NAME, "job-name").text
-                    )
-                    and check_city(
-                        job_element.find_element(By.CLASS_NAME, "job-area").text
-                    )
-                    and check_company(
-                        job_element.find_element(By.CLASS_NAME, "company-name")
-                        .find_element(By.TAG_NAME, "a")
-                        .text
-                    )
-                    and check_industry(
-                        job_element.find_element(By.CLASS_NAME, "company-tag-list")
-                        .find_element(By.TAG_NAME, "li")
-                        .text
-                    )
-                    and is_ready_to_communicate(
-                        job_element.find_element(
-                            By.CSS_SELECTOR, "[class*='job-info clearfix']"
-                        ).get_attribute("innerHTML")
-                    )
-                ):
-                    urls.append(
-                        job_element.find_element(
-                            By.CLASS_NAME, "job-card-left"
-                        ).get_attribute("href")
-                    )
-            except Exception:
-                pass
-        for url in urls:
-            try:
-                parsed_url = urlparse(url)
-                query_params = parse_qs(parsed_url.query)
-                lid = query_params.get("lid", [None])[0]
-                security_id = query_params.get("securityId", [None])[0]
-                driver.get(URL4 + security_id + URL5 + lid + URL6)
-                time.sleep(0.5)
-                WAIT.until(ec.presence_of_element_located((By.TAG_NAME, "pre")))
-                page_source = driver.find_element(By.TAG_NAME, "pre").text
-                data = json.loads(page_source)
-                if data["message"] == "Success":
-                    description = data["zpData"]["jobCard"]["postDescription"]
-                    active = data["zpData"]["jobCard"]["activeTimeDesc"]
-                    if not (check_sec(description) and check_active_time(active)):
-                        continue
-            except Exception:
-                pass
-            jobs.append(url)
-        for job in jobs:
-            try:
-                driver.get(job)
-                WAIT.until(
-                    ec.presence_of_element_located(
-                        (By.CSS_SELECTOR, "[class*='btn btn-startchat']")
-                    )
-                )
-                btn = driver.find_element(
-                    By.CSS_SELECTOR, "[class*='btn btn-startchat']"
-                )
-                if not (
-                    check_company(
-                        driver.find_element(
-                            By.CSS_SELECTOR,
-                            "div.company-info:nth-child(2) > a:nth-child(2)",
-                        ).text
-                    )
-                    and check_placeholder(
-                        driver.find_element(
-                            By.CSS_SELECTOR,
-                            ".sider-company > p:nth-child(4)",
-                        ).text
-                    )
-                    and check_experience(
-                        driver.find_element(
-                            By.CSS_SELECTOR,
-                            "span.text-desc:nth-child(2)",
-                        ).text
-                    )
-                    and check_degree(
-                        driver.find_element(
-                            By.CSS_SELECTOR,
-                            "span.text-desc:nth-child(3)",
-                        ).text
-                    )
-                    and check_salary(
-                        driver.find_element(
-                            By.CSS_SELECTOR,
-                            "span.salary",
-                        ).text
-                    )
-                    and check_active_time(
-                        driver.find_element(By.CLASS_NAME, "boss-active-time").text
-                    )
-                    and check_res()
-                    and check_sec(
-                        driver.find_element(By.CLASS_NAME, "job-detail-section").text
-                    )
-                    and is_ready_to_communicate(btn.text)
-                ):
-                    continue
-                btn.click()
-                WAIT.until(
-                    ec.presence_of_element_located((By.CLASS_NAME, "dialog-con"))
-                )
-                dialog_text = driver.find_element(By.CLASS_NAME, "dialog-con").text
-                if "已达上限" in dialog_text:
-                    return -1
-                time.sleep(1)
-            except Exception:
-                pass
-        return 0
-    except Exception:
-        return 0
+        btn = driver.find_element(By.CSS_SELECTOR, "[class*='btn btn-startchat']")
+        if not (
+            check_company(
+                driver.find_element(
+                    By.CSS_SELECTOR,
+                    "div.company-info:nth-child(2) > a:nth-child(2)",
+                ).text
+            )
+            and check_placeholder(
+                driver.find_element(
+                    By.CSS_SELECTOR,
+                    ".sider-company > p:nth-child(4)",
+                ).text
+            )
+            and check_experience(
+                driver.find_element(
+                    By.CSS_SELECTOR,
+                    "span.text-desc:nth-child(2)",
+                ).text
+            )
+            and check_degree(
+                driver.find_element(
+                    By.CSS_SELECTOR,
+                    "span.text-desc:nth-child(3)",
+                ).text
+            )
+            and check_salary(
+                driver.find_element(
+                    By.CSS_SELECTOR,
+                    "span.salary",
+                ).text
+            )
+            and check_active_time(
+                driver.find_element(By.CLASS_NAME, "boss-active-time").text
+            )
+            and check_res()
+            and check_sec(driver.find_element(By.CLASS_NAME, "job-detail-section").text)
+            and is_ready_to_communicate(btn.text)
+        ):
+            continue
+        btn.click()
+        WAIT.until(ec.presence_of_element_located((By.CLASS_NAME, "dialog-con")))
+        dialog_text = driver.find_element(By.CLASS_NAME, "dialog-con").text
+        if "已达上限" in dialog_text:
+            return -1
+        time.sleep(1)
+    return 0
 
 
 def check_active_time(active_time_text):
     """
     检查活跃时间
     """
-    try:
-        active_time_blacks = ["半年", "月内", "周内", "7日", "本月"]
-        return not any(item in active_time_text for item in active_time_blacks)
-    except Exception:
-        return False
+    active_time_blacks = ["半年", "月内", "周内", "7日", "本月"]
+    return not any(item in active_time_text for item in active_time_blacks)
 
 
 def check_placeholder(placeholder_text):
     """
     检查规模
     """
-    try:
-        return "-20" not in placeholder_text
-    except Exception:
-        return True
+    return "-20" not in placeholder_text
 
 
 def check_experience(experience_text):
     """
     检查经验
     """
-    try:
-        return "5" not in experience_text and "10" not in experience_text
-    except Exception:
-        return True
+    return "5" not in experience_text and "10" not in experience_text
 
 
 def check_degree(degree_text):
     """
     检查学位
     """
-    try:
-        return "硕" not in degree_text and "博" not in degree_text
-    except Exception:
-        return True
+    return "硕" not in degree_text and "博" not in degree_text
 
 
 def check_salary(salary_text):
@@ -203,46 +169,39 @@ def check_salary(salary_text):
     if match:
         low_salary = int(match.group(1))
         return low_salary < 10
-    return True
 
 
 def check_city(city_text):
     """
     检查城市
     """
-    try:
-        city_blacks = [
-            "沈阳",
-            "齐齐哈尔",
-            "塔城",
-            "长春",
-            "毕节",
-            "包头",
-            "乌鲁木齐",
-            "拉萨",
-            "锡林",
-            "葫芦",
-            "乌兰察布",
-            "大连",
-            "大庆",
-            "哈尔滨",
-            "呼和浩特",
-            "鄂尔多斯",
-        ]
-        return not any(item in city_text for item in city_blacks)
-    except Exception:
-        return True
+    city_blacks = [
+        "沈阳",
+        "齐齐哈尔",
+        "塔城",
+        "长春",
+        "毕节",
+        "包头",
+        "乌鲁木齐",
+        "拉萨",
+        "锡林",
+        "葫芦",
+        "乌兰察布",
+        "大连",
+        "大庆",
+        "哈尔滨",
+        "呼和浩特",
+        "鄂尔多斯",
+    ]
+    return not any(item in city_text for item in city_blacks)
 
 
 def check_industry(industry_text):
     """
     检查行业
     """
-    try:
-        industry_blacks = ["培训", "教育", "院校", "房产", "经纪", "工程施工", "中介", "区块链"]
-        return not any(item in industry_text for item in industry_blacks)
-    except Exception:
-        return True
+    industry_blacks = ["培训", "教育", "院校", "房产", "经纪", "工程施工", "中介", "区块链"]
+    return not any(item in industry_text for item in industry_blacks)
 
 
 def check_sec(sec_text):
@@ -380,6 +339,14 @@ def check_sec(sec_text):
         "酷家乐",
         "面料",
         "女装",
+        "墨滴",
+        "喷射",
+        "喷头",
+        "材料化学",
+        "机械制图",
+        "喷墨",
+        "供墨系统",
+        "打印机",
         "全屋定制",
         "华广软件",
         "定制家具",
@@ -387,8 +354,10 @@ def check_sec(sec_text):
         "造诣软件",
         "网络交换机",
         "不是软件",
+        "产品开发专员",
         "大学2字",
         "211以上",
+        "211本科以上",
         "毕业3年",
         "毕业5年",
     ]
@@ -398,24 +367,18 @@ def check_sec(sec_text):
         exp_date_text = sec_text[
             sec_text.index("截止日期") + 5 : sec_text.index("截止日期") + 15
         ]
-        try:
-            date_format = "%Y.%m.%d"
-            if time.mktime(time.strptime(exp_date_text, date_format)) < time.time():
-                return False
-        except Exception:
-            pass
+        date_format = "%Y.%m.%d"
+        if time.mktime(time.strptime(exp_date_text, date_format)) < time.time():
+            return False
     if "不支持在线" in sec_text or "线下面试" in sec_text or "不接受线上" in sec_text:
         sec_Citys = ["上海", "苏州", "杭州"]
-        try:
-            if not any(
-                item in driver.find_element(By.CLASS_NAME, "text-desc text-city").text
-                for item in sec_Citys
-            ):
-                return False
-        except Exception:
-            pass
+        if not any(
+            item in driver.find_element(By.CLASS_NAME, "text-desc text-city").text
+            for item in sec_Citys
+        ):
+            return False
     if "毕业时间" in sec_text:
-        graduation_time_blacks = ["2020", "21", "22"]
+        graduation_time_blacks = ["2020", "21", "22", "24年-"]
         graduation_time = sec_text[sec_text.index("毕业时间") : sec_text.index("毕业时间") + 15]
         if any(item in graduation_time for item in graduation_time_blacks):
             return False
@@ -425,13 +388,13 @@ def check_sec(sec_text):
     secs = ["23届", "23年", "往届", "0-1年", "0-2年", "0-3年"]
     if any(item in sec_text for item in secs):
         return True
-    if "毕业时间" in sec_text:
+    if "截止日期" in sec_text:
         new_sec_text = (
-            sec_text[: sec_text.index("毕业时间")] + sec_text[sec_text.index("毕业时间") + 15 :]
+            sec_text[: sec_text.index("截止日期")] + sec_text[sec_text.index("截止日期") + 15 :]
         )
     else:
         new_sec_text = sec_text
-    if "24届" in new_sec_text or "24年" in new_sec_text:
+    if "24届" in new_sec_text or "24年" in new_sec_text or "24应届" in new_sec_text:
         return "23" in new_sec_text
     secs1 = ["应届"]
     if any(item in sec_text for item in secs1):
@@ -446,6 +409,8 @@ def check_sec(sec_text):
         "一到三年",
         "1至3年",
         "1年-3年",
+        "至少二年",
+        "至少2年",
         "2-3年",
         "2年左右",
         "2年相关工作",
@@ -462,153 +427,143 @@ def check_title(title_text):
     """
     检查标题
     """
-    try:
-        title_text = title_text.lower()
-        title_blacks = [
-            "助教",
-            "销售",
-            "日",
-            "员",
-            "单片机",
-            "游戏",
-            "电话",
-            "选址",
-            "外贸",
-            "网络优化",
-            "客服",
-            "实验",
-            "弱电",
-            "消防",
-            "暖通",
-            "电气",
-            "机电",
-            "售前",
-            "售后",
-            "ic",
-            "英文",
-            "可靠",
-            "仪器",
-            "机械",
-            "器械",
-            "前端",
-            "android",
-            "wpf",
-            "蓝牙耳机",
-            "相机",
-            "耗材",
-            "硬件",
-            "教师",
-            "讲师",
-            "老师",
-            "推广",
-            "实训",
-            "经营分析",
-            "对账",
-            "网络",
-            "支持",
-            "培训",
-            "训练",
-            "残",
-            "高级",
-            "创业",
-            "合伙",
-            "光学",
-            "顾问",
-            "仿真",
-            "cam",
-            "座舱",
-            "车",
-            "主管",
-            "经理",
-            "基金",
-            "三维",
-            "芯片",
-            "布料",
-            ".net",
-            "php",
-            "市场",
-            "obc",
-            "高性能",
-            "环保",
-            "内部",
-            "财务",
-            "采购",
-            "人士",
-            "管家",
-            "架构师",
-            "水务",
-            "棋牌",
-            "组长",
-            "英语",
-            "渗透",
-            "01",
-            "资深",
-            "专家",
-            "兼职",
-            "台湾",
-            "海外",
-            "c++",
-            "实施运维",
-            "实施",
-            "运维",
-            "shell",
-            "电子",
-            "驾驶",
-            "c#",
-            "win",
-            "无人",
-            "招聘",
-            "高薪",
-            "egp",
-            "通信",
-            "培养",
-            "外派",
-            "企点",
-            "造价",
-            "期刊",
-            "玩具",
-            "电动",
-            "爬虫",
-            "运营",
-            "护士",
-            "面料",
-            "粤语",
-            "内窥镜",
-            "维修",
-            "结构设计",
-            "惠普",
-            "营销",
-            "金融",
-        ]
-        return not any(item in title_text for item in title_blacks)
-    except Exception:
-        return False
+    title_text = title_text.lower()
+    title_blacks = [
+        "助教",
+        "销售",
+        "日",
+        "员",
+        "单片机",
+        "游戏",
+        "电话",
+        "选址",
+        "外贸",
+        "网络优化",
+        "客服",
+        "实验",
+        "弱电",
+        "消防",
+        "暖通",
+        "电气",
+        "机电",
+        "售前",
+        "售后",
+        "ic",
+        "英文",
+        "可靠",
+        "仪器",
+        "机械",
+        "器械",
+        "前端",
+        "android",
+        "wpf",
+        "蓝牙耳机",
+        "相机",
+        "耗材",
+        "硬件",
+        "教师",
+        "讲师",
+        "老师",
+        "推广",
+        "实训",
+        "经营分析",
+        "对账",
+        "网络",
+        "支持",
+        "培训",
+        "训练",
+        "残",
+        "高级",
+        "创业",
+        "合伙",
+        "光学",
+        "顾问",
+        "仿真",
+        "cam",
+        "座舱",
+        "车",
+        "主管",
+        "经理",
+        "基金",
+        "三维",
+        "芯片",
+        "布料",
+        ".net",
+        "php",
+        "市场",
+        "obc",
+        "高性能",
+        "环保",
+        "内部",
+        "财务",
+        "采购",
+        "人士",
+        "管家",
+        "架构师",
+        "水务",
+        "棋牌",
+        "组长",
+        "英语",
+        "渗透",
+        "01",
+        "资深",
+        "专家",
+        "兼职",
+        "台湾",
+        "海外",
+        "c++",
+        "实施运维",
+        "实施",
+        "运维",
+        "shell",
+        "电子",
+        "驾驶",
+        "c#",
+        "win",
+        "无人",
+        "招聘",
+        "高薪",
+        "egp",
+        "通信",
+        "培养",
+        "外派",
+        "企点",
+        "造价",
+        "期刊",
+        "玩具",
+        "电动",
+        "爬虫",
+        "运营",
+        "护士",
+        "面料",
+        "粤语",
+        "内窥镜",
+        "维修",
+        "结构设计",
+        "惠普",
+        "速卖通",
+        "营销",
+        "金融",
+    ]
+    return not any(item in title_text for item in title_blacks)
 
 
 def check_company(company_text):
     """
     检查公司名称
     """
-    try:
-        company_blacks = ["培训", "学校", "人才", "教育"]
-        return not any(item in company_text for item in company_blacks)
-    except Exception:
-        return False
+    company_blacks = ["培训", "学校", "人才", "教育"]
+    return not any(item in company_text for item in company_blacks)
 
 
 def check_res():
     """
     检查成立时间
     """
-    try:
-        res_element = driver.find_element(By.CSS_SELECTOR, ".res-time")
-        res_text = res_element.text[-10:]
-        date_format = "%Y-%m-%d"
-        return time.mktime(time.strptime(res_text, date_format)) < (
-            time.time() - 31536000
-        )
-    except Exception:
-        return True
+    res_element = driver.find_element(By.CSS_SELECTOR, ".res-time")
+    res_text = res_element.text[-10:]
+    date_format = "%Y-%m-%d"
+    return time.mktime(time.strptime(res_text, date_format)) < (time.time() - 31536000)
 
 
 def is_ready_to_communicate(btn_text):
@@ -642,7 +597,6 @@ Query = [
     "Python软件测试",
     "软件自动化测试",
     "软件功能测试",
-    "Python测试",
     "软件性能测试",
     "全栈工程师",
     "软件实施",
@@ -656,14 +610,10 @@ Query = [
     # "JavaScript",
     # "软件技术文档",
 ]
-
 for item in Query:
     for salary in ["404", "403"]:
         for i in range(1, 10):
-            try:
-                if resume_submission(URL1 + item + URL2 + salary + URL3 + str(i)) == -1:
-                    sys.exit()
-            except Exception:
-                continue
-
+            if resume_submission(URL1 + item + URL2 + salary + URL3 + str(i)) == -1:
+                sys.exit()
+            continue
 driver.quit()

@@ -9,7 +9,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 import undetected_chromedriver as uc
 
 URL1 = "https://www.zhipin.com/web/geek/job?query="
-URL2 = "&city=100010000&experience=102,101,103&scale=302,303,304,305,306,302&degree=209,208,206,202,203&salary="  # ,104
+URL2 = "&city=100010000&experience=102,101,103&scale=303,304,305,306,302&degree=209,208,206,202,203&salary="  # ,104    302,
 URL3 = "&page="
 URL4 = "https://www.zhipin.com/wapi/zpgeek/job/card.json?securityId="
 URL5 = "&lid="
@@ -195,6 +195,7 @@ def check_city(city_text):
         "乌兰察布",
         "大连",
         "大庆",
+        "大同",
         "哈尔滨",
         "呼和浩特",
         "鄂尔多斯",
@@ -207,7 +208,8 @@ def check_method(sec_text, city_text):
     检查面试方式
     """
     citys = ["上海", "苏州", "杭州"]
-    if "不支持在线" in sec_text or "线下面试" in sec_text or "不接受线上" in sec_text:
+    secs = ["不支持在线", "线下面试", "不接受线上", "未开放线上"]
+    if any(item in sec_text for item in secs):
         return any(item in city_text for item in citys)
     return True
 
@@ -216,7 +218,7 @@ def check_industry(industry_text):
     """
     检查行业
     """
-    industry_blacks = ["培训", "教育", "院校", "房产", "经纪", "工程施工", "中介", "区块链"]
+    industry_blacks = ["培训", "教育", "院校", "房产", "经纪", "工程施工", "中介", "区块链", "批发", "零售"]
     return not any(item in industry_text for item in industry_blacks)
 
 
@@ -363,6 +365,9 @@ def check_sec(sec_text):
         "喷墨",
         "供墨系统",
         "打印机",
+        "首饰",
+        "打板",
+        "打字速度",
         "全屋定制",
         "华广软件",
         "定制家具",
@@ -370,6 +375,7 @@ def check_sec(sec_text):
         "造诣软件",
         "网络交换机",
         "不是软件",
+        "土木",
         "产品开发专员",
         "大学2字",
         "211以上",
@@ -549,11 +555,19 @@ def check_title(title_text):
         "粤语",
         "内窥镜",
         "维修",
+        "视频",
+        "文件管理",
         "结构设计",
         "惠普",
         "速卖通",
         "营销",
+        "经销",
         "金融",
+        "node",
+        "bim",
+        "小程序开发",
+        "产品开发",
+        "开发媒介",
         "24",
     ]
     return not any(item in title_text for item in title_blacks)
@@ -563,7 +577,7 @@ def check_company(company_text):
     """
     检查公司名称
     """
-    company_blacks = ["培训", "学校", "人才", "教育"]
+    company_blacks = ["培训", "学校", "人才", "教育", "童星"]
     return not any(item in company_text for item in company_blacks)
 
 
@@ -601,7 +615,7 @@ WAIT.until(ec.url_changes(driver.current_url))
 Query = [
     "Java",
     "Java开发",
-    "Java后端",
+    "Java后端开发",
     "Java软件开发",
     "Java软件工程师",
     "Java测试开发",

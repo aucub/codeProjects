@@ -519,6 +519,7 @@ def check_title(title_text):
         "专家",
         "兼职",
         "台湾",
+        "香港",
         "海外",
         "c++",
         "实施运维",
@@ -553,6 +554,7 @@ def check_title(title_text):
         "速卖通",
         "营销",
         "金融",
+        "24",
     ]
     return not any(item in title_text for item in title_blacks)
 

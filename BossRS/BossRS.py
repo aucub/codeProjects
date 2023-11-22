@@ -9,14 +9,14 @@ from selenium.webdriver.support.wait import WebDriverWait
 import undetected_chromedriver as uc
 
 URL1 = "https://www.zhipin.com/web/geek/job?query="
-URL2 = "&city=100010000&experience=102,101,103&scale=303,304,305,306,302&degree=209,208,206,202,203&salary="  # ,104    302,
+URL2 = "&city=100010000&experience=102,101,103&scale=303,304,305,306&degree=209,208,206,202,203&salary="  # ,104    302,
 URL3 = "&page="
 URL4 = "https://www.zhipin.com/wapi/zpgeek/job/card.json?securityId="
 URL5 = "&lid="
 URL6 = "&sessionId="
 
 driver = uc.Chrome(headless=False, version_main=119)
-WAIT = WebDriverWait(driver, 30)
+WAIT = WebDriverWait(driver, 60)
 
 
 def resume_submission(url):
@@ -602,6 +602,7 @@ def check_title(title_text):
         "速卖通",
         "营销",
         "经销",
+        "收银",
         "金融",
         "node",
         "bim",
@@ -663,22 +664,16 @@ WAIT.until(ec.url_changes(driver.current_url))
 
 Query = [
     "Java",
-    "Java开发",
-    "Java后端开发",
-    "Java软件开发",
-    "Java软件工程师",
-    "Java测试开发",
-    "Java软件测试",
-    "软件测试开发",
+    "Java软件测试开发",
     "软件测试",
-    "Java运维开发",
+    "Java软件运维开发",
     "Java软件实施",
-    "Python软件测试",
-    "软件自动化测试",
-    "软件功能测试",
-    "软件性能测试",
-    "全栈工程师",
-    "软件实施",
+    # "Python软件测试",
+    # "软件自动化测试",
+    # "软件功能测试",
+    # "软件性能测试",
+    # "全栈工程师",
+    # "软件实施",
     # "数据分析",
     # "数据挖掘",
     # "Python",

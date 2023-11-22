@@ -24,11 +24,14 @@ def resume_submission(url):
     投递简历
     """
     driver.get(url)
-    WAIT.until(
-        ec.presence_of_element_located(
-            (By.CSS_SELECTOR, "[class*='job-title clearfix']")
+    try:
+        WAIT.until(
+            ec.presence_of_element_located(
+                (By.CSS_SELECTOR, "[class*='job-title clearfix']")
+            )
         )
-    )
+    except Exception:
+        return 1
     jobs = []
     urls = []
     job_elements = driver.find_elements(
@@ -64,7 +67,10 @@ def resume_submission(url):
         query_params = parse_qs(parsed_url.query)
         lid = query_params.get("lid", [None])[0]
         security_id = query_params.get("securityId", [None])[0]
-        driver.get(URL4 + security_id + URL5 + lid + URL6)
+        try:
+            driver.get(URL4 + security_id + URL5 + lid + URL6)
+        except Exception:
+            continue
         time.sleep(0.5)
         WAIT.until(ec.presence_of_element_located((By.TAG_NAME, "pre")))
         page_source = driver.find_element(By.TAG_NAME, "pre").text
@@ -83,53 +89,61 @@ def resume_submission(url):
             )
         )
         btn = driver.find_element(By.CSS_SELECTOR, "[class*='btn btn-startchat']")
-        if not (
-            check_company(
-                driver.find_element(
-                    By.CSS_SELECTOR,
-                    "div.company-info:nth-child(2) > a:nth-child(2)",
-                ).text
-            )
-            and check_placeholder(
-                driver.find_element(
-                    By.CSS_SELECTOR,
-                    ".sider-company > p:nth-child(4)",
-                ).text
-            )
-            and check_experience(
-                driver.find_element(
-                    By.CSS_SELECTOR,
-                    "span.text-desc:nth-child(2)",
-                ).text
-            )
-            and check_degree(
-                driver.find_element(
-                    By.CSS_SELECTOR,
-                    "span.text-desc:nth-child(3)",
-                ).text
-            )
-            and check_salary(
-                driver.find_element(
-                    By.CSS_SELECTOR,
-                    "span.salary",
-                ).text
-            )
-            and check_active_time(
-                driver.find_element(By.CLASS_NAME, "boss-active-time").text
-            )
-            and check_res()
-            and check_sec(driver.find_element(By.CLASS_NAME, "job-detail-section").text)
-            and check_method(
-                driver.find_element(By.CLASS_NAME, "job-detail-section").text,
-                driver.find_element(
-                    By.CSS_SELECTOR, "[class*='text-desc text-city']"
-                ).text,
-            )
-            and is_ready_to_communicate(btn.text)
-        ):
+        try:
+            if not (
+                check_company(
+                    driver.find_element(
+                        By.CSS_SELECTOR,
+                        "div.company-info:nth-child(2) > a:nth-child(2)",
+                    ).text
+                )
+                and check_placeholder(
+                    driver.find_element(
+                        By.CSS_SELECTOR,
+                        ".sider-company > p:nth-child(4)",
+                    ).text
+                )
+                and check_experience(
+                    driver.find_element(
+                        By.CSS_SELECTOR,
+                        "span.text-desc:nth-child(2)",
+                    ).text
+                )
+                and check_degree(
+                    driver.find_element(
+                        By.CSS_SELECTOR,
+                        "span.text-desc:nth-child(3)",
+                    ).text
+                )
+                and check_salary(
+                    driver.find_element(
+                        By.CSS_SELECTOR,
+                        "span.salary",
+                    ).text
+                )
+                and check_active_time(
+                    driver.find_element(By.CLASS_NAME, "boss-active-time").text
+                )
+                and check_res()
+                and check_sec(
+                    driver.find_element(By.CLASS_NAME, "job-detail-section").text
+                )
+                and check_method(
+                    driver.find_element(By.CLASS_NAME, "job-detail-section").text,
+                    driver.find_element(
+                        By.CSS_SELECTOR, "[class*='text-desc text-city']"
+                    ).text,
+                )
+                and is_ready_to_communicate(btn.text)
+            ):
+                continue
+        except Exception:
             continue
         btn.click()
-        WAIT.until(ec.presence_of_element_located((By.CLASS_NAME, "dialog-con")))
+        try:
+            WAIT.until(ec.presence_of_element_located((By.CLASS_NAME, "dialog-con")))
+        except Exception:
+            continue
         dialog_text = driver.find_element(By.CLASS_NAME, "dialog-con").text
         if "已达上限" in dialog_text:
             return -1
@@ -199,6 +213,18 @@ def check_city(city_text):
         "哈尔滨",
         "呼和浩特",
         "鄂尔多斯",
+        "西宁",
+        "汉中",
+        "沧州",
+        "莆田",
+        "伊犁",
+        "布克",
+        "塔城",
+        "和丰",
+        "自治",
+        "苗族",
+        "黔",
+        "兴义",
     ]
     return not any(item in city_text for item in city_blacks)
 
@@ -208,7 +234,7 @@ def check_method(sec_text, city_text):
     检查面试方式
     """
     citys = ["上海", "苏州", "杭州"]
-    secs = ["不支持在线", "线下面试", "不接受线上", "未开放线上"]
+    secs = ["不支持在线", "不支持线上", "线下面试", "不接受线上", "未开放线上", "现场coding"]
     if any(item in sec_text for item in secs):
         return any(item in city_text for item in citys)
     return True
@@ -218,7 +244,19 @@ def check_industry(industry_text):
     """
     检查行业
     """
-    industry_blacks = ["培训", "教育", "院校", "房产", "经纪", "工程施工", "中介", "区块链", "批发", "零售"]
+    industry_blacks = [
+        "培训",
+        "教育",
+        "院校",
+        "房产",
+        "经纪",
+        "工程施工",
+        "中介",
+        "区块链",
+        "批发",
+        "零售",
+        "再生资源",
+    ]
     return not any(item in industry_text for item in industry_blacks)
 
 
@@ -266,6 +304,7 @@ def check_sec(sec_text):
         "应届生勿",
         "日语",
         "精通c#",
+        "熟练运用c#",
         "精通lab",
         "node开发经验",
         "3年工作",
@@ -428,6 +467,7 @@ def check_sec(sec_text):
         "至少2年",
         "2-3年",
         "2年左右",
+        "2年工作",
         "2年相关工作",
         "3年左右",
         "2-4年",
@@ -577,7 +617,16 @@ def check_company(company_text):
     """
     检查公司名称
     """
-    company_blacks = ["培训", "学校", "人才", "教育", "童星"]
+    company_blacks = [
+        "培训",
+        "学校",
+        "人才",
+        "教育",
+        "童星",
+        "青萍",
+        "喜悦",
+        "快服",
+    ]
     return not any(item in company_text for item in company_blacks)
 
 

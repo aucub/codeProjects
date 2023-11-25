@@ -2,6 +2,7 @@ import json
 import sys
 import time
 import re
+import traceback
 from urllib.parse import urlparse, parse_qs
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
@@ -9,7 +10,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 import undetected_chromedriver as uc
 
 URL1 = "https://www.zhipin.com/web/geek/job?query="
-URL2 = "&city=100010000&experience=102,101,103,104&scale=302,303,304,305,306&degree=209,208,206,202,203&salary="  # ,104    302,
+URL2 = "&city=100010000&experience=101,102,103&scale=303,304,305,306&degree=209,208,206,202,203&salary="  # 302, ,104
 URL3 = "&page="
 URL4 = "https://www.zhipin.com/wapi/zpgeek/job/card.json?securityId="
 URL5 = "&lid="
@@ -32,6 +33,7 @@ def resume_submission(url):
             )
         )
     except Exception:
+        traceback.print_exc()
         return 1
     jobs = []
     urls = []
@@ -71,6 +73,7 @@ def resume_submission(url):
         try:
             driver.get(URL4 + security_id + URL5 + lid + URL6)
         except Exception:
+            traceback.print_exc()
             continue
         time.sleep(0.5)
         WAIT.until(ec.presence_of_element_located((By.TAG_NAME, "pre")))
@@ -109,12 +112,12 @@ def resume_submission(url):
                         "li.company-name",
                     ).text
                 )
-                and check_title(
+                and check_guide(
                     driver.find_element(
                         By.CSS_SELECTOR, "[class*='pos-bread city-job-guide']"
                     ).text
                 )
-                and check_placeholder(
+                and check_scale(
                     driver.find_element(
                         By.CSS_SELECTOR,
                         ".sider-company > p:nth-child(4)",
@@ -160,15 +163,20 @@ def resume_submission(url):
                 and check_fund(
                     driver.find_element(By.CSS_SELECTOR, "[class*='company-fund']").text
                 )
+                and check_boss(
+                    driver.find_element(By.CSS_SELECTOR, ".boss-info-attr").text
+                )
                 and is_ready_to_communicate(btn.text)
             ):
                 continue
         except Exception:
+            traceback.print_exc()
             continue
         btn.click()
         try:
             WAIT.until(ec.presence_of_element_located((By.CLASS_NAME, "dialog-con")))
         except Exception:
+            traceback.print_exc()
             continue
         dialog_text = driver.find_element(By.CLASS_NAME, "dialog-con").text
         if "已达上限" in dialog_text:
@@ -182,14 +190,14 @@ def check_active_time(active_time_text):
     检查活跃时间
     """
     active_time_blacks = ["半年", "月内", "周内", "本周", "7日", "本月"]
-    return not any(item in active_time_text for item in active_time_blacks)
+    return all(item not in active_time_text for item in active_time_blacks)
 
 
-def check_placeholder(placeholder_text):
+def check_scale(scale_text):
     """
     检查规模
     """
-    return "-20" not in placeholder_text
+    return "-20" not in scale_text
 
 
 def check_experience(experience_text):
@@ -220,7 +228,7 @@ def check_fund(fund_text):
         "10万",
         "5万",
     ]
-    return not any(fund_text in item for item in fund_blacks)
+    return all(fund_text not in item for item in fund_blacks)
 
 
 def check_salary(salary_text):
@@ -259,7 +267,7 @@ def check_sec(sec_text):
         "计算机",
         "编程",
     ]
-    if not any(item in sec_text for item in sec_keywords):
+    if all(item not in sec_text for item in sec_keywords):
         return False
     sec_blacks = [
         "java勿扰",
@@ -298,6 +306,7 @@ def check_sec(sec_text):
         "电器",
         "城乡规划",
         "资源管理",
+        "专利代理",
         "photoshop",
         "湘源",
         "sketchup",
@@ -314,6 +323,7 @@ def check_sec(sec_text):
         "无线电",
         "嵌入式软件开发",
         "熟练使用c",
+        "熟练掌握c",
         "内核裁剪",
         "驱动开发",
         "密码学",
@@ -476,10 +486,23 @@ def check_sec(sec_text):
         "纺织",
         "无人机",
         "家纺",
-        "****",
+        "会员群",
+        "货品调配",
+        "*****",
         "汇编",
         "产品开发专员",
         "大学2字",
+        "暂挂",
+        "简历收集",
+        "非立即入职",
+        "没有空缺",
+        "天猫商家",
+        "钉群管理",
+        "电商开店",
+        "外貌要求",
+        "恕不退还",
+        "已找到",
+        "携带相关证件",
         "211以上",
         "211本科以上",
         "211本科及以上",
@@ -495,7 +518,8 @@ def check_sec(sec_text):
             if time.mktime(time.strptime(exp_date_text, date_format)) < time.time():
                 return False
         except Exception:
-            return False
+            traceback.print_exc()
+            pass
     if "毕业时间" in sec_text:
         graduation_time_blacks = ["2020", "21", "22", "24年-"]
         graduation_time = sec_text[sec_text.index("毕业时间") : sec_text.index("毕业时间") + 15]
@@ -534,6 +558,7 @@ def check_sec(sec_text):
         "2-3年",
         "2年左右",
         "2年工作",
+        "2年经验",
         "一年工作",
         "2年相关工作",
         "3年左右",
@@ -549,7 +574,7 @@ def check_sec(sec_text):
         "毕业3年",
         "毕业5年",
     ]
-    return not any(item in sec_text for item in sec_blacks1)
+    return all(item not in sec_text for item in sec_blacks1)
 
 
 def check_res():
@@ -564,6 +589,7 @@ def check_res():
             time.time() - 31536000
         )
     except Exception:
+        traceback.print_exc()
         return False
 
 
@@ -624,14 +650,28 @@ def check_city(city_text):
         "学院",
         "清远",
     ]
-    return not any(item in city_text for item in city_blacks)
+    return all(item not in city_text for item in city_blacks)
+
+
+def check_boss(boss_text):
+    """
+    检查人事
+    """
+    boss_text = boss_text.lower()
+    boss_blacks = [
+        "总裁",
+        "总经理",
+        "ceo",
+        "创始人",
+    ]
+    return all(item not in boss_text for item in boss_blacks)
 
 
 def check_method(sec_text, city_text):
     """
     检查面试方式
     """
-    citys = ["上海", "苏州", "杭州"]
+    citys = ["上海", "苏州", "杭州", "南京"]
     secs = ["不支持在线", "不支持线上", "线下面试", "不接受线上", "未开放线上", "现场coding"]
     if any(item in sec_text for item in secs):
         return any(item in city_text for item in citys)
@@ -655,7 +695,7 @@ def check_industry(industry_text):
         "零售",
         "再生资源",
     ]
-    return not any(item in industry_text for item in industry_blacks)
+    return all(item not in industry_text for item in industry_blacks)
 
 
 def check_title(title_text):
@@ -664,6 +704,11 @@ def check_title(title_text):
     """
     title_text = title_text.lower()
     title_blacks = [
+        "运营助理",
+        "咨询顾问",
+        "亚马逊",
+        "专利",
+        "代理",
         "助教",
         "销售",
         "日",
@@ -672,6 +717,7 @@ def check_title(title_text):
         "陪产",
         "现场",
         "单片机",
+        "测评",
         "游戏",
         "电话",
         "选址",
@@ -751,9 +797,6 @@ def check_title(title_text):
         "香港",
         "海外",
         "c++",
-        "实施运维",
-        "实施",
-        "运维",
         "shell",
         "电子",
         "驾驶",
@@ -797,6 +840,7 @@ def check_title(title_text):
         "node",
         "qt",
         "界面",
+        "前端",
         "数据质量",
         "数据标注",
         "c语言开发",
@@ -815,9 +859,34 @@ def check_title(title_text):
         "数据库研发",
         "产品开发",
         "开发媒介",
-        "24",
     ]
-    return not any(item in title_text for item in title_blacks)
+    return all(item not in title_text for item in title_blacks)
+
+
+def check_guide(guide_text):
+    """
+    检查导航
+    """
+    guide_text = guide_text.lower()
+    guide_blacks = [
+        "地产中介",
+        "销售",
+        "采购",
+        "电梯工",
+        "药剂",
+        "教师",
+        "电气",
+        "焊工",
+        "前厅",
+        "酒店",
+        "广告制作",
+        "配送",
+        "摄影",
+        "摄像",
+        "水电",
+        "制片",
+    ]
+    return all(item not in guide_text for item in guide_blacks)
 
 
 def check_company(company_text):
@@ -848,6 +917,9 @@ def check_company(company_text):
         "派森特",
         "久远银海",
         "博彦",
+        "沐雨禾禾",
+        "农业",
+        "华迅网络",
         "中电金信",
         "中软国际",
         "蓝鸽",
@@ -1025,7 +1097,7 @@ def check_company(company_text):
         "任拓",
         "东华软件",
     ]
-    return not any(item in company_text for item in company_blacks)
+    return all(item not in company_text for item in company_blacks)
 
 
 driver.get("https://www.zhipin.com/web/user/?ka=header-login")
@@ -1041,7 +1113,7 @@ Query = [
     "Java",
     "Java软件开发",
     "软件测试",
-    "软件实施",
+    # "软件实施",
     # "全栈工程师",
     # "软件自动化测试",
     # "软件功能测试",
@@ -1064,7 +1136,7 @@ for item in Query:
                 sys.exit()
 POSITION = [
     "Java" + URL7 + "100101",  # Java
-    "Java" + URL7 + "100123",  # 全栈工程师
+    URL7 + "100123",  # 全栈工程师
     URL7 + "100309",  # 软件测试
     URL7 + "100302",  # 自动化测试
     URL7 + "100303",  # 功能测试
@@ -1074,7 +1146,7 @@ POSITION = [
 ]
 for item in POSITION:
     for salary in ["404", "403", "402"]:
-        for i in range(1, 15):
+        for i in range(1, 10):
             if resume_submission(URL1 + item + URL2 + salary + URL3 + str(i)) == -1:
                 sys.exit()
 driver.quit()

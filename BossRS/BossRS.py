@@ -10,7 +10,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 import undetected_chromedriver as uc
 
 URL1 = "https://www.zhipin.com/web/geek/job?query="
-URL2 = "&city=100010000&experience=101,102,103&scale=303,304,305,306&degree=209,208,206,202,203&salary="  # 302, ,104
+URL2 = "&city=100010000&experience=101,102,103,104&scale=302,303,304,305,306&degree=209,208,206,202,203&salary="
 URL3 = "&page="
 URL4 = "https://www.zhipin.com/wapi/zpgeek/job/card.json?securityId="
 URL5 = "&lid="
@@ -682,7 +682,7 @@ def check_method(sec_text, city_text):
     检查面试方式
     """
     citys = ["上海", "苏州", "杭州", "南京"]
-    secs = ["不支持在线", "不支持线上", "线下面试", "不接受线上", "未开放线上", "现场coding"]
+    secs = ["不支持在线", "不支持线上", "线下面试", "现场面试", "不接受线上", "未开放线上", "现场coding"]
     if any(item in sec_text for item in secs):
         return any(item in city_text for item in citys)
     return True
@@ -1127,7 +1127,7 @@ Query = [
     "Java",
     "Java软件开发",
     "软件测试",
-    # "软件实施",
+    "软件实施",
     # "全栈工程师",
     # "软件自动化测试",
     # "软件功能测试",
@@ -1150,13 +1150,13 @@ for item in Query:
                 sys.exit()
 POSITION = [
     "Java" + URL7 + "100101",  # Java
-    URL7 + "100123",  # 全栈工程师
     URL7 + "100309",  # 软件测试
-    URL7 + "100302",  # 自动化测试
-    URL7 + "100303",  # 功能测试
-    "Java" + URL7 + "100305",  # 测试开发
     "Java" + URL7 + "100402",  # 运维开发
     "Java" + URL7 + "100606",  # 实施
+    URL7 + "100123",  # 全栈工程师
+    "Java" + URL7 + "100305",  # 测试开发
+    "Java" + URL7 + "100302",  # 自动化测试
+    "Java" + URL7 + "100303",  # 功能测试
 ]
 for item in POSITION:
     for salary in ["404", "403", "402"]:

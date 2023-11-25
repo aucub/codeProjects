@@ -18,7 +18,7 @@ URL6 = "&sessionId="
 URL7 = "&position="
 
 driver = uc.Chrome(headless=False, version_main=119)
-WAIT = WebDriverWait(driver, 30)
+WAIT = WebDriverWait(driver, 20)
 
 
 def resume_submission(url):
@@ -32,7 +32,7 @@ def resume_submission(url):
                 (By.CSS_SELECTOR, "[class*='job-title clearfix']")
             )
         )
-    except Exception:
+    except:
         traceback.print_exc()
         return 1
     jobs = []
@@ -72,7 +72,7 @@ def resume_submission(url):
         security_id = query_params.get("securityId", [None])[0]
         try:
             driver.get(URL4 + security_id + URL5 + lid + URL6)
-        except Exception:
+        except:
             traceback.print_exc()
             continue
         time.sleep(0.5)
@@ -169,13 +169,13 @@ def resume_submission(url):
                 and is_ready_to_communicate(btn.text)
             ):
                 continue
-        except Exception:
+        except:
             traceback.print_exc()
             continue
         btn.click()
         try:
             WAIT.until(ec.presence_of_element_located((By.CLASS_NAME, "dialog-con")))
-        except Exception:
+        except:
             traceback.print_exc()
             continue
         dialog_text = driver.find_element(By.CLASS_NAME, "dialog-con").text
@@ -271,6 +271,7 @@ def check_sec(sec_text):
         return False
     sec_blacks = [
         "java勿扰",
+        "非java",
         "没有编程",
         "不接受应届",
         "不接收应届",
@@ -283,6 +284,11 @@ def check_sec(sec_text):
         "21年之前",
         "22应届",
         "20届以前",
+        "提供培训",
+        "咨询电话",
+        "用户培训",
+        "解答客户",
+        "联系回访",
         "商机",
         "快手",
         "抖音",
@@ -300,6 +306,8 @@ def check_sec(sec_text):
         "android智能产品",
         "视频号",
         "开发客户",
+        "智能手表",
+        "夜班",
         "商务对接",
         "实验室",
         "卫生工作",
@@ -517,7 +525,7 @@ def check_sec(sec_text):
         try:
             if time.mktime(time.strptime(exp_date_text, date_format)) < time.time():
                 return False
-        except Exception:
+        except:
             traceback.print_exc()
             pass
     if "毕业时间" in sec_text:
@@ -544,6 +552,8 @@ def check_sec(sec_text):
         return True
     sec_blacks1 = [
         "年以上",
+        "在校生",
+        "毕业前",
         "年及以上",
         "年或以上",
         "1-2年",
@@ -588,7 +598,7 @@ def check_res():
         return time.mktime(time.strptime(res_text, date_format)) < (
             time.time() - 31536000
         )
-    except Exception:
+    except:
         traceback.print_exc()
         return False
 
@@ -732,6 +742,8 @@ def check_title(title_text):
         "机电",
         "售前",
         "售后",
+        "二维",
+        "动画",
         "ic",
         "英文",
         "可靠",
@@ -859,6 +871,8 @@ def check_title(title_text):
         "数据库研发",
         "产品开发",
         "开发媒介",
+        "24",
+        "25",
     ]
     return all(item not in title_text for item in title_blacks)
 

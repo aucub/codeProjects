@@ -17,7 +17,7 @@ WAIT = WebDriverWait(driver, 20)
 
 def search(url):
     driver.get(url)
-    time.sleep(60)
+    time.sleep(20)
     WAIT.until(EC.element_to_be_clickable((By.CLASS_NAME, "carrybox")))
     driver.find_element(By.CLASS_NAME, "carrybox").click()
     clist = driver.find_elements(By.CLASS_NAME, "clist")
@@ -80,13 +80,14 @@ def search(url):
     ).click()
     time.sleep(10)
     # 最新排序
-    driver.find_elements(By.CLASS_NAME, "ss")[1].click()
+    driver.find_elements(By.CLASS_NAME, "ss")[2].click()
+    time.sleep(10)
     # 发布日期
     driver.find_element(By.CSS_SELECTOR, "div.op:nth-child(2)").click()
-    driver.find_element(By.CSS_SELECTOR, "p.pp:nth-child(3) > a:nth-child(1)").click()
+    driver.find_element(By.CSS_SELECTOR, "p.pp:nth-child(4) > a:nth-child(1)").click()
     time.sleep(10)
 
-    for i in range(1, 16):
+    for i in range(1, 45):
         WAIT.until(EC.presence_of_element_located((By.CLASS_NAME, "mytxt")))
         driver.find_element(By.CLASS_NAME, "mytxt").clear()
         driver.find_element(By.CLASS_NAME, "mytxt").send_keys(str(i))
@@ -106,26 +107,21 @@ def resume():
         )
     ):
         try:
-            print(i)
             title = driver.find_elements(By.CSS_SELECTOR, "[class*='jname text-cut']")[
                 i
             ].text
             com = driver.find_elements(By.CSS_SELECTOR, "[class*='cname text-cut']")[
                 i
             ].text
-            cut = driver.find_elements(By.CLASS_NAME, "area")[i].text
-            dcut = driver.find_elements(By.CSS_SELECTOR, "[class*='dc text-cut']")[
+            city = driver.find_elements(By.CLASS_NAME, "area")[i].text
+            industry = driver.find_elements(By.CSS_SELECTOR, "[class*='dc text-cut']")[
                 i
             ].text
-            print(title)
-            print(com)
-            print(cut)
-            print(dcut)
             if not (
                 check_title(title)
                 and check_company(com)
-                and check_industry(dcut)
-                and check_city(cut)
+                and check_industry(industry)
+                and check_city(city)
             ):
                 continue
             element = driver.find_elements(By.CSS_SELECTOR, "[class*='ick']")[i]
@@ -148,11 +144,11 @@ def resume():
             time.sleep(1)
     time.sleep(5)
     # 处理弹窗
-    text = WAIT.until(
+    WAIT.until(
         EC.presence_of_element_located(
             (By.CSS_SELECTOR, "[class*='van-popup van-popup--center']")
         )
-    ).text
+    )
     # 关闭弹窗
     driver.find_element(
         By.CSS_SELECTOR,
@@ -624,7 +620,7 @@ Query = [
     "软件性能测试",
     "软件测试开发",
     "数据分析",
-    "Python",
+    "python",
 ]
 
 for item in Query:

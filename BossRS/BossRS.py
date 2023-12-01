@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 import time
 import re
@@ -17,7 +18,11 @@ URL5 = "&lid="
 URL6 = "&sessionId="
 URL7 = "&position="
 
-driver = uc.Chrome(headless=False, version_main=119)
+driver = uc.Chrome(
+    headless=False,
+    user_data_dir=os.path.expanduser("~") + "/.config/google-chrome",
+    version_main=119,
+)
 WAIT = WebDriverWait(driver, 20)
 
 
@@ -26,6 +31,7 @@ def resume_submission(url):
     投递简历
     """
     driver.get(url)
+    time.sleep(5)
     try:
         WAIT.until(
             ec.presence_of_element_located(
@@ -75,7 +81,7 @@ def resume_submission(url):
         except:
             traceback.print_exc()
             continue
-        time.sleep(0.5)
+        time.sleep(2)
         WAIT.until(ec.presence_of_element_located((By.TAG_NAME, "pre")))
         page_source = driver.find_element(By.TAG_NAME, "pre").text
         data = json.loads(page_source)
@@ -173,6 +179,7 @@ def resume_submission(url):
             traceback.print_exc()
             continue
         btn.click()
+        time.sleep(3)
         try:
             WAIT.until(ec.presence_of_element_located((By.CLASS_NAME, "dialog-con")))
         except:
@@ -181,7 +188,6 @@ def resume_submission(url):
         dialog_text = driver.find_element(By.CLASS_NAME, "dialog-con").text
         if "已达上限" in dialog_text:
             return -1
-        time.sleep(1)
     return 0
 
 
@@ -239,7 +245,7 @@ def check_salary(salary_text):
     match = re.search(pattern, salary_text)
     if match:
         low_salary = int(match.group(1))
-        return low_salary < 10
+        return low_salary < 9
 
 
 def check_sec(sec_text):
@@ -271,7 +277,6 @@ def check_sec(sec_text):
         return False
     sec_blacks = [
         "java勿扰",
-        "非java",
         "没有编程",
         "不接受应届",
         "不接收应届",
@@ -282,17 +287,17 @@ def check_sec(sec_text):
         "22年及之前",
         "22年之前",
         "21年之前",
+        "21年毕业",
         "22应届",
         "20届以前",
-        "提供培训",
         "咨询电话",
-        "用户培训",
         "解答客户",
         "联系回访",
         "商机",
         "快手",
         "抖音",
         "陪产",
+        "临床护理",
         "小红书",
         "反应堆",
         "测试组长",
@@ -310,15 +315,12 @@ def check_sec(sec_text):
         "镭雕",
         "激光电视",
         "投影产品",
-        "android智能产品",
         "视频号",
         "开发客户",
         "智能手表",
         "夜班",
         "商务对接",
-        "实验室",
         "卫生工作",
-        "电器",
         "城乡规划",
         "资源管理",
         "专利代理",
@@ -343,7 +345,6 @@ def check_sec(sec_text):
         "驱动开发",
         "密码学",
         "证书管理",
-        "rom定制",
         "ipsec",
         "vpn",
         "vpp",
@@ -386,7 +387,6 @@ def check_sec(sec_text):
         "uds",
         "cdd",
         "diva",
-        "通过cet-6",
         "硬件测试",
         "整机测试",
         "设备及仪器",
@@ -438,7 +438,6 @@ def check_sec(sec_text):
         "化工",
         "石油",
         "土建",
-        "进行培训",
         "安防产品",
         "手机厂商",
         "请勿联系",
@@ -561,6 +560,7 @@ def check_sec(sec_text):
         "年以上",
         "在校生",
         "毕业前",
+        "可实习至",
         "年及以上",
         "年或以上",
         "1-2年",
@@ -579,6 +579,7 @@ def check_sec(sec_text):
         "一年工作",
         "2年相关工作",
         "3年左右",
+        "3年软件",
         "2-4年",
         "2-5年",
         "3-5年",
@@ -647,6 +648,7 @@ def check_city(city_text):
         "乌兰察布",
         "大连",
         "大庆",
+        "通辽",
         "大同",
         "哈尔滨",
         "呼和浩特",
@@ -691,7 +693,7 @@ def check_method(sec_text, city_text):
     检查面试方式
     """
     citys = ["上海", "苏州", "杭州", "南京"]
-    secs = ["不支持在线", "不支持线上", "线下面试", "现场面试", "不接受线上", "未开放线上", "现场coding"]
+    secs = ["不支持在线", "不支持线上", "线下面试", "现场面试", "现场机考", "不接受线上", "未开放线上", "现场coding"]
     if any(item in sec_text for item in secs):
         return any(item in city_text for item in citys)
     return True
@@ -728,7 +730,10 @@ def check_title(title_text):
         "亚马逊",
         "专利",
         "代理",
-        "驻点",
+        "外包",
+        "舆情",
+        "处理",
+        "生产",
         "服务",
         "嵌入式软件开发",
         "装备",
@@ -778,7 +783,6 @@ def check_title(title_text):
         "经营分析",
         "对账",
         "网络",
-        "支持",
         "培训",
         "训练",
         "残",
@@ -821,8 +825,6 @@ def check_title(title_text):
         "台湾",
         "香港",
         "海外",
-        "c++",
-        "shell",
         "电子",
         "驾驶",
         "c#",
@@ -884,7 +886,6 @@ def check_title(title_text):
         "数据库研发",
         "产品开发",
         "开发媒介",
-        "24",
         "25",
     ]
     return all(item not in title_text for item in title_blacks)
@@ -968,7 +969,6 @@ def check_company(company_text):
         "天有为",
         "天地伟业",
         "图墨",
-        "掌趣",
         "易科士",
         "老乡鸡",
         "货拉拉",
@@ -1123,27 +1123,28 @@ def check_company(company_text):
         "策马科技",
         "任拓",
         "东华软件",
+        "东华医为",
     ]
     return all(item not in company_text for item in company_blacks)
 
 
-driver.get("https://www.zhipin.com/web/user/?ka=header-login")
-WAIT.until(
-    ec.presence_of_element_located(
-        (By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']")
-    )
-)
-driver.find_element(By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']").click()
-WAIT.until(ec.url_changes(driver.current_url))
+# driver.get("https://www.zhipin.com/web/user/?ka=header-login")
+# WAIT.until(
+#     ec.presence_of_element_located(
+#         (By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']")
+#     )
+# )
+# driver.find_element(By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']").click()
+# WAIT.until(ec.url_changes(driver.current_url))
 
 Query = [
+    "软件自动化测试",
+    "软件功能测试",
     "Java",
     "Java软件开发",
     "软件测试",
     "软件实施",
     # "全栈工程师",
-    # "软件自动化测试",
-    # "软件功能测试",
     # "软件性能测试",
     # "软件测试开发",
     # "数据分析",
@@ -1168,8 +1169,11 @@ POSITION = [
     "Java" + URL7 + "100606",  # 实施
     URL7 + "100123",  # 全栈工程师
     "Java" + URL7 + "100305",  # 测试开发
-    "Java" + URL7 + "100302",  # 自动化测试
-    "Java" + URL7 + "100303",  # 功能测试
+    "软件测试" + URL7 + "100302",  # 自动化测试
+    "软件测试" + URL7 + "100303",  # 功能测试
+    "软件测试" + URL7 + "100301",  # 测试工程师
+    "软件运维开发" + URL7 + "100402",  # 运维开发
+    "软件运维" + URL7 + "100401",  # 运维
 ]
 for item in POSITION:
     for salary in ["404", "403", "402"]:

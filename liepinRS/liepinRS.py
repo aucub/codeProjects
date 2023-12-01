@@ -1,3 +1,4 @@
+import os
 import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -13,7 +14,7 @@ options.add_argument("--disable-web-security")
 options.add_argument("--disable-extensions")
 driver = uc.Chrome(
     headless=False,
-    user_data_dir="/home/uymi/.config/google-chrome-beta",
+    user_data_dir=os.path.expanduser("~") + "/.config/google-chrome",
     options=options,
 )
 WAIT = WebDriverWait(driver, 20)
@@ -104,6 +105,7 @@ def check_boss(boss_text):
         "总经理",
         "ceo",
         "创始人",
+        "猎",
     ]
     return all(item not in boss_text for item in boss_blacks)
 
@@ -149,26 +151,6 @@ def check_degree(degree_text):
     return "硕" not in degree_text and "博" not in degree_text
 
 
-def check_industry(industry_text):
-    """
-    检查行业
-    """
-    industry_blacks = [
-        "培训",
-        "教育",
-        "院校",
-        "房产",
-        "经纪",
-        "工程施工",
-        "中介",
-        "区块链",
-        "批发",
-        "零售",
-        "再生资源",
-    ]
-    return all(item not in industry_text for item in industry_blacks)
-
-
 def check_city(city_text):
     """
     检查城市
@@ -209,6 +191,7 @@ def check_city(city_text):
         "学院",
         "清远",
         "丹东",
+        "通辽",
     ]
     return all(item not in city_text for item in city_blacks)
 
@@ -219,12 +202,16 @@ def check_title(title_text):
     """
     title_text = title_text.lower()
     title_blacks = [
+        "某",
         "运营助理",
         "咨询顾问",
         "亚马逊",
         "专利",
         "代理",
-        "驻点",
+        "外包",
+        "舆情",
+        "处理",
+        "生产",
         "服务",
         "嵌入式软件开发",
         "装备",
@@ -274,7 +261,6 @@ def check_title(title_text):
         "经营分析",
         "对账",
         "网络",
-        "支持",
         "培训",
         "训练",
         "残",
@@ -317,8 +303,6 @@ def check_title(title_text):
         "台湾",
         "香港",
         "海外",
-        "c++",
-        "shell",
         "电子",
         "驾驶",
         "c#",
@@ -380,7 +364,6 @@ def check_title(title_text):
         "数据库研发",
         "产品开发",
         "开发媒介",
-        "24",
         "25",
     ]
     return all(item not in title_text for item in title_blacks)
@@ -438,7 +421,6 @@ def check_company(company_text):
         "天有为",
         "天地伟业",
         "图墨",
-        "掌趣",
         "易科士",
         "老乡鸡",
         "货拉拉",
@@ -593,6 +575,7 @@ def check_company(company_text):
         "策马科技",
         "任拓",
         "东华软件",
+        "东华医为",
     ]
     return all(item not in company_text for item in company_blacks)
 
@@ -602,14 +585,14 @@ Query = [
     "java软件开发",
     "软件测试",
     "软件实施",
-    "全栈工程师",
+    "java全栈工程师",
     "软件自动化测试",
     "软件功能测试",
-    "软件性能测试",
-    "软件测试开发",
+    "java软件测试开发",
     "数据分析",
-    "python",
+    "python软件测试",
 ]
 
 for item in Query:
     search(URL2 + item + URL3)
+driver.quit()

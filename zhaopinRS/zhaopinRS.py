@@ -1,3 +1,4 @@
+import os
 import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -12,7 +13,7 @@ options.add_argument("--disable-web-security")
 options.add_argument("--disable-extensions")
 driver = uc.Chrome(
     headless=False,
-    user_data_dir="/home/uymi/.config/google-chrome-beta",
+    user_data_dir=os.path.expanduser("~") + "/.config/google-chrome",
     options=options,
 )
 WAIT = WebDriverWait(driver, 20)
@@ -22,6 +23,10 @@ def search(url):
     for i in range(1, 10):
         driver.get(url + str(i))
         time.sleep(10)
+        # 执行JavaScript代码来滚动到页面底部
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        # 等待一段时间
+        driver.implicitly_wait(5)
         resume()
 
 
@@ -175,6 +180,7 @@ def check_city(city_text):
         "学院",
         "清远",
         "丹东",
+        "通辽",
     ]
     return all(item not in city_text for item in city_blacks)
 
@@ -190,7 +196,10 @@ def check_title(title_text):
         "亚马逊",
         "专利",
         "代理",
-        "驻点",
+        "外包",
+        "舆情",
+        "处理",
+        "生产",
         "服务",
         "嵌入式软件开发",
         "装备",
@@ -240,7 +249,6 @@ def check_title(title_text):
         "经营分析",
         "对账",
         "网络",
-        "支持",
         "培训",
         "训练",
         "残",
@@ -283,8 +291,6 @@ def check_title(title_text):
         "台湾",
         "香港",
         "海外",
-        "c++",
-        "shell",
         "电子",
         "驾驶",
         "c#",
@@ -346,7 +352,6 @@ def check_title(title_text):
         "数据库研发",
         "产品开发",
         "开发媒介",
-        "24",
         "25",
     ]
     return all(item not in title_text for item in title_blacks)
@@ -404,7 +409,6 @@ def check_company(company_text):
         "天有为",
         "天地伟业",
         "图墨",
-        "掌趣",
         "易科士",
         "老乡鸡",
         "货拉拉",
@@ -559,6 +563,7 @@ def check_company(company_text):
         "策马科技",
         "任拓",
         "东华软件",
+        "东华医为",
     ]
     return all(item not in company_text for item in company_blacks)
 
@@ -568,14 +573,14 @@ Query = [
     "java软件开发",
     "软件测试",
     "软件实施",
-    "全栈工程师",
+    "java全栈工程师",
     "软件自动化测试",
     "软件功能测试",
-    "软件性能测试",
-    "软件测试开发",
+    "java软件测试开发",
     "数据分析",
-    "python",
+    "python软件测试",
 ]
 
 for item in Query:
     search(URL1 + item + URL2)
+driver.quit()

@@ -9,6 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 import undetected_chromedriver as uc
+from gpt import gpt
 
 URL1 = "https://www.zhipin.com/web/geek/job?query="
 URL2 = "&city=100010000&experience=101,102,103,104&scale=302,303,304,305,306&degree=209,208,206,202,203&salary="
@@ -173,6 +174,7 @@ def resume_submission(url):
                     driver.find_element(By.CSS_SELECTOR, ".boss-info-attr").text
                 )
                 and is_ready_to_communicate(btn.text)
+                and gpt.check(description)
             ):
                 continue
         except:

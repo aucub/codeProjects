@@ -278,6 +278,33 @@ def check_sec(sec_text):
     if all(item not in sec_text for item in sec_keywords):
         return False
     sec_blacks = [
+        "桌面运维",
+        "驾照",
+        "三班倒",
+        "红绿灯",
+        "维护维修",
+        "网络运维",
+        "燃气",
+        "热水器",
+        "钣金",
+        "模具",
+        "样品",
+        "贴片机",
+        "机台调试",
+        "生产机台",
+        "验机测试",
+        "验机报告",
+        "验机数据",
+        "大型设备",
+        "路由器",
+        "交换机",
+        "卫星",
+        "值班",
+        "体育运动",
+        "引体向上",
+        "俯卧撑",
+        "售后技术",
+        "挖掘客户",
         "java勿扰",
         "没有编程",
         "不接受应届",
@@ -672,6 +699,8 @@ def check_city(city_text):
         "学院",
         "清远",
         "丹东",
+        "海口",
+        "烟台",
     ]
     return all(item not in city_text for item in city_blacks)
 
@@ -727,6 +756,8 @@ def check_title(title_text):
     """
     title_text = title_text.lower()
     title_blacks = [
+        "产品测试",
+        "支持",
         "运营助理",
         "咨询顾问",
         "亚马逊",

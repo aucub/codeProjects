@@ -1,29 +1,37 @@
 import requests
 import traceback
 
-base_url = "https://copilot.github1s.tk/api"
+# 设置API的基本URL
+base_url = ""
+share_token = ""
+
+# 创建请求头部
+headers = {"Authorization": f"Bearer {share_token}"}
 
 
 class gpt:
     def check(sec):
         # 设置聊天内容
         payload = {
-            "model": "Balanced",
+            "model": "gpt-3.5-turbo",
             "stream": False,
             "messages": [
                 {
                     "role": "user",
-                    "content": "你需要扮演一个简历投递助手，你负责检查职位说明是否满足我的要求，返回true或者false，不需要额外的说明。要求：1.职位必须和Java开发或者软件测试，软件实施，软件运维，Python，Linux等计算机软件相关。2.没有要求线下面试或笔试或线下投递简历。3.没有说明不接受应届生，没有要求1年以上工作经验。注意1-2年经验要求等视为不符合要求。4.不是管理网络交换机，路由器，计算机硬件，公司资产，机房运维，设备安装等工作。不是与软件技术无关的工作。不是硬件测试或硬件开发的工作。5.没有解答客户问题，售后服务，售前服务等工作内容。没有销售，推广等工作内容。6.不是外包，外派，驻场等工作。职位说明："
+                    "content": "我希望你充当简历投递助手，你将检查职位描述是否完全符合以下所有要求。请提供一个“true”或“false”的结果，无需任何解释。要求：1.该职位必须与计算机软件相关，例如Java开发、软件测试、软件运维开发、软件实施或软件运维。2.不要求线下面试、线下笔试、线下投递简历。3.职位描述不应提及不接受应届毕业生，不应要求工作经验。4.不应涉及与硬件相关的任务，比如管理网络交换机、路由器、计算机硬件、公司资产、桌面支持、网络运营、数据中心运营或设备安装。它也不应该是硬件测试或硬件开发的角色。5.该工作不应涉及回复客户询问、提供售后支持、售前支持、销售活动或营销等任务。6.该工作不应是外包、派遣工作。没有轮班、夜班工作。职位说明："
                     + sec,
                 },
             ],
         }
         try:
             # 发送请求
-            response = requests.post(f"{base_url}/v1/chat/completions", json=payload)
+            response = requests.post(
+                f"{base_url}/v1/chat/completions", json=payload, headers=headers
+            )
 
             # 检查响应
             if response.status_code == 200:
+                print(sec)
                 print("Response from API:", response.json())
                 data = response.json()
                 content = data["choices"][0]["message"]["content"]
@@ -38,4 +46,3 @@ class gpt:
                 return False
         except:
             traceback.print_exc()
-            print("Error")

@@ -31,6 +31,7 @@ def resume_submission(url):
     投递简历
     """
     driver.get(url)
+    print("打开:" + url)
     time.sleep(5)
     check_dialog()
     try:
@@ -1211,44 +1212,21 @@ driver.get("https://www.zhipin.com")
 
 time.sleep(5)
 
-Query = [
-    "Java",
-    "Java软件开发",
-    "软件测试",
-    # "软件自动化测试",
-    # "软件功能测试",
-    # "软件实施",
-    # "全栈工程师",
-    # "软件性能测试",
-    # "软件测试开发",
-    # "数据分析",
-    # "数据挖掘",
-    # "Python",
-    # "软件需求分析",
-    # "Node.js",
-    # "DBA",
-    # "Hadoop",
-    # "JavaScript",
-    # "软件技术文档",
-]
+# 获取环境变量的值
+env_var_value = os.environ.get("BOSSRSQUERY", "")
+
+# 将逗号分隔的字符串转换为数组
+Query = env_var_value.split(",")
 for item in Query:
     for salary in ["404", "403", "402"]:
         for i in range(1, 15):
             if resume_submission(URL1 + item + URL2 + salary + URL3 + str(i)) == -1:
                 sys.exit()
-POSITION = [
-    "Java" + URL7 + "100101",  # Java
-    URL7 + "100309",  # 软件测试
-    "Java" + URL7 + "100305",  # 测试开发
-    # URL7 + "100123",  # 全栈工程师
-    # "软件测试" + URL7 + "100302",  # 自动化测试
-    # "软件测试" + URL7 + "100303",  # 功能测试
-    # "Java" + URL7 + "100402",  # 运维开发
-    # "Java" + URL7 + "100606",  # 实施
-    # "软件测试" + URL7 + "100301",  # 测试工程师
-    # "软件运维开发" + URL7 + "100402",  # 运维开发
-    # "软件运维" + URL7 + "100401",  # 运维
-]
+# 获取环境变量的值
+env_var_value = os.environ.get("BOSSRSPOSITION", "")
+
+# 将逗号分隔的字符串转换为数组
+POSITION = env_var_value.split(",")
 for item in POSITION:
     for salary in ["404", "403", "402"]:
         for i in range(1, 10):

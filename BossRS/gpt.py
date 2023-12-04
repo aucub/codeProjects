@@ -2,18 +2,14 @@ import requests
 import traceback
 
 # 设置API的基本URL
-base_url = ""
-share_token = ""
-
-# 创建请求头部
-headers = {"Authorization": f"Bearer {share_token}"}
+base_url = "https://copilot.github1s.tk"
 
 
 class gpt:
     def check(sec):
         # 设置聊天内容
         payload = {
-            "model": "gpt-3.5-turbo",
+            "model": "Balanced",
             "stream": False,
             "messages": [
                 {
@@ -25,9 +21,7 @@ class gpt:
         }
         try:
             # 发送请求
-            response = requests.post(
-                f"{base_url}/v1/chat/completions", json=payload, headers=headers
-            )
+            response = requests.post(f"{base_url}/v1/chat/completions", json=payload)
 
             # 检查响应
             if response.status_code == 200:

@@ -1,0 +1,35 @@
+name: BossRS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  BossRS:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.1
+
+      - uses: browser-actions/setup-chrome@v1.4.0
+        with:
+          chrome-version: stable
+
+      - uses: nanasess/setup-chromedriver@v2.2.1
+        with:
+          chromedriver-version: "119.0.6045.105"
+      - run: |
+          export DISPLAY=:99
+          chromedriver --url-base=/wd/hub &
+          sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 & # optional
+
+      - uses: actions/setup-python@v4.7.1
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - run: |
+          cd BossRSaction
+          pip install -r requirements.txt
+          python BossRSgpt.py
+        env:
+          BOSSRSCOOKIES: ${{ secrets.BOSSRSCOOKIES }}
+          OPENAIBASEURL: ${{ secrets.OPENAIBASEURL }}
+          OPENAISHARETOKEN: ${{ secrets.OPENAISHARETOKEN }}

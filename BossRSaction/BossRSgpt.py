@@ -1,6 +1,5 @@
 import json
 import os
-import pickle
 import sys
 import time
 import re
@@ -21,8 +20,7 @@ URL6 = "&sessionId="
 URL7 = "&position="
 
 driver = uc.Chrome(
-    headless=False,
-    user_data_dir=os.path.expanduser("~") + "/.config/google-chrome",
+    headless=True,
     version_main=119,
 )
 WAIT = WebDriverWait(driver, 20)
@@ -184,6 +182,7 @@ def resume_submission(url):
             traceback.print_exc()
             continue
         btn.click()
+        print("投递")
         check_dialog()
         time.sleep(3)
         try:
@@ -634,6 +633,7 @@ def check_dialog():
         dialog_elements = driver.find_elements(By.CLASS_NAME, "dialog-container")
         if dialog_elements:
             driver.find_element(By.CLASS_NAME, "icon-close").click
+            print("关闭弹窗")
         time.sleep(1)
     except:
         traceback.print_exc()
@@ -677,6 +677,7 @@ def check_city(city_text):
     """
     检查城市
     """
+    print(city_text)
     city_blacks = [
         "沈阳",
         "辽阳",
@@ -725,6 +726,7 @@ def check_boss(boss_text):
     检查人事
     """
     boss_text = boss_text.lower()
+    print(boss_text)
     boss_blacks = [
         "总裁",
         "总经理",
@@ -749,6 +751,7 @@ def check_industry(industry_text):
     """
     检查行业
     """
+    print(industry_text)
     industry_blacks = [
         "培训",
         "教育",
@@ -770,6 +773,7 @@ def check_title(title_text):
     检查标题
     """
     title_text = title_text.lower()
+    print(title_text)
     title_blacks = [
         "产品测试",
         "支持",
@@ -969,6 +973,7 @@ def check_company(company_text):
     """
     检查公司名称
     """
+    print(company_text)
     company_blacks = [
         "新疆",
         "乌鲁木齐",
@@ -1185,30 +1190,31 @@ def check_company(company_text):
 # driver.find_element(By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']").click()
 # WAIT.until(ec.url_changes(driver.current_url))
 
-# # 访问登录页面
-# driver.get("https://www.zhipin.com")
+# 访问登录页面
+driver.get("https://www.zhipin.com")
 
-# # 等待一段时间
-# time.sleep(5)
+# 等待一段时间
+time.sleep(10)
 
-# # 加载之前保存的cookie
-# with open("cookies.pkl", "rb") as f:
-#     cookies = pickle.load(f)
+cookies_string = os.environ.get("BOSSRSCOOKIES")
 
-# # 将cookie添加到浏览器中
-# for cookie in cookies:
-#     driver.add_cookie(cookie)
+# 将 cookies 字符串转换为字典
+cookies_list = eval(cookies_string)
 
-# time.sleep(5)
+# 将 cookies 添加到浏览器中
+for cookie in cookies_list:
+    driver.add_cookie(cookie)
 
-# driver.get("https://www.zhipin.com")
+time.sleep(5)
 
-# time.sleep(5)
+driver.get("https://www.zhipin.com")
+
+time.sleep(5)
 
 Query = [
-    # "Java",
-    # "Java软件开发",
-    # "软件测试",
+    "Java",
+    "Java软件开发",
+    "软件测试",
     # "软件自动化测试",
     # "软件功能测试",
     # "软件实施",
@@ -1231,17 +1237,17 @@ for item in Query:
             if resume_submission(URL1 + item + URL2 + salary + URL3 + str(i)) == -1:
                 sys.exit()
 POSITION = [
-    # "Java" + URL7 + "100101",  # Java
-    # URL7 + "100309",  # 软件测试
+    "Java" + URL7 + "100101",  # Java
+    URL7 + "100309",  # 软件测试
+    "Java" + URL7 + "100305",  # 测试开发
+    # URL7 + "100123",  # 全栈工程师
     # "软件测试" + URL7 + "100302",  # 自动化测试
     # "软件测试" + URL7 + "100303",  # 功能测试
-    "Java" + URL7 + "100402",  # 运维开发
-    "Java" + URL7 + "100606",  # 实施
-    URL7 + "100123",  # 全栈工程师
-    "Java" + URL7 + "100305",  # 测试开发
-    "软件测试" + URL7 + "100301",  # 测试工程师
-    "软件运维开发" + URL7 + "100402",  # 运维开发
-    "软件运维" + URL7 + "100401",  # 运维
+    # "Java" + URL7 + "100402",  # 运维开发
+    # "Java" + URL7 + "100606",  # 实施
+    # "软件测试" + URL7 + "100301",  # 测试工程师
+    # "软件运维开发" + URL7 + "100402",  # 运维开发
+    # "软件运维" + URL7 + "100401",  # 运维
 ]
 for item in POSITION:
     for salary in ["404", "403", "402"]:

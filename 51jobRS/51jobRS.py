@@ -87,14 +87,16 @@ def search(url):
     driver.find_element(By.CSS_SELECTOR, "div.op:nth-child(2)").click()
     driver.find_element(By.CSS_SELECTOR, "p.pp:nth-child(4) > a:nth-child(1)").click()
     time.sleep(10)
-
-    for i in range(1, 45):
-        WAIT.until(EC.presence_of_element_located((By.CLASS_NAME, "mytxt")))
-        driver.find_element(By.CLASS_NAME, "mytxt").clear()
-        driver.find_element(By.CLASS_NAME, "mytxt").send_keys(str(i))
-        driver.find_element(By.CLASS_NAME, "jumpPage").click()
-        resume()
-        time.sleep(5)
+    try:
+        for i in range(1, 45):
+            WAIT.until(EC.presence_of_element_located((By.CLASS_NAME, "mytxt")))
+            driver.find_element(By.CLASS_NAME, "mytxt").clear()
+            driver.find_element(By.CLASS_NAME, "mytxt").send_keys(str(i))
+            driver.find_element(By.CLASS_NAME, "jumpPage").click()
+            resume()
+            time.sleep(5)
+    except:
+        pass
 
 
 def resume():
@@ -144,17 +146,20 @@ def resume():
         except ElementClickInterceptedException:
             time.sleep(1)
     time.sleep(5)
-    # 处理弹窗
-    WAIT.until(
-        EC.presence_of_element_located(
-            (By.CSS_SELECTOR, "[class*='van-popup van-popup--center']")
+    try:
+        # 处理弹窗
+        WAIT.until(
+            EC.presence_of_element_located(
+                (By.CSS_SELECTOR, "[class*='van-popup van-popup--center']")
+            )
         )
-    )
-    # 关闭弹窗
-    driver.find_element(
-        By.CSS_SELECTOR,
-        "[class*='van-icon van-icon-cross van-popup__close-icon van-popup__close-icon--top-right']",
-    ).click()
+        # 关闭弹窗
+        driver.find_element(
+            By.CSS_SELECTOR,
+            "[class*='van-icon van-icon-cross van-popup__close-icon van-popup__close-icon--top-right']",
+        ).click()
+    except:
+        pass
 
 
 def check_industry(industry_text):
@@ -611,7 +616,7 @@ def check_company(company_text):
 # time.sleep(50)
 
 Query = [
-    "java",
+    # "java",
     "java软件开发",
     "软件测试",
     "软件实施",

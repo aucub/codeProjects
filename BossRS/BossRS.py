@@ -9,6 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 import undetected_chromedriver as uc
+from gpt import gpt
 
 URL1 = "https://www.zhipin.com/web/geek/job?query="
 URL2 = "&city=100010000&experience=101,102,103,104&scale=302,303,304,305,306&degree=209,208,206,202,203&salary="
@@ -32,6 +33,7 @@ def resume_submission(url):
     """
     driver.get(url)
     time.sleep(5)
+    check_dialog()
     try:
         WAIT.until(
             ec.presence_of_element_located(
@@ -103,6 +105,7 @@ def resume_submission(url):
                 (By.CSS_SELECTOR, "[class*='btn btn-startchat']")
             )
         )
+        check_dialog()
         btn = driver.find_element(By.CSS_SELECTOR, "[class*='btn btn-startchat']")
         try:
             if not (
@@ -173,12 +176,14 @@ def resume_submission(url):
                     driver.find_element(By.CSS_SELECTOR, ".boss-info-attr").text
                 )
                 and is_ready_to_communicate(btn.text)
+                and gpt.check(description)
             ):
                 continue
         except:
             traceback.print_exc()
             continue
         btn.click()
+        check_dialog()
         time.sleep(3)
         try:
             WAIT.until(ec.presence_of_element_located((By.CLASS_NAME, "dialog-con")))
@@ -276,6 +281,33 @@ def check_sec(sec_text):
     if all(item not in sec_text for item in sec_keywords):
         return False
     sec_blacks = [
+        "桌面运维",
+        "驾照",
+        "三班倒",
+        "红绿灯",
+        "维护维修",
+        "网络运维",
+        "燃气",
+        "热水器",
+        "钣金",
+        "模具",
+        "样品",
+        "贴片机",
+        "机台调试",
+        "生产机台",
+        "验机测试",
+        "验机报告",
+        "验机数据",
+        "大型设备",
+        "路由器",
+        "交换机",
+        "卫星",
+        "值班",
+        "体育运动",
+        "引体向上",
+        "俯卧撑",
+        "售后技术",
+        "挖掘客户",
         "java勿扰",
         "没有编程",
         "不接受应届",
@@ -595,6 +627,17 @@ def check_sec(sec_text):
     return all(item not in sec_text for item in sec_blacks1)
 
 
+def check_dialog():
+    try:
+        time.sleep(1)
+        dialog_elements = driver.find_elements(By.CLASS_NAME, "dialog-container")
+        if dialog_elements:
+            driver.find_element(By.CLASS_NAME, "icon-close").click
+        time.sleep(1)
+    except:
+        traceback.print_exc()
+
+
 def check_res():
     """
     检查成立时间
@@ -670,6 +713,8 @@ def check_city(city_text):
         "学院",
         "清远",
         "丹东",
+        "海口",
+        "烟台",
     ]
     return all(item not in city_text for item in city_blacks)
 
@@ -684,6 +729,7 @@ def check_boss(boss_text):
         "总经理",
         "ceo",
         "创始人",
+        "法人",
     ]
     return all(item not in boss_text for item in boss_blacks)
 
@@ -725,6 +771,8 @@ def check_title(title_text):
     """
     title_text = title_text.lower()
     title_blacks = [
+        "产品测试",
+        "支持",
         "运营助理",
         "咨询顾问",
         "亚马逊",
@@ -1143,7 +1191,7 @@ Query = [
     "软件测试",
     "软件自动化测试",
     "软件功能测试",
-    "软件实施",
+    # "软件实施",
     # "全栈工程师",
     # "软件性能测试",
     # "软件测试开发",
@@ -1159,21 +1207,21 @@ Query = [
 ]
 for item in Query:
     for salary in ["404", "403", "402"]:
-        for i in range(1, 15):
+        for i in range(1, 10):
             if resume_submission(URL1 + item + URL2 + salary + URL3 + str(i)) == -1:
                 sys.exit()
 POSITION = [
     "Java" + URL7 + "100101",  # Java
+    "Java" + URL7 + "100305",  # 测试开发
     URL7 + "100309",  # 软件测试
+    "软件测试" + URL7 + "100301",  # 测试工程师
     "软件测试" + URL7 + "100302",  # 自动化测试
     "软件测试" + URL7 + "100303",  # 功能测试
-    "Java" + URL7 + "100402",  # 运维开发
-    "Java" + URL7 + "100606",  # 实施
-    URL7 + "100123",  # 全栈工程师
-    "Java" + URL7 + "100305",  # 测试开发
-    "软件测试" + URL7 + "100301",  # 测试工程师
-    "软件运维开发" + URL7 + "100402",  # 运维开发
-    "软件运维" + URL7 + "100401",  # 运维
+    # "Java" + URL7 + "100402",  # 运维开发
+    # "Java" + URL7 + "100606",  # 实施
+    # URL7 + "100123",  # 全栈工程师
+    # "软件运维开发" + URL7 + "100402",  # 运维开发
+    # "软件运维" + URL7 + "100401",  # 运维
 ]
 for item in POSITION:
     for salary in ["404", "403", "402"]:

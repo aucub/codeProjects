@@ -24,7 +24,7 @@ driver = uc.Chrome(
     user_data_dir=os.path.expanduser("~") + "/.config/google-chrome",
     version_main=119,
 )
-WAIT = WebDriverWait(driver, 15)
+WAIT = WebDriverWait(driver, 5)
 
 
 def resume_submission(url):
@@ -35,8 +35,10 @@ def resume_submission(url):
     time.sleep(3)
     check_dialog()
     try:
-        ec.presence_of_element_located(
-            (By.CSS_SELECTOR, "[class*='job-title clearfix']")
+        WAIT.until(
+            ec.presence_of_element_located(
+                (By.CSS_SELECTOR, "[class*='job-title clearfix']")
+            )
         )
     except:
         traceback.print_exc()
@@ -113,12 +115,6 @@ def resume_submission(url):
                         "div.company-info:nth-child(2) > a:nth-child(2)",
                     ).text
                 )
-                and check_company(
-                    driver.find_element(
-                        By.CSS_SELECTOR,
-                        "li.company-name",
-                    ).text
-                )
                 and check_guide(
                     driver.find_element(
                         By.CSS_SELECTOR, "[class*='pos-bread city-job-guide']"
@@ -147,9 +143,6 @@ def resume_submission(url):
                         By.CSS_SELECTOR,
                         "span.salary",
                     ).text
-                )
-                and check_active_time(
-                    driver.find_element(By.CLASS_NAME, "boss-active-time").text
                 )
                 and check_res()
                 and check_update(driver.find_element(By.CSS_SELECTOR, "p.gray").text)
@@ -180,6 +173,22 @@ def resume_submission(url):
         except:
             traceback.print_exc()
             continue
+        try:
+            if not (
+                check_company(
+                    driver.find_element(
+                        By.CSS_SELECTOR,
+                        "li.company-name",
+                    ).text
+                )
+                and check_active_time(
+                    driver.find_element(By.CLASS_NAME, "boss-active-time").text
+                )
+            ):
+                continue
+        except:
+            traceback.print_exc()
+            pass
         btn.click()
         check_dialog()
         time.sleep(3)
@@ -1215,7 +1224,7 @@ POSITION = [
     "软件测试" + URL7 + "100301",  # 测试工程师
     "软件测试" + URL7 + "100302",  # 自动化测试
     "软件测试" + URL7 + "100303",  # 功能测试
-    "Java" + URL7 + "100402",  # 运维开发
+    # "Java" + URL7 + "100402",  # 运维开发
     # "Java" + URL7 + "100606",  # 实施
     # URL7 + "100123",  # 全栈工程师
     # "软件运维开发" + URL7 + "100402",  # 运维开发

@@ -24,7 +24,7 @@ driver = uc.Chrome(
     user_data_dir=os.path.expanduser("~") + "/.config/google-chrome",
     version_main=119,
 )
-WAIT = WebDriverWait(driver, 20)
+WAIT = WebDriverWait(driver, 15)
 
 
 def resume_submission(url):
@@ -32,17 +32,15 @@ def resume_submission(url):
     投递简历
     """
     driver.get(url)
-    time.sleep(5)
+    time.sleep(3)
     check_dialog()
     try:
-        WAIT.until(
-            ec.presence_of_element_located(
-                (By.CSS_SELECTOR, "[class*='job-title clearfix']")
-            )
+        ec.presence_of_element_located(
+            (By.CSS_SELECTOR, "[class*='job-title clearfix']")
         )
     except:
         traceback.print_exc()
-        return 1
+        return -1
     jobs = []
     urls = []
     job_elements = driver.find_elements(
@@ -281,7 +279,16 @@ def check_sec(sec_text):
     if all(item not in sec_text for item in sec_keywords):
         return False
     sec_blacks = [
+        "式样书",
+        "abview",
+        "标书制作",
+        "市场推广",
+        "呼叫",
         "桌面运维",
+        "仪器设备",
+        "信号采集",
+        "售后技术",
+        "电话指导",
         "驾照",
         "三班倒",
         "红绿灯",
@@ -293,11 +300,8 @@ def check_sec(sec_text):
         "模具",
         "样品",
         "贴片机",
-        "机台调试",
-        "生产机台",
-        "验机测试",
-        "验机报告",
-        "验机数据",
+        "机台",
+        "验机",
         "大型设备",
         "路由器",
         "交换机",
@@ -306,7 +310,6 @@ def check_sec(sec_text):
         "体育运动",
         "引体向上",
         "俯卧撑",
-        "售后技术",
         "挖掘客户",
         "java勿扰",
         "没有编程",
@@ -314,14 +317,12 @@ def check_sec(sec_text):
         "不接收应届",
         "不考虑应届",
         "应届生请勿",
-        "20-21年",
-        "20年毕业",
-        "22年及之前",
-        "22年之前",
-        "21年之前",
-        "21年毕业",
+        "20-21",
+        "20年",
+        "22年",
+        "21年",
         "22应届",
-        "20届以前",
+        "20届",
         "咨询电话",
         "解答客户",
         "联系回访",
@@ -339,7 +340,7 @@ def check_sec(sec_text):
         "网络规划设计",
         "运维通信",
         "能力稍逊",
-        "实物资产登记",
+        "资产登记",
         "电厂",
         "nbt200",
         "iec621",
@@ -520,9 +521,9 @@ def check_sec(sec_text):
         "全屋定制",
         "华广软件",
         "定制家具",
-        "驻店设计师",
+        "驻店",
         "造诣软件",
-        "网络交换机",
+        "交换机",
         "不是软件",
         "土木",
         "机械相关",
@@ -549,6 +550,7 @@ def check_sec(sec_text):
         "恕不退还",
         "已找到",
         "携带相关证件",
+        "6级或以上",
         "211以上",
         "211本科以上",
         "211本科及以上",
@@ -595,34 +597,14 @@ def check_sec(sec_text):
         "可实习至",
         "年及以上",
         "年或以上",
-        "1-2年",
-        "1～2年",
-        "1-3年",
-        "一到三年",
-        "1至3年",
-        "1年-3年",
-        "至少二年",
-        "至少2年",
-        "至少两年",
-        "2-3年",
-        "2年左右",
-        "2年工作",
-        "2年经验",
-        "一年工作",
-        "2年相关工作",
-        "3年左右",
-        "3年软件",
-        "2-4年",
-        "2-5年",
-        "3-5年",
-        "3年以上",
-        "3年及以上",
-        "3～5年",
-        "2-4年",
+        "三年",
+        "3年",
+        "二年",
+        "2年",
+        "两年",
+        "4年",
+        "5年",
         "年(含)以上",
-        "3年工作",
-        "毕业3年",
-        "毕业5年",
     ]
     return all(item not in sec_text for item in sec_blacks1)
 
@@ -647,7 +629,7 @@ def check_res():
         res_text = res_element.text[-10:]
         date_format = "%Y-%m-%d"
         return time.mktime(time.strptime(res_text, date_format)) < (
-            time.time() - 31536000
+            time.time() - 63072000
         )
     except:
         traceback.print_exc()
@@ -715,6 +697,10 @@ def check_city(city_text):
         "丹东",
         "海口",
         "烟台",
+        "廊坊",
+        "石家庄",
+        "丽水",
+        "平顶山",
     ]
     return all(item not in city_text for item in city_blacks)
 
@@ -771,10 +757,20 @@ def check_title(title_text):
     """
     title_text = title_text.lower()
     title_blacks = [
-        "产品测试",
+        "产品",
         "支持",
+        "调试",
+        "机器视觉",
+        "非开发",
+        "验证",
+        "笔电",
+        "结构",
+        "衡器",
+        "dqe",
+        "厂区",
+        "轻松",
         "运营助理",
-        "咨询顾问",
+        "顾问",
         "亚马逊",
         "专利",
         "代理",
@@ -798,7 +794,7 @@ def check_title(title_text):
         "电话",
         "选址",
         "外贸",
-        "网络优化",
+        "网络",
         "客服",
         "实验",
         "弱电",
@@ -819,7 +815,7 @@ def check_title(title_text):
         "前端",
         "android",
         "wpf",
-        "蓝牙耳机",
+        "耳机",
         "相机",
         "耗材",
         "硬件",
@@ -828,7 +824,7 @@ def check_title(title_text):
         "老师",
         "推广",
         "实训",
-        "经营分析",
+        "经营",
         "对账",
         "网络",
         "培训",
@@ -860,7 +856,7 @@ def check_title(title_text):
         "采购",
         "人士",
         "管家",
-        "架构师",
+        "架构",
         "水务",
         "棋牌",
         "组长",
@@ -894,11 +890,10 @@ def check_title(title_text):
         "护士",
         "面料",
         "粤语",
-        "内窥镜",
+        "内窥",
         "维修",
         "视频",
         "文件管理",
-        "结构设计",
         "惠普",
         "速卖通",
         "营销",
@@ -932,7 +927,6 @@ def check_title(title_text):
         "样品",
         "小程序开发",
         "数据库研发",
-        "产品开发",
         "开发媒介",
         "25",
     ]
@@ -970,15 +964,26 @@ def check_company(company_text):
     检查公司名称
     """
     company_blacks = [
+        "顺丰集团",
+        "精仪精测",
+        "昌硕科技",
+        "腾云悦智",
         "新疆",
         "乌鲁木齐",
+        "大连",
+        "京北方",
+        "辛可必",
+        "微创软件",
+        "企业管理",
+        "信息咨询",
+        "美婷",
+        "富联富桂",
         "培训",
         "职业",
         "中介",
         "学校",
         "人才",
         "人力",
-        "人力资源",
         "劳务",
         "教育",
         "童星",
@@ -1005,6 +1010,7 @@ def check_company(company_text):
         "压寨",
         "合伙",
         "中科软",
+        "汉科软",
         "快酷",
         "拓尔思",
         "奥特",
@@ -1030,7 +1036,7 @@ def check_company(company_text):
         "格林豪泰",
         "佰钧成",
         "我爱我家",
-        "链家房地产",
+        "地产",
         "宸鸿",
         "华众万象",
         "棱镜网络",
@@ -1045,12 +1051,9 @@ def check_company(company_text):
         "绣歌",
         "神玥",
         "通力互联",
-        "酒店管理",
         "北京银行",
-        "房地产",
         "房产",
         "房屋",
-        "太平洋房屋",
         "销售",
         "投资咨询",
         "咨询管理",
@@ -1067,7 +1070,6 @@ def check_company(company_text):
         "经纪",
         "珠宝",
         "旅馆",
-        "酒店",
         "餐厅",
         "宾馆",
         "摄影",
@@ -1099,7 +1101,6 @@ def check_company(company_text):
         "塑料",
         "餐饮",
         "面包房",
-        "比萨店",
         "艺术",
         "蛋糕",
         "调味品",
@@ -1116,7 +1117,7 @@ def check_company(company_text):
         "假日",
         "园艺",
         "环境工程",
-        "财务代理",
+        "代理",
         "练字",
         "书法",
         "书画",
@@ -1130,14 +1131,11 @@ def check_company(company_text):
         "少儿",
         "美术",
         "门窗",
-        "快餐店",
         "人力市场",
         "信用管理",
         "建材",
         "机械制造",
         "模具",
-        "便利店",
-        "饮品店",
         "建筑工程",
         "配件",
         "服装",
@@ -1207,7 +1205,7 @@ Query = [
 ]
 for item in Query:
     for salary in ["404", "403", "402"]:
-        for i in range(1, 10):
+        for i in range(1, 15):
             if resume_submission(URL1 + item + URL2 + salary + URL3 + str(i)) == -1:
                 sys.exit()
 POSITION = [
@@ -1217,7 +1215,7 @@ POSITION = [
     "软件测试" + URL7 + "100301",  # 测试工程师
     "软件测试" + URL7 + "100302",  # 自动化测试
     "软件测试" + URL7 + "100303",  # 功能测试
-    # "Java" + URL7 + "100402",  # 运维开发
+    "Java" + URL7 + "100402",  # 运维开发
     # "Java" + URL7 + "100606",  # 实施
     # URL7 + "100123",  # 全栈工程师
     # "软件运维开发" + URL7 + "100402",  # 运维开发
@@ -1225,7 +1223,7 @@ POSITION = [
 ]
 for item in POSITION:
     for salary in ["404", "403", "402"]:
-        for i in range(1, 10):
+        for i in range(1, 15):
             if resume_submission(URL1 + item + URL2 + salary + URL3 + str(i)) == -1:
                 sys.exit()
 driver.quit()

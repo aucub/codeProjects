@@ -22,9 +22,9 @@ URL7 = "&position="
 driver = uc.Chrome(
     headless=False,
     user_data_dir=os.path.expanduser("~") + "/.config/google-chrome",
-    version_main=119,
+    version_main=120,
 )
-WAIT = WebDriverWait(driver, 5)
+WAIT = WebDriverWait(driver, 15)
 
 
 def resume_submission(url):
@@ -42,7 +42,7 @@ def resume_submission(url):
         )
     except:
         traceback.print_exc()
-        return -1
+        return 1
     jobs = []
     urls = []
     job_elements = driver.find_elements(
@@ -191,7 +191,7 @@ def resume_submission(url):
             pass
         btn.click()
         check_dialog()
-        time.sleep(3)
+        time.sleep(5)
         try:
             WAIT.until(ec.presence_of_element_located((By.CLASS_NAME, "dialog-con")))
         except:
@@ -245,6 +245,7 @@ def check_fund(fund_text):
         "30万",
         "10万",
         "5万",
+        "2万",
     ]
     return all(fund_text not in item for item in fund_blacks)
 
@@ -734,7 +735,17 @@ def check_method(sec_text, city_text):
     检查面试方式
     """
     citys = ["上海", "苏州", "杭州", "南京"]
-    secs = ["不支持在线", "不支持线上", "线下面试", "现场面试", "现场机考", "不接受线上", "未开放线上", "现场coding"]
+    secs = [
+        "不支持在线",
+        "不支持线上",
+        "线下面试",
+        "现场面试",
+        "现场机考",
+        "不接受线上",
+        "未开放线上",
+        "现场coding",
+        "附近优先",
+    ]
     if any(item in sec_text for item in secs):
         return any(item in city_text for item in citys)
     return True
@@ -1198,10 +1209,10 @@ Query = [
     "软件测试",
     "软件自动化测试",
     "软件功能测试",
+    "软件性能测试",
+    # "软件测试开发",
     # "软件实施",
     # "全栈工程师",
-    # "软件性能测试",
-    # "软件测试开发",
     # "数据分析",
     # "数据挖掘",
     # "Python",
@@ -1224,8 +1235,9 @@ POSITION = [
     "软件测试" + URL7 + "100301",  # 测试工程师
     "软件测试" + URL7 + "100302",  # 自动化测试
     "软件测试" + URL7 + "100303",  # 功能测试
-    # "Java" + URL7 + "100402",  # 运维开发
-    # "Java" + URL7 + "100606",  # 实施
+    "Java" + URL7 + "100402",  # 运维开发
+    "Java" + URL7 + "100606",  # 实施
+    "Java" + URL7 + "100123",  # 全栈工程师
     # URL7 + "100123",  # 全栈工程师
     # "软件运维开发" + URL7 + "100402",  # 运维开发
     # "软件运维" + URL7 + "100401",  # 运维

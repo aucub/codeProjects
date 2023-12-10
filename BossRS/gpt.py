@@ -31,9 +31,10 @@ class gpt:
                 if "true" in content:
                     return True
                 else:
-                    return False
+                    return True
             else:
                 print("Error:", response.status_code, response.text)
                 return True
         except:
             traceback.print_exc()
+            return True

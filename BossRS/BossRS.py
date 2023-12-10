@@ -1,5 +1,6 @@
 import json
 import os
+import pickle
 import sys
 import time
 import re
@@ -21,10 +22,10 @@ URL7 = "&position="
 
 driver = uc.Chrome(
     headless=False,
-    user_data_dir=os.path.expanduser("~") + "/.config/google-chrome",
+    # user_data_dir=os.path.expanduser("~") + "/.config/google-chrome",
     version_main=120,
 )
-WAIT = WebDriverWait(driver, 15)
+WAIT = WebDriverWait(driver, 5)
 
 
 def resume_submission(url):
@@ -167,7 +168,7 @@ def resume_submission(url):
                     driver.find_element(By.CSS_SELECTOR, ".boss-info-attr").text
                 )
                 and is_ready_to_communicate(btn.text)
-                and gpt.check(description)
+                ## and gpt.check(description)
             ):
                 continue
         except:
@@ -191,7 +192,7 @@ def resume_submission(url):
             pass
         btn.click()
         check_dialog()
-        time.sleep(5)
+        time.sleep(3)
         try:
             WAIT.until(ec.presence_of_element_located((By.CLASS_NAME, "dialog-con")))
         except:
@@ -207,7 +208,7 @@ def check_active_time(active_time_text):
     """
     检查活跃时间
     """
-    active_time_blacks = ["半年", "月内", "周内", "本周", "7日", "本月"]
+    active_time_blacks = ["半年", "月内", "本月"]  #  "周内", "本周", "7日",
     return all(item not in active_time_text for item in active_time_blacks)
 
 
@@ -313,8 +314,6 @@ def check_sec(sec_text):
         "机台",
         "验机",
         "大型设备",
-        "路由器",
-        "交换机",
         "卫星",
         "值班",
         "体育运动",
@@ -328,11 +327,7 @@ def check_sec(sec_text):
         "不考虑应届",
         "应届生请勿",
         "20-21",
-        "20年",
-        "22年",
-        "21年",
         "22应届",
-        "20届",
         "咨询电话",
         "解答客户",
         "联系回访",
@@ -344,7 +339,6 @@ def check_sec(sec_text):
         "小红书",
         "反应堆",
         "测试组长",
-        "嵌入式编程",
         "低功耗产品开发",
         "网络自动化",
         "网络规划设计",
@@ -381,9 +375,6 @@ def check_sec(sec_text):
         "应届生勿",
         "日语",
         "无线电",
-        "嵌入式软件开发",
-        "熟练使用c",
-        "熟练掌握c",
         "内核裁剪",
         "驱动开发",
         "密码学",
@@ -394,7 +385,6 @@ def check_sec(sec_text):
         "sonic",
         "frr",
         "dpdk",
-        "uboot",
         "洗衣机",
         "精通c#",
         "精通.net",
@@ -412,7 +402,6 @@ def check_sec(sec_text):
         "算法经验",
         "熟练操作vb",
         "精通lab",
-        "node开发经验",
         "qt语言基础",
         "xamarin",
         "mcu",
@@ -546,7 +535,6 @@ def check_sec(sec_text):
         "会员群",
         "货品调配",
         "*****",
-        "汇编",
         "产品开发专员",
         "大学2字",
         "暂挂",
@@ -579,14 +567,20 @@ def check_sec(sec_text):
             traceback.print_exc()
             pass
     if "毕业时间" in sec_text:
-        graduation_time_blacks = ["2020", "21", "22", "24年-"]
+        graduation_time_blacks = ["2020", "21", "22"]
+        graduation_time_blacks1 = ["24年-"]
         graduation_time = sec_text[sec_text.index("毕业时间") : sec_text.index("毕业时间") + 15]
-        if any(item in graduation_time for item in graduation_time_blacks):
-            return False
         graduation_times = ["不限", "23"]
+        graduation_times1 = ["-24", "-25"]
         if any(item in graduation_time for item in graduation_times):
             return True
-    secs = ["23届", "23年", "24年及之前", "往届", "0-1年", "0-2年", "0-3年"]
+        if any(item in graduation_time for item in graduation_time_blacks1):
+            return False
+        if any(item in graduation_time for item in graduation_times1):
+            return True
+        if any(item in graduation_time for item in graduation_time_blacks):
+            return False
+    secs = ["23届", "23年", "24年及之前", "往届", "0-"]
     if any(item in sec_text for item in secs):
         return True
     if "截止日期" in sec_text:
@@ -597,14 +591,14 @@ def check_sec(sec_text):
         new_sec_text = sec_text
     if "24届" in new_sec_text or "24年" in new_sec_text or "24应届" in new_sec_text:
         return "23" in new_sec_text
-    secs1 = ["应届"]
+    secs1 = ["应届" "无经验"]
     if any(item in sec_text for item in secs1):
         return True
     sec_blacks1 = [
-        "年以上",
         "在校生",
         "毕业前",
         "可实习至",
+        "年以上",
         "年及以上",
         "年或以上",
         "三年",
@@ -639,7 +633,7 @@ def check_res():
         res_text = res_element.text[-10:]
         date_format = "%Y-%m-%d"
         return time.mktime(time.strptime(res_text, date_format)) < (
-            time.time() - 63072000
+            time.time() - 31536000
         )
     except:
         traceback.print_exc()
@@ -762,8 +756,6 @@ def check_industry(industry_text):
         "房产",
         "经纪",
         "工程施工",
-        "中介",
-        "区块链",
         "批发",
         "零售",
         "再生资源",
@@ -779,8 +771,6 @@ def check_title(title_text):
     title_blacks = [
         "产品",
         "支持",
-        "调试",
-        "机器视觉",
         "非开发",
         "验证",
         "笔电",
@@ -794,12 +784,10 @@ def check_title(title_text):
         "亚马逊",
         "专利",
         "代理",
-        "外包",
         "舆情",
         "处理",
         "生产",
         "服务",
-        "嵌入式软件开发",
         "装备",
         "助教",
         "销售",
@@ -807,14 +795,10 @@ def check_title(title_text):
         "员",
         "设备",
         "陪产",
-        "现场",
-        "单片机",
         "测评",
-        "游戏",
         "电话",
         "选址",
         "外贸",
-        "网络",
         "客服",
         "实验",
         "弱电",
@@ -827,14 +811,10 @@ def check_title(title_text):
         "二维",
         "动画",
         "ic",
-        "英文",
         "可靠",
         "仪器",
         "机械",
         "器械",
-        "前端",
-        "android",
-        "wpf",
         "耳机",
         "相机",
         "耗材",
@@ -846,11 +826,9 @@ def check_title(title_text):
         "实训",
         "经营",
         "对账",
-        "网络",
         "培训",
         "训练",
         "残",
-        "高级",
         "创业",
         "合伙",
         "光学",
@@ -859,14 +837,11 @@ def check_title(title_text):
         "cam",
         "座舱",
         "车",
-        "主管",
         "经理",
         "基金",
         "三维",
         "芯片",
         "布料",
-        ".net",
-        "php",
         "市场",
         "obc",
         "高性能",
@@ -876,12 +851,8 @@ def check_title(title_text):
         "采购",
         "人士",
         "管家",
-        "架构",
         "水务",
         "棋牌",
-        "组长",
-        "英语",
-        "渗透",
         "01",
         "资深",
         "专家",
@@ -889,12 +860,8 @@ def check_title(title_text):
         "台湾",
         "香港",
         "海外",
-        "电子",
         "驾驶",
-        "c#",
-        "win",
         "无人",
-        "招聘",
         "高薪",
         "egp",
         "通信",
@@ -905,14 +872,12 @@ def check_title(title_text):
         "期刊",
         "玩具",
         "电动",
-        "爬虫",
         "运营",
         "护士",
         "面料",
         "粤语",
         "内窥",
         "维修",
-        "视频",
         "文件管理",
         "惠普",
         "速卖通",
@@ -921,34 +886,40 @@ def check_title(title_text):
         "城市规划",
         "质检",
         "回收",
-        "手机",
         "无人机",
         "小白",
-        "设计",
         "收银",
         "金融",
-        "node",
-        "qt",
-        "界面",
-        "前端",
         "数据质量",
         "数据标注",
-        "c语言开发",
         "bim",
         "cad",
-        "go",
         "安卓",
-        "项目管理",
         "管理",
         "电商",
-        "算法",
         "商务",
         "审计",
         "样品",
-        "小程序开发",
-        "数据库研发",
+        "组长",
+        "主管",
+        "高级",
+        "渗透",
+        "爬虫",
+        "网络",
+        "游戏",
+        "架构",
+        "英文",
+        "英语",
+        "单片机",
+        "嵌入式软件开发",
+        "qt",
+        ".net",
+        "php",
+        "wpf",
         "开发媒介",
-        "25",
+        "c语言开发",
+        "go",
+        "c#",
     ]
     return all(item not in title_text for item in title_blacks)
 
@@ -1175,8 +1146,6 @@ def check_company(company_text):
         "店",
         "宏源电子",
         "室",
-        "馆",
-        "行",
         "鞋业",
         "鞋厂",
         "叮咚",
@@ -1203,6 +1172,28 @@ def check_company(company_text):
 # driver.find_element(By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']").click()
 # WAIT.until(ec.url_changes(driver.current_url))
 
+
+# 访问登录页面
+driver.get("https://www.zhipin.com")
+
+# 等待一段时间
+time.sleep(5)
+
+# 加载之前保存的cookie
+with open("cookies.pkl", "rb") as f:
+    cookies = pickle.load(f)
+
+# # 将cookie添加到浏览器中
+for cookie in cookies:
+    driver.add_cookie(cookie)
+
+time.sleep(5)
+
+driver.get("https://www.zhipin.com")
+
+time.sleep(5)
+
+
 Query = [
     "Java",
     "Java软件开发",
@@ -1210,9 +1201,9 @@ Query = [
     "软件自动化测试",
     "软件功能测试",
     "软件性能测试",
-    # "软件测试开发",
-    # "软件实施",
-    # "全栈工程师",
+    "软件测试开发",
+    "软件实施",
+    "全栈工程师",
     # "数据分析",
     # "数据挖掘",
     # "Python",
@@ -1225,7 +1216,7 @@ Query = [
 ]
 for item in Query:
     for salary in ["404", "403", "402"]:
-        for i in range(1, 15):
+        for i in range(1, 10):
             if resume_submission(URL1 + item + URL2 + salary + URL3 + str(i)) == -1:
                 sys.exit()
 POSITION = [
@@ -1238,13 +1229,13 @@ POSITION = [
     "Java" + URL7 + "100402",  # 运维开发
     "Java" + URL7 + "100606",  # 实施
     "Java" + URL7 + "100123",  # 全栈工程师
-    # URL7 + "100123",  # 全栈工程师
-    # "软件运维开发" + URL7 + "100402",  # 运维开发
+    URL7 + "100123",  # 全栈工程师
+    "软件运维开发" + URL7 + "100402",  # 运维开发
     # "软件运维" + URL7 + "100401",  # 运维
 ]
 for item in POSITION:
     for salary in ["404", "403", "402"]:
-        for i in range(1, 15):
+        for i in range(1, 10):
             if resume_submission(URL1 + item + URL2 + salary + URL3 + str(i)) == -1:
                 sys.exit()
 driver.quit()

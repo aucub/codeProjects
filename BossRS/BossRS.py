@@ -1,5 +1,4 @@
 import json
-import os
 import pickle
 import sys
 import time
@@ -10,7 +9,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 import undetected_chromedriver as uc
-from gpt import gpt
+
+# import os
+# from gpt import gpt
 
 URL1 = "https://www.zhipin.com/web/geek/job?query="
 URL2 = "&city=100010000&experience=101,102,103,104&scale=302,303,304,305,306&degree=209,208,206,202,203&salary="
@@ -25,7 +26,7 @@ driver = uc.Chrome(
     # user_data_dir=os.path.expanduser("~") + "/.config/google-chrome",
     version_main=120,
 )
-WAIT = WebDriverWait(driver, 5)
+WAIT = WebDriverWait(driver, 10)
 
 
 def resume_submission(url):
@@ -35,6 +36,7 @@ def resume_submission(url):
     driver.get(url)
     time.sleep(3)
     check_dialog()
+    check_verify(url)
     try:
         WAIT.until(
             ec.presence_of_element_located(
@@ -84,9 +86,11 @@ def resume_submission(url):
         except:
             traceback.print_exc()
             continue
+        print("链接:" + url + "检查中")
         time.sleep(2)
         WAIT.until(ec.presence_of_element_located((By.TAG_NAME, "pre")))
         page_source = driver.find_element(By.TAG_NAME, "pre").text
+        print("详情:" + page_source)
         data = json.loads(page_source)
         if data["message"] == "Success":
             description = data["zpData"]["jobCard"]["postDescription"]
@@ -107,6 +111,8 @@ def resume_submission(url):
             )
         )
         check_dialog()
+        check_verify(job)
+        print("职位链接:" + job + "检查中")
         btn = driver.find_element(By.CSS_SELECTOR, "[class*='btn btn-startchat']")
         try:
             if not (
@@ -191,8 +197,6 @@ def resume_submission(url):
             traceback.print_exc()
             pass
         btn.click()
-        check_dialog()
-        time.sleep(3)
         try:
             WAIT.until(ec.presence_of_element_located((By.CLASS_NAME, "dialog-con")))
         except:
@@ -201,6 +205,9 @@ def resume_submission(url):
         dialog_text = driver.find_element(By.CLASS_NAME, "dialog-con").text
         if "已达上限" in dialog_text:
             return -1
+        check_dialog()
+        check_verify(job)
+        time.sleep(3)
     return 0
 
 
@@ -290,6 +297,7 @@ def check_sec(sec_text):
     if all(item not in sec_text for item in sec_keywords):
         return False
     sec_blacks = [
+        "售后维护",
         "式样书",
         "abview",
         "标书制作",
@@ -385,6 +393,9 @@ def check_sec(sec_text):
         "sonic",
         "frr",
         "dpdk",
+        "rs232",
+        "rs485",
+        "rs422",
         "洗衣机",
         "精通c#",
         "精通.net",
@@ -534,7 +545,12 @@ def check_sec(sec_text):
         "家纺",
         "会员群",
         "货品调配",
-        "*****",
+        "****",
+        "v50",
+        "82800",
+        "tr6850",
+        "protel",
+        "pcb",
         "产品开发专员",
         "大学2字",
         "暂挂",
@@ -544,6 +560,8 @@ def check_sec(sec_text):
         "天猫商家",
         "钉群管理",
         "电商开店",
+        "泛微招聘",
+        "甲方～",
         "外貌要求",
         "恕不退还",
         "已找到",
@@ -596,6 +614,9 @@ def check_sec(sec_text):
         return True
     sec_blacks1 = [
         "在校生",
+        "大三",
+        "大四",
+        "研二",
         "毕业前",
         "可实习至",
         "年以上",
@@ -619,6 +640,20 @@ def check_dialog():
         dialog_elements = driver.find_elements(By.CLASS_NAME, "dialog-container")
         if dialog_elements:
             driver.find_element(By.CLASS_NAME, "icon-close").click
+        time.sleep(1)
+    except:
+        traceback.print_exc()
+
+
+def check_verify(url):
+    try:
+        time.sleep(1)
+        current_url = driver.current_url
+        if "safe/verify-slider" in current_url:
+            WebDriverWait(driver, 00).until(ec.url_changes(current_url))
+            time.sleep(3)
+            driver.get(url)
+            time.sleep(6)
         time.sleep(1)
     except:
         traceback.print_exc()
@@ -664,6 +699,7 @@ def check_city(city_text):
     """
     city_blacks = [
         "沈阳",
+        "辽宁",
         "辽阳",
         "齐齐哈尔",
         "塔城",
@@ -769,7 +805,11 @@ def check_title(title_text):
     """
     title_text = title_text.lower()
     title_blacks = [
+        "n2",
+        "手动",
         "产品",
+        "整机",
+        "治理",
         "支持",
         "非开发",
         "验证",
@@ -913,6 +953,8 @@ def check_title(title_text):
         "单片机",
         "嵌入式软件开发",
         "qt",
+        "unity",
+        "3d",
         ".net",
         "php",
         "wpf",
@@ -1170,7 +1212,7 @@ def check_company(company_text):
 #     )
 # )
 # driver.find_element(By.CSS_SELECTOR, "[class*='btn-sign-switch ewm-switch']").click()
-# WAIT.until(ec.url_changes(driver.current_url))
+# WebDriverWait(driver, 10000).until(ec.url_changes(driver.current_url))
 
 
 # 访问登录页面
@@ -1193,7 +1235,6 @@ driver.get("https://www.zhipin.com")
 
 time.sleep(5)
 
-
 Query = [
     "Java",
     "Java软件开发",
@@ -1202,8 +1243,10 @@ Query = [
     "软件功能测试",
     "软件性能测试",
     "软件测试开发",
+    "Python软件测试",
     "软件实施",
     "全栈工程师",
+    "软件技术文档",
     # "数据分析",
     # "数据挖掘",
     # "Python",
@@ -1212,11 +1255,10 @@ Query = [
     # "DBA",
     # "Hadoop",
     # "JavaScript",
-    # "软件技术文档",
 ]
 for item in Query:
     for salary in ["404", "403", "402"]:
-        for i in range(1, 10):
+        for i in range(1, 15):
             if resume_submission(URL1 + item + URL2 + salary + URL3 + str(i)) == -1:
                 sys.exit()
 POSITION = [
@@ -1235,7 +1277,7 @@ POSITION = [
 ]
 for item in POSITION:
     for salary in ["404", "403", "402"]:
-        for i in range(1, 10):
+        for i in range(1, 15):
             if resume_submission(URL1 + item + URL2 + salary + URL3 + str(i)) == -1:
                 sys.exit()
 driver.quit()

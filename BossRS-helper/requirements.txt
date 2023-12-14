@@ -1,0 +1,5 @@
+requests==2.31.0
+selenium==4.16.0
+undetected-chromedriver==3.5.4
+black==23.10.1
+toml==0.10.2

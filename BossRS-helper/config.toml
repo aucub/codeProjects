@@ -3,7 +3,7 @@ user_data_dir = ""
 timeout = 10
 chat = false
 salary_max = 10
-active_blacks = ["半年", "月内", "本月", "周内", "本周", "7日"]
+active_blacks = ["半年", "月内", "本月"] # , "周内", "本周", "7日"
 scale_blacks = ["-20"]
 degree_blacks = ["硕", "博"]
 experience_blacks = ["5", "10"]
@@ -771,9 +771,9 @@ querys = [
     "软件实施",
     "全栈工程师",
     "软件技术文档",
+    "Python",
     # "数据分析",
     # "数据挖掘",
-    # "Python",
     # "软件需求分析",
     # "Node.js",
     # "DBA",

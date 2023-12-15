@@ -1,5 +1,6 @@
 from attr import attrib, attrs
 
+
 @attrs
 class RsInfo:
     url: str = attrib(default="")
@@ -22,3 +23,4 @@ class RsInfo:
     active: str = attrib(default="")
     description: str = attrib(default="")
     communicate: str = attrib(default="")
+    datetime: str = attrib(default="")

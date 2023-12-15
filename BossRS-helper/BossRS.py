@@ -1,4 +1,4 @@
-import codecs
+import datetime
 import json
 import pickle
 import sys
@@ -10,6 +10,7 @@ from attr import asdict
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
+from tinydb import Query, TinyDB
 import undetected_chromedriver as uc
 from chat import Chat
 from rsinfo import RsInfo
@@ -31,7 +32,8 @@ if len(config_setting.user_data_dir) > 0 and not config_setting.user_data_dir.is
     driver.user_data_dir = config_setting.user_data_dir
 WAIT = WebDriverWait(driver, config_setting.timeout)
 
-rsinfo_dict = dict()
+db = TinyDB("rsinfo.json", ensure_ascii=False)
+Info = Query()
 
 
 def resume_submission(url):
@@ -76,9 +78,11 @@ def resume_submission(url):
         rsinfo.url = job_element.find_element(
             By.CLASS_NAME, "job-card-left"
         ).get_attribute("href")
+        rsinfo.datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         rsinfo.id = get_encryptJobId(rsinfo.url)
-        if rsinfo.id in rsinfo_dict:
-            if not is_ready_to_communicate(rsinfo_dict[rsinfo.id].communicate):
+        record = db.get(Info.id == rsinfo.id)
+        if record:
+            if not is_ready_to_communicate(RsInfo(**record).communicate):
                 continue
         if (
             check_name(rsinfo.name)
@@ -88,7 +92,7 @@ def resume_submission(url):
             and is_ready_to_communicate(rsinfo.communicate)
         ):
             urls.append(rsinfo.url)
-        rsinfo_dict[rsinfo.id] = rsinfo
+        update_rsinfos(rsinfo)
     for url in urls:
         parsed_url = urlparse(url)
         query_params = parse_qs(parsed_url.query)
@@ -104,7 +108,7 @@ def resume_submission(url):
         page_source = driver.find_element(By.TAG_NAME, "pre").text
         data = json.loads(page_source)
         if data["message"] == "Success":
-            rsinfo = rsinfo_dict[get_encryptJobId(url)]
+            rsinfo = get_rsinfo(get_encryptJobId(url))
             rsinfo.description = data["zpData"]["jobCard"]["postDescription"]
             rsinfo.active = data["zpData"]["jobCard"]["activeTimeDesc"]
             rsinfo.address = data["zpData"]["jobCard"]["address"]
@@ -114,7 +118,7 @@ def resume_submission(url):
             rsinfo.degree = data["zpData"]["jobCard"]["degreeName"]
             rsinfo.boss = data["zpData"]["jobCard"]["bossName"]
             rsinfo.bossTitle = data["zpData"]["jobCard"]["bossTitle"]
-            rsinfo_dict[get_encryptJobId(url)] = rsinfo
+            update_rsinfos(rsinfo)
             if not (
                 check_description(rsinfo.description)
                 and check_active(rsinfo.active)
@@ -126,7 +130,6 @@ def resume_submission(url):
             ):
                 continue
         submissions.append(url)
-    save_rsinfos()
     for submission in submissions:
         driver.get(submission)
         WAIT.until(
@@ -138,7 +141,7 @@ def resume_submission(url):
         check_verify(submission)
         startchat = driver.find_element(By.CSS_SELECTOR, "[class*='btn btn-startchat']")
         try:
-            rsinfo = rsinfo_dict[get_encryptJobId(submission)]
+            rsinfo = get_rsinfo(get_encryptJobId(url))
             rsinfo.guide = driver.find_element(
                 By.CSS_SELECTOR, "[class*='pos-bread city-job-guide']"
             ).text
@@ -154,7 +157,7 @@ def resume_submission(url):
             ).text
             rsinfo.res = driver.find_element(By.CSS_SELECTOR, ".res-time").text
             rsinfo.communicate = startchat.text
-            rsinfo_dict[get_encryptJobId(submission)] = rsinfo
+            update_rsinfos(rsinfo)
             if not (
                 check_guide(rsinfo.guide)
                 and check_scale(rsinfo.scale)
@@ -173,9 +176,9 @@ def resume_submission(url):
             traceback.print_exc()
             continue
         startchat.click()
-        rsinfo = rsinfo_dict[get_encryptJobId(submission)]
+        rsinfo = get_rsinfo(get_encryptJobId(submission))
         rsinfo.communicate = "继续沟通"
-        rsinfo_dict[get_encryptJobId(submission)] = rsinfo
+        update_rsinfos(rsinfo)
         try:
             WAIT.until(ec.presence_of_element_located((By.CLASS_NAME, "dialog-con")))
         except:
@@ -186,26 +189,22 @@ def resume_submission(url):
             return -1
         check_dialog()
         time.sleep(3)
-    save_rsinfos()
     return 0
 
 
-def save_rsinfos():
-    rsinfo_list = []
-    for rsinfo in rsinfo_dict.values():
-        rsinfo_list.append(json.dumps(asdict(rsinfo), ensure_ascii=False))
-    with open("rsinfo.txt", "w", encoding="utf-8") as f:
-        for item in rsinfo_list:
-            f.write(item + "\n")
+def update_rsinfos(rsinfo):
+    if len(rsinfo.id) == 0 or rsinfo.id.isspace():
+        print("无法更新无效的对象")
+        return
+    db.upsert(asdict(rsinfo), Info.id == rsinfo.id)
 
 
-def load_rsinfos():
-    rsinfo_dict = {}
-    with codecs.open("rsinfo.txt", "r", "utf-8-sig") as f:
-        for line in f:
-            json_dict = json.loads(line)
-            rsinfo = RsInfo(**json_dict)
-            rsinfo_dict[rsinfo.id] = rsinfo
+def get_rsinfo(id):
+    record = db.get(Info.id == id)
+    if record:
+        return RsInfo(**record)
+    else:
+        return RsInfo()
 
 
 def get_encryptJobId(url):
@@ -460,8 +459,6 @@ for cookie in cookies:
     driver.add_cookie(cookie)
 time.sleep(5)
 driver.get("https://www.zhipin.com")
-
-load_rsinfos()
 
 time.sleep(5)
 

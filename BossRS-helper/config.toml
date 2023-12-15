@@ -3,7 +3,7 @@ user_data_dir = ""
 timeout = 10
 chat = false
 salary_max = 10
-active_blacks = ["半年", "月内", "本月"] # , "周内", "本周", "7日"
+active_blacks = ["半年", "月内", "本月", "周内", "本周", "7日"]
 scale_blacks = ["-20"]
 degree_blacks = ["硕", "博"]
 experience_blacks = ["5", "10"]
@@ -53,8 +53,20 @@ city_blacks = [
     "平顶山",
 ]
 bossTitle_blacks = ["总裁", "总经理", "ceo", "创始人", "法人"]
-industry_blacks = ["培训", "教育", "院校", "房产", "经纪", "工程施工", "批发", "零售", "再生资源"]
+industry_blacks = [
+    "培训",
+    "教育",
+    "院校",
+    "房产",
+    "经纪",
+    "工程施工",
+    "批发",
+    "零售",
+    "再生资源",
+    "人力资源",
+]
 name_blacks = [
+    "富士康",
     "n2",
     "手动",
     "产品",
@@ -227,6 +239,8 @@ company_blacks = [
     "企业管理",
     "信息咨询",
     "美婷",
+    "富士康",
+    "富泰华",
     "富联富桂",
     "培训",
     "职业",
@@ -463,6 +477,8 @@ description_keywords = [
 ]
 description_blacks = [
     "售后维护",
+    "英文面试",
+    "英语面试",
     "式样书",
     "abview",
     "标书制作",
@@ -557,11 +573,13 @@ description_blacks = [
     "vpp",
     "sonic",
     "frr",
+    "cvi",
     "dpdk",
     "rs232",
     "rs485",
     "rs422",
     "洗衣机",
+    "熟悉opencv",
     "精通c#",
     "精通.net",
     "掌握c#",
@@ -601,6 +619,7 @@ description_blacks = [
     "蓝牙耳机",
     "游戏测试",
     "汽车",
+    "驾驶",
     "车厂",
     "机器人",
     "硬件控制",
@@ -770,8 +789,8 @@ querys = [
     "Python软件测试",
     "软件实施",
     "全栈工程师",
-    "软件技术文档",
     "Python",
+    # "软件技术文档",
     # "数据分析",
     # "数据挖掘",
     # "软件需求分析",

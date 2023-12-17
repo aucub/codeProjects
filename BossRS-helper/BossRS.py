@@ -50,7 +50,7 @@ def resume_submission(url):
                 (By.CSS_SELECTOR, "[class*='job-title clearfix']")
             )
         )
-    except:
+    except Exception:
         traceback.print_exc()
         return 1
     submissions = []
@@ -100,7 +100,7 @@ def resume_submission(url):
         security_id = query_params.get("securityId", [None])[0]
         try:
             driver.get(URL4 + security_id + URL5 + lid + URL6)
-        except:
+        except Exception:
             traceback.print_exc()
             continue
         time.sleep(2)
@@ -172,7 +172,7 @@ def resume_submission(url):
             if config_setting.chat:
                 if not Chat.check(rsinfo.description):
                     continue
-        except:
+        except Exception:
             traceback.print_exc()
             continue
         startchat.click()
@@ -181,7 +181,7 @@ def resume_submission(url):
         update_rsinfos(rsinfo)
         try:
             WAIT.until(ec.presence_of_element_located((By.CLASS_NAME, "dialog-con")))
-        except:
+        except Exception:
             traceback.print_exc()
             continue
         dialog_text = driver.find_element(By.CLASS_NAME, "dialog-con").text
@@ -281,13 +281,14 @@ def check_description(description_text):
         return False
     if "截止日期" in description_text:
         exp_date_text = description_text[
-            description_text.index("截止日期") + 5 : description_text.index("截止日期") + 15
+            description_text.index("截止日期") + 5 : description_text.index("截止日期")
+            + 15
         ]
         date_format = "%Y.%m.%d"
         try:
             if time.mktime(time.strptime(exp_date_text, date_format)) < time.time():
                 return False
-        except:
+        except Exception:
             traceback.print_exc()
             pass
         description_text = (
@@ -332,7 +333,7 @@ def check_dialog():
         if dialog_elements:
             driver.find_element(By.CLASS_NAME, "icon-close").click
         time.sleep(1)
-    except:
+    except Exception:
         traceback.print_exc()
 
 
@@ -346,7 +347,7 @@ def check_verify(url):
             driver.get(url)
             time.sleep(6)
         time.sleep(1)
-    except:
+    except Exception:
         traceback.print_exc()
 
 
@@ -360,7 +361,7 @@ def check_res(res_text):
         return time.mktime(time.strptime(res_text, date_format)) < (
             time.time() - config_setting.res
         )
-    except:
+    except Exception:
         traceback.print_exc()
         return True
 
@@ -387,7 +388,10 @@ def check_city(city_text):
     """
     检查城市
     """
-    return all(item not in city_text for item in config_setting.city_blacks)
+    try:
+        return all(item not in city_text for item in config_setting.city_blacks)
+    except Exception:
+        return True
 
 
 def check_bossTitle(bossTitle_text):

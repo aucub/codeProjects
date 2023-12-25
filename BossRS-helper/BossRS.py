@@ -41,7 +41,6 @@ def resume_submission(url):
     投递简历
     """
     driver.get(url)
-    time.sleep(3)
     check_dialog()
     check_verify(url)
     try:
@@ -103,7 +102,7 @@ def resume_submission(url):
         except Exception:
             traceback.print_exc()
             continue
-        time.sleep(2)
+        time.sleep(0.6)
         WAIT.until(ec.presence_of_element_located((By.TAG_NAME, "pre")))
         page_source = driver.find_element(By.TAG_NAME, "pre").text
         data = json.loads(page_source)
@@ -188,7 +187,7 @@ def resume_submission(url):
         if "已达上限" in dialog_text:
             return -1
         check_dialog()
-        time.sleep(3)
+        time.sleep(1)
     return 0
 
 
@@ -455,16 +454,13 @@ def check_company(company_text):
 
 driver.get("https://www.zhipin.com")
 time.sleep(5)
-# 加载之前保存的cookie
-with open("cookies.pkl", "rb") as f:
+with open(config_setting.cookie_path, "rb") as f:
     cookies = pickle.load(f)
-# # 将cookie添加到浏览器中
 for cookie in cookies:
     driver.add_cookie(cookie)
-time.sleep(5)
+time.sleep(2)
 driver.get("https://www.zhipin.com")
-
-time.sleep(5)
+time.sleep(2)
 
 for item in config_setting.querys:
     for salary in config_setting.salarys:

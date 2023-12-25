@@ -17,11 +17,11 @@ time.sleep(5)
 with open("cookies.pkl", "rb") as f:
     cookies = pickle.load(f)
 
-# 将 cookies 转换为字符串
-cookies_string = str(cookies)
+# # 将 cookies 转换为字符串
+# cookies_string = str(cookies)
 
-# 打印或保存 cookies 字符串
-print(cookies_string)
+# # 打印或保存 cookies 字符串
+# print(cookies_string)
 
 # 将cookie添加到浏览器中
 for cookie in cookies:
@@ -31,7 +31,7 @@ time.sleep(5)
 
 driver.get("https://www.zhipin.com")
 
-time.sleep(5)
+time.sleep(9999)
 
 # 关闭浏览器
 driver.quit()

@@ -32,7 +32,7 @@ if len(config_setting.user_data_dir) > 0 and not config_setting.user_data_dir.is
     driver.user_data_dir = config_setting.user_data_dir
 WAIT = WebDriverWait(driver, config_setting.timeout)
 
-db = TinyDB("rsinfo.json", ensure_ascii=False)
+db = TinyDB(config_setting.db_path, ensure_ascii=False)
 Info = Query()
 
 

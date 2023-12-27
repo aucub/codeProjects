@@ -1,6 +1,7 @@
 headless = false
 user_data_dir = ""
 cookie_path = "cookies.pkl"
+db_path = "rsinfo.json"
 timeout = 10
 chat = false
 salary_max = 10
@@ -51,8 +52,17 @@ city_blacks = [
 bossTitle_blacks = ["总裁", "总经理", "ceo", "创始人", "法人"]
 industry_blacks = ["培训", "教育", "院校", "房产", "经纪", "工程施工", "批发", "零售", "再生资源"]
 name_blacks = [
+    "轮班",
+    "监控",
+    "专员",
+    "人员",
+    "测试员",
+    "桌面运维",
+    "上门",
+    "数据运维",
     "富士康",
     "n2",
+    "leader",
     "整机",
     "治理",
     "笔电",
@@ -438,9 +448,18 @@ description_keywords = [
     "编程",
 ]
 description_blacks = [
+    "轮班",
+    "倒班",
+    "7*24",
     "英文面试",
     "英语面试",
     "abview",
+    "unity",
+    "django",
+    "tornado",
+    "flask",
+    "ue引擎",
+    "3d引擎",
     "标书制作",
     "市场推广",
     "呼叫",
@@ -674,6 +693,7 @@ description_blacks = [
     "无人机",
     "家纺",
     "会员群",
+    "群消息",
     "货品调配",
     "*****",
     "v50",
@@ -732,12 +752,12 @@ querys = [
     "Python软件测试",
     "软件实施",
     "全栈工程师",
-    "Python",
     # "软件技术文档",
     # "数据分析",
     # "数据挖掘",
     # "软件需求分析",
     # "Node.js",
+    # "Python",
     # "DBA",
     # "Hadoop",
     # "JavaScript",

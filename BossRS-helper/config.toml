@@ -3,9 +3,9 @@ user_data_dir = ""
 cookie_path = "cookies.pkl"
 db_path = "rsinfo.json"
 timeout = 10
-chat = false
+chat = true
 salary_max = 10
-active_blacks = ["半年", "月内", "本月", "周内", "本周", "7日"]
+active_blacks = ["半年", "月内", "本月"] # "周内", "本周", "7日"
 scale_blacks = ["-20"]
 degree_blacks = ["硕", "博"]
 experience_blacks = ["5", "10"]
@@ -54,9 +54,6 @@ industry_blacks = ["培训", "教育", "院校", "房产", "经纪", "工程施�
 name_blacks = [
     "轮班",
     "监控",
-    "专员",
-    "人员",
-    "测试员",
     "桌面运维",
     "上门",
     "数据运维",
@@ -427,8 +424,8 @@ guide_blacks = [
 ]
 update = 2592000
 offline_interview = true
-offline_citys = ["杭州"]
-description_min = 50
+offline_citys = ["杭州", "嘉兴"]
+description_min = 35
 description_keywords = [
     "java",
     "python",
@@ -465,7 +462,6 @@ description_blacks = [
     "呼叫",
     "仪器设备",
     "信号采集",
-    "售后技术",
     "驾照",
     "三班倒",
     "红绿灯",
@@ -777,4 +773,4 @@ querys = [
 query_params = "&city=100010000&experience=101,102,103,104&scale=302,303,304,305,306&degree=209,208,206,202,203"
 salarys = ["404", "403", "402"]
 range_min = 1
-range_max = 5
+range_max = 10

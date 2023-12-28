@@ -71,9 +71,14 @@ def resume_submission(url):
             .find_element(By.TAG_NAME, "li")
             .text
         )
-        rsinfo.communicate = job_element.find_element(
-            By.CSS_SELECTOR, "[class*='job-info clearfix']"
-        ).get_attribute("innerHTML")
+        if is_ready_to_communicate(
+            job_element.find_element(
+                By.CSS_SELECTOR, "[class*='job-info clearfix']"
+            ).get_attribute("innerHTML")
+        ):
+            rsinfo.communicate = "立即沟通"
+        else:
+            rsinfo.communicate = "继续沟通"
         rsinfo.url = job_element.find_element(
             By.CLASS_NAME, "job-card-left"
         ).get_attribute("href")
@@ -330,8 +335,8 @@ def check_dialog():
         time.sleep(1)
         dialog_elements = driver.find_elements(By.CLASS_NAME, "dialog-container")
         if dialog_elements:
-            driver.find_element(By.CLASS_NAME, "icon-close").click
-        time.sleep(1)
+            dialog_elements.find_element(By.CSS_SELECTOR, "a.close").click
+            time.sleep(1)
     except Exception:
         traceback.print_exc()
 
@@ -341,7 +346,7 @@ def check_verify(url):
         time.sleep(1)
         current_url = driver.current_url
         if "safe/verify-slider" in current_url:
-            WebDriverWait(driver, 00).until(ec.url_changes(current_url))
+            WebDriverWait(driver, 999).until(ec.url_changes(current_url))
             time.sleep(3)
             driver.get(url)
             time.sleep(6)

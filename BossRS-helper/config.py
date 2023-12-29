@@ -10,7 +10,7 @@ class Config:
     headless: bool = False
     user_data_dir: str = ""
     cookie_path: str = "cookies.pkl"
-    db_path: str = "rsinfo.json"
+    db_path: str = "rsinfo.db"
     timeout: int = 10
     chat: bool = False
     salary_max: int = 10  # 最大薪水

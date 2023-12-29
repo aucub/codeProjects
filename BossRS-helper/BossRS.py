@@ -31,7 +31,7 @@ if len(config_setting.user_data_dir) > 0 and not config_setting.user_data_dir.is
     driver.user_data_dir = config_setting.user_data_dir
 WAIT = WebDriverWait(driver, config_setting.timeout)
 
-conn = sqlite3.connect("rsinfo.db")
+conn = sqlite3.connect(config_setting.db_path)
 cursor = conn.cursor()
 
 
@@ -86,16 +86,16 @@ def resume_submission(url):
         )
         rsinfo.datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         rsinfo.id = get_encryptJobId(rsinfo.url)
-        cursor.execute("SELECT * FROM rsinfo WHERE id = ?", (rsinfo.id))
+        cursor.execute("SELECT * FROM rsinfo WHERE id = ?", (rsinfo.id,))
         row = cursor.fetchone()
         if row:
-            if not is_ready_to_communicate(RsInfo(**row).communicate):
+            if not is_ready_to_communicate(RsInfo(*row).communicate):
                 continue
         if (
             check_name(rsinfo.name)
             and check_city(rsinfo.city)
             and check_company(rsinfo.company)
-            and check_industry(rsinfo.companyTag)
+            and check_industry(rsinfo.industry)
             and is_ready_to_communicate(rsinfo.communicate)
         ):
             urls.append(
@@ -104,6 +104,7 @@ def resume_submission(url):
                 )
             )
         update_rsinfos(rsinfo)
+    conn.commit()
     for url in urls:
         parsed_url = urlparse(url)
         query_params = parse_qs(parsed_url.query)
@@ -137,10 +138,11 @@ def resume_submission(url):
                 and check_salary(rsinfo.salary)
                 and check_experience(rsinfo.experience)
                 and check_degree(rsinfo.degree)
-                and check_bossTitle(rsinfo.bossTitle)
+                and check_bossTitle(rsinfo.boss_title)
             ):
                 continue
         submissions.append(url)
+    conn.commit()
     for submission in submissions:
         driver.get(submission)
         WAIT.until(
@@ -214,6 +216,7 @@ def resume_submission(url):
             return -1
         check_dialog()
         time.sleep(1)
+    conn.commit()
     return 0
 
 
@@ -221,7 +224,7 @@ def update_rsinfos(rsinfo):
     if len(rsinfo.id) == 0 or rsinfo.id.isspace():
         print("无法更新无效的对象")
         return
-    cursor.execute("SELECT * FROM rsinfo WHERE id = ?", (id,))
+    cursor.execute("SELECT * FROM rsinfo WHERE id = ?", (rsinfo.id,))
     row = cursor.fetchone()
     if row:
         cursor.execute(
@@ -252,7 +255,7 @@ def update_rsinfos(rsinfo):
         )
     else:
         cursor.execute(
-            "INSERT INTO rsinfo (url, id, name, city, address, guide, scale, update_date, salary, experience, degree,     company, company_tag, fund, res, boss, boss_title, active, description, communicate, datetime) VALUES     (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO rsinfo (url, id, name, city, address, guide, scale, update_date, salary, experience, degree,     company, industry, fund, res, boss, boss_title, active, description, communicate, datetime) VALUES     (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 rsinfo.url,
                 rsinfo.id,
@@ -280,10 +283,10 @@ def update_rsinfos(rsinfo):
 
 
 def get_rsinfo(id):
-    cursor.execute("SELECT * FROM rsinfo WHERE id = ?", (id))
+    cursor.execute("SELECT * FROM rsinfo WHERE id = ?", (id,))
     row = cursor.fetchone()
     if row:
-        return RsInfo(**row)
+        return RsInfo(*row)
     else:
         return RsInfo()
 
@@ -408,10 +411,11 @@ def check_description(description_text):
 def check_dialog():
     try:
         time.sleep(1)
-        dialog_element = driver.find_element(By.CLASS_NAME, "dialog-container")
-        if dialog_element:
-            dialog_element.find_element(By.CSS_SELECTOR, "a.close").click
-            time.sleep(1)
+        dialog_elements = driver.find_elements(By.CLASS_NAME, "dialog-container")
+        if dialog_elements:
+            if dialog_elements[0].find_elements(By.CSS_SELECTOR, "a.close"):
+                dialog_elements[0].find_elements(By.CSS_SELECTOR, "a.close")[0].click
+                time.sleep(1)
     except Exception:
         traceback.print_exc()
 
@@ -548,3 +552,4 @@ for item in config_setting.querys:
             if resume_submission(URL1 + item + URL2 + salary + URL3 + str(i)) == -1:
                 sys.exit()
 driver.quit()
+conn.close()

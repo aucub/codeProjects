@@ -6,11 +6,10 @@ import time
 import re
 import traceback
 from urllib.parse import urlparse, parse_qs
-from attr import asdict
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
-from tinydb import Query, TinyDB
+import sqlite3
 import undetected_chromedriver as uc
 from chat import Chat
 from rsinfo import RsInfo
@@ -32,8 +31,8 @@ if len(config_setting.user_data_dir) > 0 and not config_setting.user_data_dir.is
     driver.user_data_dir = config_setting.user_data_dir
 WAIT = WebDriverWait(driver, config_setting.timeout)
 
-db = TinyDB(config_setting.db_path, ensure_ascii=False)
-Info = Query()
+conn = sqlite3.connect("rsinfo.db")
+cursor = conn.cursor()
 
 
 def resume_submission(url):
@@ -66,7 +65,7 @@ def resume_submission(url):
             .find_element(By.TAG_NAME, "a")
             .text
         )
-        rsinfo.companyTag = (
+        rsinfo.industry = (
             job_element.find_element(By.CLASS_NAME, "company-tag-list")
             .find_element(By.TAG_NAME, "li")
             .text
@@ -79,14 +78,18 @@ def resume_submission(url):
             rsinfo.communicate = "立即沟通"
         else:
             rsinfo.communicate = "继续沟通"
-        rsinfo.url = job_element.find_element(
-            By.CLASS_NAME, "job-card-left"
-        ).get_attribute("href")
+        rsinfo.url = (
+            job_element.find_element(By.CLASS_NAME, "job-card-left")
+            .get_attribute("href")
+            .split("html")[0]
+            + "html"
+        )
         rsinfo.datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         rsinfo.id = get_encryptJobId(rsinfo.url)
-        record = db.get(Info.id == rsinfo.id)
-        if record:
-            if not is_ready_to_communicate(RsInfo(**record).communicate):
+        cursor.execute("SELECT * FROM rsinfo WHERE id = ?", (rsinfo.id))
+        row = cursor.fetchone()
+        if row:
+            if not is_ready_to_communicate(RsInfo(**row).communicate):
                 continue
         if (
             check_name(rsinfo.name)
@@ -95,7 +98,11 @@ def resume_submission(url):
             and check_industry(rsinfo.companyTag)
             and is_ready_to_communicate(rsinfo.communicate)
         ):
-            urls.append(rsinfo.url)
+            urls.append(
+                job_element.find_element(By.CLASS_NAME, "job-card-left").get_attribute(
+                    "href"
+                )
+            )
         update_rsinfos(rsinfo)
     for url in urls:
         parsed_url = urlparse(url)
@@ -121,7 +128,7 @@ def resume_submission(url):
             rsinfo.experience = data["zpData"]["jobCard"]["experienceName"]
             rsinfo.degree = data["zpData"]["jobCard"]["degreeName"]
             rsinfo.boss = data["zpData"]["jobCard"]["bossName"]
-            rsinfo.bossTitle = data["zpData"]["jobCard"]["bossTitle"]
+            rsinfo.boss_title = data["zpData"]["jobCard"]["bossTitle"]
             update_rsinfos(rsinfo)
             if not (
                 check_description(rsinfo.description)
@@ -145,28 +152,42 @@ def resume_submission(url):
         check_verify(submission)
         startchat = driver.find_element(By.CSS_SELECTOR, "[class*='btn btn-startchat']")
         try:
-            rsinfo = get_rsinfo(get_encryptJobId(url))
+            rsinfo = get_rsinfo(get_encryptJobId(submission))
             rsinfo.guide = driver.find_element(
                 By.CSS_SELECTOR, "[class*='pos-bread city-job-guide']"
             ).text
+            if len(rsinfo.guide) > 2:
+                rsinfo.guide = rsinfo.guide[2:]
             rsinfo.scale = driver.find_element(
                 By.CSS_SELECTOR, ".sider-company > p:nth-child(4)"
             ).text
-            rsinfo.update = driver.find_element(By.CSS_SELECTOR, "p.gray").text
+            if "人" not in rsinfo.scale:
+                rsinfo.scale = ""
+            rsinfo.update_date = driver.find_element(By.CSS_SELECTOR, "p.gray").text
+            if len(rsinfo.update_date) > 4:
+                rsinfo.update_date = rsinfo.update_date[4:]
             rsinfo.description = driver.find_element(
                 By.CLASS_NAME, "job-detail-section"
             ).text
-            rsinfo.fund = driver.find_element(
-                By.CSS_SELECTOR, "[class*='company-fund']"
-            ).text
+            try:
+                rsinfo.fund = driver.find_element(
+                    By.CSS_SELECTOR, "[class*='company-fund']"
+                ).text
+                if len(rsinfo.fund.splitlines()) > 1:
+                    rsinfo.fund = rsinfo.fund.splitlines()[-1]
+            except Exception:
+                traceback.print_exc()
+                pass
             rsinfo.res = driver.find_element(By.CSS_SELECTOR, ".res-time").text
+            if len(rsinfo.res.splitlines()) > 1:
+                rsinfo.res = rsinfo.res.splitlines()[-1]
             rsinfo.communicate = startchat.text
             update_rsinfos(rsinfo)
             if not (
                 check_guide(rsinfo.guide)
                 and check_scale(rsinfo.scale)
                 and check_res(rsinfo.res)
-                and check_update(rsinfo.update)
+                and check_update(rsinfo.update_date)
                 and check_description(rsinfo.description)
                 and check_offline(rsinfo.description, rsinfo.city)
                 and check_fund(rsinfo.fund)
@@ -200,13 +221,69 @@ def update_rsinfos(rsinfo):
     if len(rsinfo.id) == 0 or rsinfo.id.isspace():
         print("无法更新无效的对象")
         return
-    db.upsert(asdict(rsinfo), Info.id == rsinfo.id)
+    cursor.execute("SELECT * FROM rsinfo WHERE id = ?", (id,))
+    row = cursor.fetchone()
+    if row:
+        cursor.execute(
+            "UPDATE rsinfo SET url=?, name=?, city=?, address=?, guide=?, scale=?, update_date=?, salary=?, experience=?, degree=?, company=?, industry=?, fund=?, res=?, boss=?, boss_title=?, active=?, description=?, communicate=?, datetime=? WHERE id=?",
+            (
+                rsinfo.url,
+                rsinfo.name,
+                rsinfo.city,
+                rsinfo.address,
+                rsinfo.guide,
+                rsinfo.scale,
+                rsinfo.update_date,
+                rsinfo.salary,
+                rsinfo.experience,
+                rsinfo.degree,
+                rsinfo.company,
+                rsinfo.industry,
+                rsinfo.fund,
+                rsinfo.res,
+                rsinfo.boss,
+                rsinfo.boss_title,
+                rsinfo.active,
+                rsinfo.description,
+                rsinfo.communicate,
+                rsinfo.datetime,
+                rsinfo.id,
+            ),
+        )
+    else:
+        cursor.execute(
+            "INSERT INTO rsinfo (url, id, name, city, address, guide, scale, update_date, salary, experience, degree,     company, company_tag, fund, res, boss, boss_title, active, description, communicate, datetime) VALUES     (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                rsinfo.url,
+                rsinfo.id,
+                rsinfo.name,
+                rsinfo.city,
+                rsinfo.address,
+                rsinfo.guide,
+                rsinfo.scale,
+                rsinfo.update_date,
+                rsinfo.salary,
+                rsinfo.experience,
+                rsinfo.degree,
+                rsinfo.company,
+                rsinfo.industry,
+                rsinfo.fund,
+                rsinfo.res,
+                rsinfo.boss,
+                rsinfo.boss_title,
+                rsinfo.active,
+                rsinfo.description,
+                rsinfo.communicate,
+                rsinfo.datetime,
+            ),
+        )
 
 
 def get_rsinfo(id):
-    record = db.get(Info.id == id)
-    if record:
-        return RsInfo(**record)
+    cursor.execute("SELECT * FROM rsinfo WHERE id = ?", (id))
+    row = cursor.fetchone()
+    if row:
+        return RsInfo(**row)
     else:
         return RsInfo()
 
@@ -253,8 +330,6 @@ def check_fund(fund_text):
     """
     if "-" in fund_text:
         return False
-    lines = fund_text.splitlines()
-    fund_text = lines[-1]
     fund_text = fund_text[:-3]
     return all(fund_text not in item for item in config_setting.fund_blacks)
 
@@ -333,9 +408,9 @@ def check_description(description_text):
 def check_dialog():
     try:
         time.sleep(1)
-        dialog_elements = driver.find_elements(By.CLASS_NAME, "dialog-container")
-        if dialog_elements:
-            dialog_elements.find_element(By.CSS_SELECTOR, "a.close").click
+        dialog_element = driver.find_element(By.CLASS_NAME, "dialog-container")
+        if dialog_element:
+            dialog_element.find_element(By.CSS_SELECTOR, "a.close").click
             time.sleep(1)
     except Exception:
         traceback.print_exc()

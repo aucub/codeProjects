@@ -177,12 +177,13 @@ def resume_submission(url):
                 ).text
                 if len(rsinfo.fund.splitlines()) > 1:
                     rsinfo.fund = rsinfo.fund.splitlines()[-1]
+                rsinfo.res = driver.find_element(By.CSS_SELECTOR, ".res-time").text
+                if len(rsinfo.res.splitlines()) > 1:
+                    rsinfo.res = rsinfo.res.splitlines()[-1]
             except Exception:
+                print(submission)
                 traceback.print_exc()
                 pass
-            rsinfo.res = driver.find_element(By.CSS_SELECTOR, ".res-time").text
-            if len(rsinfo.res.splitlines()) > 1:
-                rsinfo.res = rsinfo.res.splitlines()[-1]
             rsinfo.communicate = startchat.text
             update_rsinfos(rsinfo)
             if not (
@@ -200,6 +201,7 @@ def resume_submission(url):
                 if not Chat.check(rsinfo.description):
                     continue
         except Exception:
+            print(submission)
             traceback.print_exc()
             continue
         startchat.click()
@@ -209,6 +211,7 @@ def resume_submission(url):
         try:
             WAIT.until(ec.presence_of_element_located((By.CLASS_NAME, "dialog-con")))
         except Exception:
+            print(submission)
             traceback.print_exc()
             continue
         dialog_text = driver.find_element(By.CLASS_NAME, "dialog-con").text
@@ -453,11 +456,14 @@ def check_update(update_text):
     """
     检查更新日期
     """
-    update_text = update_text[-10:]
-    date_format = "%Y-%m-%d"
-    return time.mktime(time.strptime(update_text, date_format)) > (
-        time.time() - config_setting.update
-    )
+    try:
+        update_text = update_text[-10:]
+        date_format = "%Y-%m-%d"
+        return time.mktime(time.strptime(update_text, date_format)) > (
+            time.time() - config_setting.update
+        )
+    except Exception:
+        return True
 
 
 def is_ready_to_communicate(startchat_text):

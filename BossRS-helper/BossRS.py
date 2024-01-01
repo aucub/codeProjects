@@ -58,6 +58,22 @@ def resume_submission(url):
     )
     for job_element in job_elements:
         rsinfo = RsInfo()
+        if is_ready_to_communicate(
+            job_element.find_element(
+                By.CSS_SELECTOR, "[class*='job-info clearfix']"
+            ).get_attribute("innerHTML")
+        ):
+            rsinfo.communicate = "立即沟通"
+        else:
+            rsinfo.communicate = "继续沟通"
+        url = job_element.find_element(By.CLASS_NAME, "job-card-left").get_attribute(
+            "href"
+        )
+        id = get_encryptJobId(url)
+        row = get_rsinfo(id)
+        if row.id == id:
+            rsinfo = row
+        rsinfo.url = url.split("&securityId")[0]
         rsinfo.name = job_element.find_element(By.CLASS_NAME, "job-name").text
         rsinfo.city = job_element.find_element(By.CLASS_NAME, "job-area").text
         rsinfo.company = (
@@ -70,40 +86,17 @@ def resume_submission(url):
             .find_element(By.TAG_NAME, "li")
             .text
         )
-        if is_ready_to_communicate(
-            job_element.find_element(
-                By.CSS_SELECTOR, "[class*='job-info clearfix']"
-            ).get_attribute("innerHTML")
-        ):
-            rsinfo.communicate = "立即沟通"
-        else:
-            rsinfo.communicate = "继续沟通"
-        rsinfo.url = (
-            job_element.find_element(By.CLASS_NAME, "job-card-left")
-            .get_attribute("href")
-            .split("html")[0]
-            + "html"
-        )
         rsinfo.datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        rsinfo.id = get_encryptJobId(rsinfo.url)
-        cursor.execute("SELECT * FROM rsinfo WHERE id = ?", (rsinfo.id,))
-        row = cursor.fetchone()
-        if row:
-            if not is_ready_to_communicate(RsInfo(*row).communicate):
-                continue
+        rsinfo.id = id
+        update_rsinfos(rsinfo)
         if (
-            check_name(rsinfo.name)
+            is_ready_to_communicate(rsinfo.communicate)
+            and check_name(rsinfo.name)
             and check_city(rsinfo.city)
             and check_company(rsinfo.company)
             and check_industry(rsinfo.industry)
-            and is_ready_to_communicate(rsinfo.communicate)
         ):
-            urls.append(
-                job_element.find_element(By.CLASS_NAME, "job-card-left").get_attribute(
-                    "href"
-                )
-            )
-        update_rsinfos(rsinfo)
+            urls.append(url)
     conn.commit()
     for url in urls:
         parsed_url = urlparse(url)
@@ -121,6 +114,7 @@ def resume_submission(url):
         data = json.loads(page_source)
         if data["message"] == "Success":
             rsinfo = get_rsinfo(get_encryptJobId(url))
+            rsinfo.url = url.split("&securityId")[0]
             rsinfo.description = data["zpData"]["jobCard"]["postDescription"]
             rsinfo.active = data["zpData"]["jobCard"]["activeTimeDesc"]
             rsinfo.address = data["zpData"]["jobCard"]["address"]
@@ -258,7 +252,7 @@ def update_rsinfos(rsinfo):
         )
     else:
         cursor.execute(
-            "INSERT INTO rsinfo (url, id, name, city, address, guide, scale, update_date, salary, experience, degree,     company, industry, fund, res, boss, boss_title, active, description, communicate, datetime) VALUES     (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO rsinfo (url, id, name, city, address, guide, scale, update_date, salary, experience, degree, company, industry, fund, res, boss, boss_title, active, description, communicate, datetime) VALUES     (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 rsinfo.url,
                 rsinfo.id,
@@ -396,13 +390,13 @@ def check_description(description_text):
             return True
         if any(item in graduation_time for item in graduation_time_blacks):
             return False
-    graduations_experiences = ["23届", "23年", "24年及之前", "往届", "0-"]
+    graduations_experiences = ["23届", "23年", "24年及之前", "往届", "0-", "0～", "0~"]
     if any(item in description_text for item in graduations_experiences):
         return True
     graduations_max = ["24届", "24年", "24应届"]
     if any(item in description_text for item in graduations_max):
         return "23" in description_text
-    graduations = ["应届" "无经验"]
+    graduations = ["应届" "毕业生" "实习生" "无经验"]
     if any(item in description_text for item in graduations):
         return True
     return all(
@@ -416,9 +410,16 @@ def check_dialog():
         time.sleep(1)
         dialog_elements = driver.find_elements(By.CLASS_NAME, "dialog-container")
         if dialog_elements:
-            if dialog_elements[0].find_elements(By.CSS_SELECTOR, "a.close"):
-                dialog_elements[0].find_elements(By.CSS_SELECTOR, "a.close")[0].click
-                time.sleep(1)
+            if (
+                "安全问题" in dialog_elements[-1].text
+                or "沟通" in dialog_elements[-1].text
+            ):
+                close_elements = dialog_elements[-1].find_elements(
+                    By.CLASS_NAME, "close"
+                )
+                if close_elements:
+                    close_elements[-1].click()
+                    time.sleep(1)
     except Exception:
         traceback.print_exc()
 
@@ -499,6 +500,7 @@ def check_offline(description_text, city_text):
         "不支持在线",
         "不支持线上",
         "线下面试",
+        "线下笔试",
         "现场面试",
         "现场机考",
         "不接受线上",

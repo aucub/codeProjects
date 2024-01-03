@@ -3,8 +3,8 @@ from attr import attrib, attrs
 
 @attrs
 class RsInfo:
-    url: str = attrib(default="")
     id: str = attrib(default="")
+    url: str = attrib(default="")
     name: str = attrib(default="")
     city: str = attrib(default="")
     address: str = attrib(default="")

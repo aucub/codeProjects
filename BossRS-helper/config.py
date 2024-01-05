@@ -30,7 +30,7 @@ class Config:
     industry_blacks: List = []  # 行业黑名单
     name_blacks: List = []  # 标题黑名单
     company_blacks: List = []  # 公司黑名单
-    fund_blacks: List = []  # 资金黑名单
+    fund_min: float = 49.0  # 资金黑名单
     res: int = 31536000  # 最晚成立时间
     guide_blacks: List = []  # 导航黑名单
     update: int = 2592000  # 最旧更新时间

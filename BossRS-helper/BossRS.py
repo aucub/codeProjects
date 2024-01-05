@@ -72,7 +72,9 @@ def resume_submission(url):
         id = get_encryptJobId(url)
         row = get_rsinfo(id)
         if row.id == id:
-            rsinfo = row
+            time.sleep(0.4)
+            continue
+            # rsinfo = row
         rsinfo.url = url.split("&securityId")[0]
         rsinfo.name = job_element.find_element(By.CLASS_NAME, "job-name").text
         rsinfo.city = job_element.find_element(By.CLASS_NAME, "job-area").text
@@ -108,7 +110,7 @@ def resume_submission(url):
         except Exception:
             traceback.print_exc()
             continue
-        time.sleep(0.6)
+        time.sleep(1)
         WAIT.until(ec.presence_of_element_located((By.TAG_NAME, "pre")))
         page_source = driver.find_element(By.TAG_NAME, "pre").text
         data = json.loads(page_source)
@@ -330,8 +332,12 @@ def check_fund(fund_text):
     """
     if "-" in fund_text:
         return False
-    fund_text = fund_text[:-3]
-    return all(fund_text not in item for item in config_setting.fund_blacks)
+    if "万" in fund_text:
+        fund_text = fund_text[:-3]
+        numbers = re.findall("\d+\.\d+|\d+", fund_text)
+        numbers = list(map(float, numbers))
+        return numbers[0] > config_setting.fund_min
+    return True
 
 
 def check_salary(salary_text):

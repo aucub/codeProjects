@@ -41,7 +41,8 @@ class Config:
     description_blacks: List = []  # 描述黑名单
     description_experience_blacks: List = []  # 描述经验黑名单
     querys: List = []
-    query_params: str = "&city=100010000&experience=101,102,103,104&scale=302,303,304,305,306&degree=209,208,206,202,203"
+    query_citys: List = ["100010000"]
+    query_params: str = "&experience=101,102,103,104&scale=302,303,304,305,306&degree=209,208,206,202,203"
     salarys: List = []
     range_min: int = 1
     range_max: int = 15

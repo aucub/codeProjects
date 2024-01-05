@@ -23,6 +23,7 @@ URL3 = "&page="
 URL4 = "https://www.zhipin.com/wapi/zpgeek/job/card.json?securityId="
 URL5 = "&lid="
 URL6 = "&sessionId="
+URL7 = "&city="
 
 driver = uc.Chrome(
     headless=config_setting.headless,
@@ -560,10 +561,16 @@ time.sleep(2)
 driver.get("https://www.zhipin.com")
 time.sleep(2)
 
-for item in config_setting.querys:
-    for salary in config_setting.salarys:
-        for i in range(config_setting.range_min, config_setting.range_max):
-            if resume_submission(URL1 + item + URL2 + salary + URL3 + str(i)) == -1:
-                sys.exit()
+for city in config_setting.query_citys:
+    for query in config_setting.querys:
+        for salary in config_setting.salarys:
+            for i in range(config_setting.range_min, config_setting.range_max):
+                if (
+                    resume_submission(
+                        URL1 + query + URL7 + city + URL2 + salary + URL3 + str(i)
+                    )
+                    == -1
+                ):
+                    sys.exit()
 driver.quit()
 conn.close()

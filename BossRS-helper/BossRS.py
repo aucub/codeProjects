@@ -73,7 +73,7 @@ def resume_submission(url):
         id = get_encryptJobId(url)
         row = get_rsinfo(id)
         if row.id == id:
-            time.sleep(0.4)
+            time.sleep(1)
             continue
             # rsinfo = row
         rsinfo.url = url.split("&securityId")[0]

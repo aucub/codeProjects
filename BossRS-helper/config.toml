@@ -62,6 +62,10 @@ name_blacks = [
     "设备",
     "党建",
     "宣传",
+    "招聘",
+    "人事",
+    "质控",
+    "手机检测",
     "产品助理",
     "项目助理",
     "人事助理",
@@ -826,4 +830,4 @@ query_citys = [
 query_params = "&experience=101,102,103,104&scale=302,303,304,305,306&degree=209,208,206,202,203"
 salarys = ["404", "403"]
 range_min = 1
-range_max = 10
+range_max = 20

@@ -9,44 +9,47 @@ import toml
 class Config:
     headless: bool = False
     user_data_dir: str = ""
-    cookie_path: str = "cookies.pkl"
+    cookie_path: str = "cookies/cookies.pkl"
     db_path: str = "rsinfo.db"
+    chrome_location: str = ""
     timeout: int = 10
     chat: bool = False
-    chat_letter: bool = False
+    chat_greet: bool = False
+    skip_known: bool = False
+    graduate: int = 23
     salary_max: int = 10  # 最大薪水
-    active_blacks: List = [
+    active_block_list: List = [
         "半年",
         "月内",
         "本月",
         "周内",
         "本周",
         "7日",
-    ]  # 活跃时间黑名单
-    scale_blacks: List = ["-20"]  # 规模黑名单
-    degree_blacks: List = ["硕", "博"]  # 学历黑名单
-    experience_blacks: List = []  # 经验黑名单
-    city_blacks: List = []  # 城市黑名单
-    bossTitle_blacks: List = []  # boss职位黑名单
-    industry_blacks: List = []  # 行业黑名单
-    name_blacks: List = []  # 标题黑名单
-    company_blacks: List = []  # 公司黑名单
-    fund_min: float = 49.0  # 资金黑名单
+    ]  # 活跃时间阻止名单
+    scale_block_list: List = ["-20"]  # 规模阻止名单
+    degree_block_list: List = ["硕", "博"]  # 学历阻止名单
+    experience_block_list: List = []  # 经验阻止名单
+    city_block_list: List = []  # 城市阻止名单
+    boss_title_block_list: List = []  # boss职位阻止名单
+    industry_block_list: List = []  # 行业阻止名单
+    name_block_list: List = []  # 名称阻止名单
+    company_block_list: List = []  # 公司阻止名单
+    fund_min: float = 29.0  # 最小注册资金
     res: int = 31536000  # 最晚成立时间
-    guide_blacks: List = []  # 导航黑名单
+    guide_block_list: List = []  # 导航阻止名单
     update: int = 2592000  # 最旧更新时间
     offline_interview: bool = True  # 线下检查
-    offline_citys: List = []  # 线下城市
-    description_min: int = 50  # 最短描述
-    description_keywords: List = []  # 描述必备词
-    description_blacks: List = []  # 描述黑名单
-    description_experience_blacks: List = []  # 描述经验黑名单
-    querys: List = []
-    query_citys: List = ["100010000"]
-    query_params: str = "&experience=101,102,103,104&scale=302,303,304,305,306&degree=209,208,206,202,203"
-    salarys: List = []
-    range_min: int = 1
-    range_max: int = 15
+    offline_city_list: List = []  # 线下城市
+    description_min: int = 35  # 最短描述
+    description_keyword_list: List = []  # 描述必备词
+    description_block_list: List = []  # 描述阻止名单
+    description_experience_block_list: List = []  # 描述经验阻止名单
+    query_list: List = []
+    query_city_list: List = ["100010000"]
+    query_param: str = "&experience=101,102,103,104&scale=302,303,304,305,306&degree=209,208,206,202,203"
+    salary_list: List = ["404", "403"]
+    page_min: int = 1
+    page_max: int = 6
 
 
 def load_config() -> Config:

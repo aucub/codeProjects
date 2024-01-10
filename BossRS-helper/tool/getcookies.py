@@ -14,7 +14,7 @@ time.sleep(5)
 
 cookies = driver.get_cookies()
 
-with open("cookies.pkl", "wb") as f:
+with open("../cookies/cookies.pkl", "wb") as f:
     pickle.dump(cookies, f)
 
 time.sleep(5)

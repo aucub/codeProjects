@@ -1,0 +1,5 @@
+#!/bin/sh
+
+chromium_command="/usr/bin/chromium --no-first-run --ignore-gpu-blocklist --password-store=basic --simulate-outdated-no-au=2099-12-31T23:59:59Z --start-maximized --disable-dev-shm-usage --disable-gpu blink-settings=imagesEnabled=false --no-sandbox $@"
+
+exec $chromium_command

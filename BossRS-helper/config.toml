@@ -1,16 +1,19 @@
 headless = false
 user_data_dir = ""
-cookie_path = "cookies.pkl"
+cookie_path = "cookies/cookies.pkl"
 db_path = "rsinfo.db"
+chrome_location = "/usr/bin/chromium-browser"
 timeout = 10
 chat = false
-chat_letter = false
+chat_greet = false
+skip_known = false
+graduate = 23
 salary_max = 10
-active_blacks = ["半年", "月内", "本月", "周内", "本周", "7日"]
-scale_blacks = ["-20"]
-degree_blacks = ["硕", "博"]
-experience_blacks = ["5", "10"]
-city_blacks = [
+active_block_list = ["半年", "月内", "本月", "周内", "本周", "7日"]
+scale_block_list = ["-20"]
+degree_block_list = ["硕", "博"]
+experience_block_list = ["5", "10"]
+city_block_list = [
     "沈阳",
     "辽宁",
     "辽阳",
@@ -50,9 +53,17 @@ city_blacks = [
     "丽水",
     "平顶山",
 ]
-bossTitle_blacks = ["总裁", "总经理", "ceo", "创始人", "法人"]
-industry_blacks = ["培训", "教育", "院校", "房产", "经纪", "工程施工", "批发", "零售", "再生资源"]
-name_blacks = [
+boss_title_block_list = ["总裁", "总经理", "ceo", "创始人", "法人"]
+industry_block_list = ["培训", "教育", "院校", "房产", "经纪", "工程施工", "批发", "零售", "再生资源"]
+name_block_list = [
+    "可靠",
+    "光源",
+    "打光",
+    "梳理",
+    "材料",
+    "预结算",
+    "安装",
+    "检测",
     "轮班",
     "倒班",
     "夜班",
@@ -270,7 +281,7 @@ name_blacks = [
     "算法",
     "c#",
 ]
-company_blacks = [
+company_block_list = [
     "乌鲁木齐",
     "京北方",
     "辛可必",
@@ -421,7 +432,7 @@ company_blacks = [
 ]
 fund_min = 29.0
 res = 31536000
-guide_blacks = [
+guide_block_list = [
     "地产中介",
     "销售",
     "采购",
@@ -441,9 +452,9 @@ guide_blacks = [
 ]
 update = 2592000
 offline_interview = true
-offline_citys = ["杭州", "嘉兴"]
+offline_city_list = ["杭州", "嘉兴"]
 description_min = 35
-description_keywords = [
+description_keyword_list = [
     "java",
     "python",
     "c++",
@@ -463,7 +474,7 @@ description_keywords = [
     "计算机",
     "编程",
 ]
-description_blacks = [
+description_block_list = [
     "机房管理",
     "网络维护",
     "电话跳线",
@@ -756,7 +767,7 @@ description_blacks = [
     "211本科以上",
     "211本科及以上",
 ]
-description_experience_blacks = [
+description_experience_block_list = [
     "在校生",
     "在读",
     "大一",
@@ -782,17 +793,17 @@ description_experience_blacks = [
     "5年",
     "年(含)以上",
 ]
-querys = [
+query_list = [
     "Java",
     "Java软件开发",
     "软件测试",
     "软件自动化测试",
     "软件功能测试",
     "软件实施",
-    # "全栈工程师",
-    # "Python软件测试",
-    # "软件测试开发",
-    # "软件性能测试",
+    "全栈工程师",
+    "Python软件测试",
+    "软件测试开发",
+    "软件性能测试",
     # "软件技术文档",
     # "数据分析",
     # "数据挖掘",
@@ -808,14 +819,14 @@ querys = [
     "软件测试&position=100301", # 测试工程师
     "软件测试&position=100302", # 自动化测试
     "软件测试&position=100303", # 功能测试
-    # "Java&position=100402",   # 运维开发
     "Java&position=100606", # 实施
     # "Java&position=100123",   # 全栈工程师
     # "&position=100123",       # 全栈工程师
+    # "Java&position=100402",   # 运维开发
     # "软件运维开发&position=100402", # 运维开发
     # "软件运维&position=100401", # 运维
 ]
-query_citys = [
+query_city_list = [
     "100010000", # 全国
     "101210100", # 杭州
     "101020100", # 上海
@@ -828,7 +839,7 @@ query_citys = [
     "101250100", # 长沙
     "101270100", # 成都
 ]
-query_params = "&experience=101,102,103,104&scale=302,303,304,305,306&degree=209,208,206,202,203"
-salarys = ["404", "403"]
-range_min = 1
-range_max = 20
+query_param = "&experience=101,102,103,104&scale=302,303,304,305,306&degree=209,208,206,202,203"
+salary_list = ["404", "403"]
+page_min = 1
+page_max = 6

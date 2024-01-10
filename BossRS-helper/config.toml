@@ -4,6 +4,7 @@ cookie_path = "cookies.pkl"
 db_path = "rsinfo.db"
 timeout = 10
 chat = false
+chat_letter = false
 salary_max = 10
 active_blacks = ["半年", "月内", "本月", "周内", "本周", "7日"]
 scale_blacks = ["-20"]
@@ -418,7 +419,7 @@ company_blacks = [
     "策马科技",
     "任拓",
 ]
-fund_min = 49.0
+fund_min = 29.0
 res = 31536000
 guide_blacks = [
     "地产中介",

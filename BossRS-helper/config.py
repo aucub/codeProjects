@@ -13,6 +13,7 @@ class Config:
     db_path: str = "rsinfo.db"
     timeout: int = 10
     chat: bool = False
+    chat_letter: bool = False
     salary_max: int = 10  # 最大薪水
     active_blacks: List = [
         "半年",

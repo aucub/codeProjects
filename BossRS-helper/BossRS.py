@@ -73,9 +73,9 @@ def resume_submission(url):
         id = get_encryptJobId(url)
         row = get_rsinfo(id)
         if row.id == id:
-            time.sleep(1)
-            continue
-            # rsinfo = row
+            # time.sleep(1)
+            # continue
+            rsinfo = row
         rsinfo.url = url.split("&securityId")[0]
         rsinfo.name = job_element.find_element(By.CLASS_NAME, "job-name").text
         rsinfo.city = job_element.find_element(By.CLASS_NAME, "job-area").text
@@ -205,6 +205,16 @@ def resume_submission(url):
         rsinfo = get_rsinfo(get_encryptJobId(submission))
         rsinfo.communicate = "继续沟通"
         update_rsinfos(rsinfo)
+        if config_setting.chat_letter:
+            try:
+                time.sleep(3)
+                Chat.send_letter_to_chat_box(
+                    driver, Chat.generate_letter(rsinfo.description)
+                )
+                continue
+            except Exception:
+                print(submission)
+                traceback.print_exc()
         try:
             WAIT.until(ec.presence_of_element_located((By.CLASS_NAME, "dialog-con")))
         except Exception:

@@ -211,6 +211,7 @@ def resume_submission(url):
                 Chat.send_letter_to_chat_box(
                     driver, Chat.generate_letter(rsinfo.description)
                 )
+                time.sleep(1)
                 continue
             except Exception:
                 print(submission)

@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 import undetected_chromedriver as uc
 from rsinfo import RsInfo
 
-default_letter = "您好，不知道这个岗位是否还有在招人，我仔细查看了您发布的职位信息，觉得自己比较适合，希望能得到您的回复~"
+default_letter = "您好，不知道这个岗位是否还有在招人，我仔细查看了您发布的职位信息，觉得自己比较适合，希望能得到您的回复"
 
 base_url = ""
 token = ""
@@ -82,19 +82,19 @@ class Chat:
             7、只包含和求职直接相关的内容，避免无关的信息，如“我来帮您写一条求职消息”。
             8、避免使用任何非实际或者假设性的信息，例如不需要“我是一名应届本科毕业生，我有3年经验，我是一位自动化测试工程师”这一类内容。
             9、注意职位描述可能存在的拼写错误，不能容许出现在求职消息中。
-            职位名称: """
+            职位名称: 
+            """
             + rsinfo.name
             + """
-            职位描述: """
+            职位描述: 
+            """
             + rsinfo.description
             + """
-            简历内容:"""
+            简历内容:
+            """
             + context
-            + """
-            要求:
-            根据职位描述，寻找出简历里最合适的技能和求职者的优势。
-        """
         )
+        print(prompt)
         letter = Chat.send(prompt)
         if letter:
             letter = letter.replace("\n", " ").replace("  ", "")
@@ -115,14 +115,15 @@ class Chat:
 
 
 def main():
-    letter = Chat.generate_letter(
-        """
+    rsinfo = RsInfo()
+    rsinfo.name = "项目助理"
+    rsinfo.description = """
     岗位职责:
     1、完成领导交办的工作。
     任职要求：
     1、富有责任感和团队协作精神。
     """
-    )
+    letter = Chat.generate_letter(rsinfo)
     print(letter)
 
 

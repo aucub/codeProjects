@@ -1,10 +1,10 @@
 headless = false
 user_data_dir = ""
-cookie_path = "cookies/cookies1.pkl"
+cookie_path = "cookies/cookies.pkl"
 db_path = "rsinfo.db"
 timeout = 10
 chat = false
-chat_greet = true
+chat_greet = false
 skip_known = false
 graduate = 23
 salary_max = 10
@@ -793,16 +793,16 @@ description_experience_block_list = [
     "年(含)以上",
 ]
 query_list = [
-    # "Java",
-    # "Java软件开发",
-    # "软件测试",
-    # "软件自动化测试",
-    # "软件功能测试",
-    # "软件实施",
-    # "全栈工程师",
-    # "Python软件测试",
-    # "软件测试开发",
-    # "软件性能测试",
+    "Java",
+    "Java软件开发",
+    "软件测试",
+    "软件自动化测试",
+    "软件功能测试",
+    "软件实施",
+    "全栈工程师",
+    "Python软件测试",
+    "软件测试开发",
+    "软件性能测试",
     # "软件技术文档",
     # "数据分析",
     # "数据挖掘",
@@ -818,27 +818,27 @@ query_list = [
     "软件测试&position=100301", # 测试工程师
     "软件测试&position=100302", # 自动化测试
     "软件测试&position=100303", # 功能测试
-    # "Java&position=100402",   # 运维开发
     "Java&position=100606", # 实施
     # "Java&position=100123",   # 全栈工程师
     # "&position=100123",       # 全栈工程师
+    # "Java&position=100402",   # 运维开发
     # "软件运维开发&position=100402", # 运维开发
     # "软件运维&position=100401", # 运维
 ]
 query_city_list = [
-    # "100010000", # 全国
-    # "101210100", # 杭州
-    # "101020100", # 上海
-    # "101010100", # 北京
-    # "101280100", # 广州
-    # "101280600", # 深圳
-    # "101190400", # 苏州
+    "100010000", # 全国
+    "101210100", # 杭州
+    "101020100", # 上海
+    "101010100", # 北京
+    "101280100", # 广州
+    "101280600", # 深圳
+    "101190400", # 苏州
     "101190100", # 南京
     "101200100", # 武汉
     "101250100", # 长沙
     "101270100", # 成都
 ]
-query_param = "&experience=101,102,103&scale=302,303,304,305,306&degree=209,208,206,202,203" # ,104
+query_param = "&experience=101,102,103,104&scale=302,303,304,305,306&degree=209,208,206,202,203"
 salary_list = ["404", "403"]
 page_min = 1
-page_max = 5
+page_max = 6

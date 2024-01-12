@@ -75,7 +75,7 @@ def query_url(url):
         row = get_rsinfo(id)
         if row.id == id:
             if config_setting.skip_known:
-                time.sleep(0.5)
+                time.sleep(0.7)
                 continue
             else:
                 rsinfo = row
@@ -97,8 +97,8 @@ def query_url(url):
         update_rsinfo(rsinfo)
         if check_rsinfo(rsinfo, "query"):
             url_list.append(url)
-    url_list_process(url_list)
     conn.commit()
+    url_list_process(url_list)
 
 
 def url_list_process(url_list):
@@ -183,7 +183,6 @@ def startchat(url: str):
     if config_setting.chat_greet:
         try:
             Chat.send_greet_to_chat_box(driver, Chat.generate_greet(rsinfo))
-            time.sleep(1)
             return
         except Exception:
             print(url)
@@ -227,7 +226,11 @@ def check_card(url: str):
             update_rsinfo(rsinfo)
             time.sleep(0.7)
             return check_rsinfo(rsinfo, "card")
+        else:
+            print(url)
+            print(response.text)
     except Exception:
+        print(url)
         traceback.print_exc()
 
 
@@ -248,7 +251,7 @@ def check_rsinfo(rsinfo: RsInfo, stage: str):
             and check_salary(rsinfo.salary)
             and check_experience(rsinfo.experience)
             and check_degree(rsinfo.degree)
-            and check_bossTitle(rsinfo.boss_title)
+            and check_boss_title(rsinfo.boss_title)
         )
     elif stage == "detail":
         return (
@@ -558,13 +561,13 @@ def check_city(city_text):
         return True
 
 
-def check_bossTitle(bossTitle_text):
+def check_boss_title(boss_title_text):
     """
     检查人事
     """
-    bossTitle_text = bossTitle_text.lower()
+    boss_title_text = boss_title_text.lower()
     return all(
-        item not in bossTitle_text for item in config_setting.boss_title_block_list
+        item not in boss_title_text for item in config_setting.boss_title_block_list
     )
 
 
@@ -621,19 +624,19 @@ def check_company(company_text):
 
 
 driver.get("https://www.zhipin.com")
-time.sleep(5)
+time.sleep(2)
 with open(config_setting.cookie_path, "rb") as f:
     cookies = pickle.load(f)
 for cookie in cookies:
     driver.add_cookie(cookie)
 time.sleep(2)
-driver.get("https://www.zhipin.com")
 driver.get("https://www.zhipin.com/web/geek/job?query=")
+check_verify("https://www.zhipin.com/web/geek/job?query=")
 time.sleep(2)
+requests_cookies = {}
 cookies = driver.get_cookies()
 for cookie in cookies:
-    if cookie["name"] == "__zp_stoken__":
-        requests_cookies = {"__zp_stoken__": cookie["value"]}
+    requests_cookies[cookie["name"]] = cookie["value"]
 requests_headers = {
     "User-Agent": driver.execute_script("return navigator.userAgent"),
 }

@@ -8,10 +8,6 @@ from rsinfo import RsInfo
 
 default_greet = "您好，不知道这个岗位是否还有在招人，我仔细查看了您发布的职位信息，觉得自己比较适合，希望能得到您的回复"
 
-base_url = os.getenv("OPENAI_BASE_URL")
-token = os.getenv("OPENAI_API_KEY")
-headers = {"Authorization": f"Bearer {token}"}
-
 
 class Chat:
     def check(description):
@@ -31,6 +27,9 @@ class Chat:
         return True
 
     def send(text):
+        base_url = os.getenv("OPENAI_BASE_URL")
+        token = os.getenv("OPENAI_API_KEY")
+        headers = {"Authorization": f"Bearer {token}"}
         payload = {
             "model": "gpt-3.5-turbo",
             "stream": False,
@@ -40,7 +39,9 @@ class Chat:
         }
         try:
             response = requests.post(
-                f"{base_url}/v1/chat/completions", json=payload, headers=headers
+                f"{base_url}/v1/chat/completions",
+                json=payload,
+                headers=headers,
             )
             if response.status_code == 200:
                 data = response.json()
@@ -88,15 +89,16 @@ class Chat:
         return greet
 
     def send_greet_to_chat_box(driver: uc.Chrome, greet):
+        time.sleep(2)
         chat_box = driver.find_element(By.CSS_SELECTOR, "#chat-input")
         chat_box.clear()
         chat_box.send_keys(greet)
-        time.sleep(3)
+        time.sleep(1)
         driver.find_element(
             By.CSS_SELECTOR,
             "#container > div > div > div.chat-conversation > div.message-controls > div > div.chat-op > button",
         ).click()
-        time.sleep(1)
+        time.sleep(2)
 
 
 def main():

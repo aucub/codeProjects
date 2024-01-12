@@ -48,7 +48,7 @@ class Config:
     query_param: str = "&experience=101,102,103,104&scale=302,303,304,305,306&degree=209,208,206,202,203"
     salary_list: List = ["404", "403"]
     page_min: int = 1
-    page_max: int = 5
+    page_max: int = 6
 
 
 def load_config() -> Config:

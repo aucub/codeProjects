@@ -53,6 +53,8 @@ city_blacks = [
 bossTitle_blacks = ["总裁", "总经理", "ceo", "创始人", "法人"]
 industry_blacks = ["培训", "教育", "院校", "房产", "经纪", "工程施工", "批发", "零售", "再生资源"]
 name_blacks = [
+    "可靠",
+    "检测",
     "轮班",
     "倒班",
     "夜班",
@@ -831,4 +833,4 @@ query_citys = [
 query_params = "&experience=101,102,103,104&scale=302,303,304,305,306&degree=209,208,206,202,203"
 salarys = ["404", "403"]
 range_min = 1
-range_max = 20
+range_max = 5

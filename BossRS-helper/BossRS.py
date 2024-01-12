@@ -201,16 +201,16 @@ def resume_submission(url):
             print(submission)
             traceback.print_exc()
             continue
+        description = driver.find_element(By.CLASS_NAME, "job-sec-text").text
         startchat.click()
         rsinfo = get_rsinfo(get_encryptJobId(submission))
         rsinfo.communicate = "继续沟通"
         update_rsinfos(rsinfo)
+        rsinfo.description = description
         if config_setting.chat_letter:
             try:
                 time.sleep(3)
-                Chat.send_letter_to_chat_box(
-                    driver, Chat.generate_letter(rsinfo.description)
-                )
+                Chat.send_letter_to_chat_box(driver, Chat.generate_letter(rsinfo))
                 time.sleep(1)
                 continue
             except Exception:

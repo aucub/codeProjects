@@ -27,9 +27,15 @@ URL6 = "&sessionId="
 URL7 = "&city="
 
 load_dotenv()
-driver = uc.Chrome(
-    headless=config_setting.headless,
-)
+chrome_options = uc.ChromeOptions()
+if (
+    len(config_setting.chrome_location) > 0
+    and not config_setting.chrome_location.isspace()
+):
+    chrome_options.binary_location = config_setting.chrome_location
+
+driver = uc.Chrome(headless=config_setting.headless, options=chrome_options)
+
 if len(config_setting.user_data_dir) > 0 and not config_setting.user_data_dir.isspace():
     driver.user_data_dir = config_setting.user_data_dir
 WAIT = WebDriverWait(driver, config_setting.timeout)

@@ -10,7 +10,7 @@ driver.get("https://www.zhipin.com")
 
 time.sleep(5)
 
-with open("cookies.pkl", "rb") as f:
+with open("../cookies/cookies.pkl", "rb") as f:
     cookies = pickle.load(f)
 
 # cookies_string = str(cookies)

@@ -1,30 +1,32 @@
 import datetime
-import json
 import pickle
 import sys
 import time
 import re
 import traceback
 from urllib.parse import urlparse, parse_qs
+import requests
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 import sqlite3
 import undetected_chromedriver as uc
 from chat import Chat
+from dotenv import load_dotenv
 from rsinfo import RsInfo
 import config
 
 config_setting = config.load_config()
 
 URL1 = "https://www.zhipin.com/web/geek/job?query="
-URL2 = config_setting.query_params + "&salary="
+URL2 = config_setting.query_param + "&salary="
 URL3 = "&page="
 URL4 = "https://www.zhipin.com/wapi/zpgeek/job/card.json?securityId="
 URL5 = "&lid="
 URL6 = "&sessionId="
 URL7 = "&city="
 
+load_dotenv()
 driver = uc.Chrome(
     headless=config_setting.headless,
 )
@@ -36,9 +38,9 @@ conn = sqlite3.connect(config_setting.db_path)
 cursor = conn.cursor()
 
 
-def resume_submission(url):
+def query_url(url):
     """
-    投递简历
+    搜索职位
     """
     driver.get(url)
     check_dialog()
@@ -52,12 +54,11 @@ def resume_submission(url):
     except Exception:
         traceback.print_exc()
         return 1
-    submissions = []
-    urls = []
-    job_elements = driver.find_elements(
+    job_element_list = driver.find_elements(
         By.CSS_SELECTOR, "[class*='job-card-body clearfix']"
     )
-    for job_element in job_elements:
+    url_list = []
+    for job_element in job_element_list:
         rsinfo = RsInfo()
         if is_ready_to_communicate(
             job_element.find_element(
@@ -73,9 +74,11 @@ def resume_submission(url):
         id = get_encryptJobId(url)
         row = get_rsinfo(id)
         if row.id == id:
-            # time.sleep(1)
-            # continue
-            rsinfo = row
+            if config_setting.skip_known:
+                time.sleep(0.5)
+                continue
+            else:
+                rsinfo = row
         rsinfo.url = url.split("&securityId")[0]
         rsinfo.name = job_element.find_element(By.CLASS_NAME, "job-name").text
         rsinfo.city = job_element.find_element(By.CLASS_NAME, "job-area").text
@@ -91,67 +94,40 @@ def resume_submission(url):
         )
         rsinfo.datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         rsinfo.id = id
-        update_rsinfos(rsinfo)
-        if (
-            is_ready_to_communicate(rsinfo.communicate)
-            and check_name(rsinfo.name)
-            and check_city(rsinfo.city)
-            and check_company(rsinfo.company)
-            and check_industry(rsinfo.industry)
-        ):
-            urls.append(url)
+        update_rsinfo(rsinfo)
+        if check_rsinfo(rsinfo, "query"):
+            url_list.append(url)
+    url_list_process(url_list)
     conn.commit()
-    for url in urls:
-        parsed_url = urlparse(url)
-        query_params = parse_qs(parsed_url.query)
-        lid = query_params.get("lid", [None])[0]
-        security_id = query_params.get("securityId", [None])[0]
-        try:
-            driver.get(URL4 + security_id + URL5 + lid + URL6)
-        except Exception:
-            traceback.print_exc()
-            continue
-        time.sleep(1)
-        WAIT.until(ec.presence_of_element_located((By.TAG_NAME, "pre")))
-        page_source = driver.find_element(By.TAG_NAME, "pre").text
-        data = json.loads(page_source)
-        if data["message"] == "Success":
-            rsinfo = get_rsinfo(get_encryptJobId(url))
-            rsinfo.url = url.split("&securityId")[0]
-            rsinfo.description = data["zpData"]["jobCard"]["postDescription"]
-            rsinfo.active = data["zpData"]["jobCard"]["activeTimeDesc"]
-            rsinfo.address = data["zpData"]["jobCard"]["address"]
-            rsinfo.id = data["zpData"]["jobCard"]["encryptJobId"]
-            rsinfo.salary = data["zpData"]["jobCard"]["salaryDesc"]
-            rsinfo.experience = data["zpData"]["jobCard"]["experienceName"]
-            rsinfo.degree = data["zpData"]["jobCard"]["degreeName"]
-            rsinfo.boss = data["zpData"]["jobCard"]["bossName"]
-            rsinfo.boss_title = data["zpData"]["jobCard"]["bossTitle"]
-            update_rsinfos(rsinfo)
-            if not (
-                check_description(rsinfo.description)
-                and check_active(rsinfo.active)
-                and check_city(rsinfo.address)
-                and check_salary(rsinfo.salary)
-                and check_experience(rsinfo.experience)
-                and check_degree(rsinfo.degree)
-                and check_bossTitle(rsinfo.boss_title)
-            ):
-                continue
-        submissions.append(url)
+
+
+def url_list_process(url_list):
+    url_list = check_url_list(url_list)
     conn.commit()
-    for submission in submissions:
-        driver.get(submission)
+    detail(url_list)
+    conn.commit()
+
+
+def check_url_list(url_list):
+    card_url_list = []
+    for url in url_list:
+        if check_card(url):
+            card_url_list.append(url)
+    return card_url_list
+
+
+def detail(url_list):
+    for url in url_list:
+        driver.get(url)
         WAIT.until(
             ec.presence_of_element_located(
                 (By.CSS_SELECTOR, "[class*='btn btn-startchat']")
             )
         )
         check_dialog()
-        check_verify(submission)
-        startchat = driver.find_element(By.CSS_SELECTOR, "[class*='btn btn-startchat']")
+        check_verify(url)
         try:
-            rsinfo = get_rsinfo(get_encryptJobId(submission))
+            rsinfo = get_rsinfo(get_encryptJobId(url))
             rsinfo.guide = driver.find_element(
                 By.CSS_SELECTOR, "[class*='pos-bread city-job-guide']"
             ).text
@@ -178,60 +154,116 @@ def resume_submission(url):
                 if len(rsinfo.res.splitlines()) > 1:
                     rsinfo.res = rsinfo.res.splitlines()[-1]
             except Exception:
-                print(submission)
+                print(url)
                 traceback.print_exc()
                 pass
-            rsinfo.communicate = startchat.text
-            update_rsinfos(rsinfo)
-            if not (
-                check_guide(rsinfo.guide)
-                and check_scale(rsinfo.scale)
-                and check_res(rsinfo.res)
-                and check_update(rsinfo.update_date)
-                and check_description(rsinfo.description)
-                and check_offline(rsinfo.description, rsinfo.city)
-                and check_fund(rsinfo.fund)
-                and is_ready_to_communicate(rsinfo.communicate)
-            ):
+            rsinfo.communicate = driver.find_element(
+                By.CSS_SELECTOR, "[class*='btn btn-startchat']"
+            ).text
+            update_rsinfo(rsinfo)
+            if not check_rsinfo(rsinfo, "detail"):
                 continue
             if config_setting.chat:
                 if not Chat.check(rsinfo.description):
                     continue
+            startchat(url)
         except Exception:
-            print(submission)
+            print(url)
             traceback.print_exc()
             continue
-        description = driver.find_element(By.CLASS_NAME, "job-sec-text").text
-        startchat.click()
-        rsinfo = get_rsinfo(get_encryptJobId(submission))
-        rsinfo.communicate = "继续沟通"
-        update_rsinfos(rsinfo)
-        rsinfo.description = description
-        if config_setting.chat_letter:
-            try:
-                time.sleep(3)
-                Chat.send_letter_to_chat_box(driver, Chat.generate_letter(rsinfo))
-                time.sleep(1)
-                continue
-            except Exception:
-                print(submission)
-                traceback.print_exc()
+
+
+def startchat(url: str):
+    description = driver.find_element(By.CLASS_NAME, "job-sec-text").text
+    driver.find_element(By.CSS_SELECTOR, "[class*='btn btn-startchat']").click()
+    rsinfo = get_rsinfo(get_encryptJobId(url))
+    rsinfo.communicate = "继续沟通"
+    update_rsinfo(rsinfo)
+    rsinfo.description = description
+    if config_setting.chat_greet:
         try:
-            WAIT.until(ec.presence_of_element_located((By.CLASS_NAME, "dialog-con")))
+            Chat.send_greet_to_chat_box(driver, Chat.generate_greet(rsinfo))
+            time.sleep(1)
+            return
         except Exception:
-            print(submission)
+            print(url)
             traceback.print_exc()
-            continue
-        dialog_text = driver.find_element(By.CLASS_NAME, "dialog-con").text
-        if "已达上限" in dialog_text:
-            return -1
-        check_dialog()
-        time.sleep(1)
-    conn.commit()
-    return 0
+    try:
+        WAIT.until(ec.presence_of_element_located((By.CLASS_NAME, "dialog-con")))
+    except Exception:
+        print(url)
+        traceback.print_exc()
+    dialog_text = driver.find_element(By.CLASS_NAME, "dialog-con").text
+    if "已达上限" in dialog_text:
+        sys.exit()
+    check_dialog()
+    time.sleep(1)
 
 
-def update_rsinfos(rsinfo):
+def check_card(url: str):
+    parsed_url = urlparse(url)
+    query_params = parse_qs(parsed_url.query)
+    lid = query_params.get("lid", [None])[0]
+    security_id = query_params.get("securityId", [None])[0]
+    card_url = URL4 + security_id + URL5 + lid + URL6
+    try:
+        response = requests.get(
+            card_url, cookies=requests_cookies, headers=requests_headers
+        )
+        if response.status_code == 200:
+            data = response.json()
+        if data["message"] == "Success":
+            rsinfo = get_rsinfo(get_encryptJobId(url))
+            rsinfo.url = url.split("&securityId")[0]
+            rsinfo.description = data["zpData"]["jobCard"]["postDescription"]
+            rsinfo.active = data["zpData"]["jobCard"]["activeTimeDesc"]
+            rsinfo.address = data["zpData"]["jobCard"]["address"]
+            rsinfo.id = data["zpData"]["jobCard"]["encryptJobId"]
+            rsinfo.salary = data["zpData"]["jobCard"]["salaryDesc"]
+            rsinfo.experience = data["zpData"]["jobCard"]["experienceName"]
+            rsinfo.degree = data["zpData"]["jobCard"]["degreeName"]
+            rsinfo.boss = data["zpData"]["jobCard"]["bossName"]
+            rsinfo.boss_title = data["zpData"]["jobCard"]["bossTitle"]
+            update_rsinfo(rsinfo)
+            time.sleep(0.7)
+            return check_rsinfo(rsinfo, "card")
+    except Exception:
+        traceback.print_exc()
+
+
+def check_rsinfo(rsinfo: RsInfo, stage: str):
+    if stage == "query":
+        return (
+            is_ready_to_communicate(rsinfo.communicate)
+            and check_name(rsinfo.name)
+            and check_city(rsinfo.city)
+            and check_company(rsinfo.company)
+            and check_industry(rsinfo.industry)
+        )
+    elif stage == "card":
+        return (
+            check_description(rsinfo.description)
+            and check_active(rsinfo.active)
+            and check_city(rsinfo.address)
+            and check_salary(rsinfo.salary)
+            and check_experience(rsinfo.experience)
+            and check_degree(rsinfo.degree)
+            and check_bossTitle(rsinfo.boss_title)
+        )
+    elif stage == "detail":
+        return (
+            check_guide(rsinfo.guide)
+            and check_scale(rsinfo.scale)
+            and check_res(rsinfo.res)
+            and check_update(rsinfo.update_date)
+            and check_description(rsinfo.description)
+            and check_offline(rsinfo.description, rsinfo.city)
+            and check_fund(rsinfo.fund)
+            and is_ready_to_communicate(rsinfo.communicate)
+        )
+
+
+def update_rsinfo(rsinfo):
     if len(rsinfo.id) == 0 or rsinfo.id.isspace():
         print("无法更新无效的对象")
         return
@@ -314,28 +346,30 @@ def check_active(active_text):
     """
     检查活跃时间
     """
-    return all(item not in active_text for item in config_setting.active_blacks)
+    return all(item not in active_text for item in config_setting.active_block_list)
 
 
 def check_scale(scale_text):
     """
     检查规模
     """
-    return all(item not in scale_text for item in config_setting.scale_blacks)
+    return all(item not in scale_text for item in config_setting.scale_block_list)
 
 
 def check_experience(experience_text):
     """
     检查经验
     """
-    return all(item not in experience_text for item in config_setting.experience_blacks)
+    return all(
+        item not in experience_text for item in config_setting.experience_block_list
+    )
 
 
 def check_degree(degree_text):
     """
     检查学位
     """
-    return all(item not in degree_text for item in config_setting.degree_blacks)
+    return all(item not in degree_text for item in config_setting.degree_block_list)
 
 
 def check_fund(fund_text):
@@ -371,10 +405,10 @@ def check_description(description_text):
         return False
     description_text = description_text.lower()
     if all(
-        item not in description_text for item in config_setting.description_keywords
+        item not in description_text for item in config_setting.description_keyword_list
     ):
         return False
-    if any(item in description_text for item in config_setting.description_blacks):
+    if any(item in description_text for item in config_setting.description_block_list):
         return False
     if "截止日期" in description_text:
         exp_date_text = description_text[
@@ -392,34 +426,56 @@ def check_description(description_text):
             description_text[: description_text.index("截止日期")]
             + description_text[description_text.index("截止日期") + 15 :]
         )
-    if "毕业时间" in description_text:
-        graduation_time = description_text[
-            description_text.index("毕业时间") : description_text.index("毕业时间") + 15
+    if config_setting.graduate != 0:
+        graduate = config_setting.graduate
+        if "毕业时间" in description_text:
+            graduation_time = description_text[
+                description_text.index("毕业时间") : description_text.index("毕业时间")
+                + 15
+            ]
+            graduation_time_min_block = str(graduate + 1) + "年-"
+            graduation_time_block_list = [
+                "20" + str(graduate - 3),
+                "20" + str(graduate - 2),
+                "20" + str(graduate - 1),
+            ]
+            graduation_times = ["不限", str(graduate)]
+            graduation_times_max_list = [
+                "-20" + str(graduate + 2),
+                "-20" + str(graduate + 1),
+            ]
+            if any(item in graduation_time for item in graduation_times):
+                return True
+            if graduation_time_min_block in graduation_time:
+                return False
+            if any(item in graduation_time for item in graduation_times_max_list):
+                return True
+            if any(item in graduation_time for item in graduation_time_block_list):
+                return False
+        graduations_experiences = [
+            str(graduate) + "届",
+            str(graduate) + "年",
+            str(graduate + 1) + "年及之前",
+            "往届",
+            "0-",
+            "0～",
+            "0~",
         ]
-        graduation_time_min_blacks = ["24年-"]
-        graduation_time_blacks = ["2020", "21", "22"]
-        graduation_times = ["不限", "23"]
-        graduation_times_max = ["-24", "-25"]
-        if any(item in graduation_time for item in graduation_times):
+        if any(item in description_text for item in graduations_experiences):
             return True
-        if any(item in graduation_time for item in graduation_time_min_blacks):
-            return False
-        if any(item in graduation_time for item in graduation_times_max):
+        graduations_max = [
+            str(graduate + 1) + "届",
+            str(graduate + 1) + "年",
+            str(graduate + 1) + "应届",
+        ]
+        if any(item in description_text for item in graduations_max):
+            return str(graduate) in description_text
+        graduations = ["应届" "毕业生" "实习生" "无经验"]
+        if any(item in description_text for item in graduations):
             return True
-        if any(item in graduation_time for item in graduation_time_blacks):
-            return False
-    graduations_experiences = ["23届", "23年", "24年及之前", "往届", "0-", "0～", "0~"]
-    if any(item in description_text for item in graduations_experiences):
-        return True
-    graduations_max = ["24届", "24年", "24应届"]
-    if any(item in description_text for item in graduations_max):
-        return "23" in description_text
-    graduations = ["应届" "毕业生" "实习生" "无经验"]
-    if any(item in description_text for item in graduations):
-        return True
     return all(
         item not in description_text
-        for item in config_setting.description_experience_blacks
+        for item in config_setting.description_experience_block_list
     )
 
 
@@ -497,7 +553,7 @@ def check_city(city_text):
     检查城市
     """
     try:
-        return all(item not in city_text for item in config_setting.city_blacks)
+        return all(item not in city_text for item in config_setting.city_block_list)
     except Exception:
         return True
 
@@ -507,7 +563,9 @@ def check_bossTitle(bossTitle_text):
     检查人事
     """
     bossTitle_text = bossTitle_text.lower()
-    return all(item not in bossTitle_text for item in config_setting.bossTitle_blacks)
+    return all(
+        item not in bossTitle_text for item in config_setting.boss_title_block_list
+    )
 
 
 def check_offline(description_text, city_text):
@@ -528,7 +586,7 @@ def check_offline(description_text, city_text):
     ]
     if config_setting.offline_interview:
         if any(item in description_text for item in offlines):
-            return any(item in city_text for item in config_setting.offline_citys)
+            return any(item in city_text for item in config_setting.offline_city_list)
     return True
 
 
@@ -536,7 +594,7 @@ def check_industry(industry_text):
     """
     检查行业
     """
-    return all(item not in industry_text for item in config_setting.industry_blacks)
+    return all(item not in industry_text for item in config_setting.industry_block_list)
 
 
 def check_name(name_text):
@@ -544,7 +602,7 @@ def check_name(name_text):
     检查标题
     """
     name_text = name_text.lower()
-    return all(item not in name_text for item in config_setting.name_blacks)
+    return all(item not in name_text for item in config_setting.name_block_list)
 
 
 def check_guide(guide_text):
@@ -552,14 +610,14 @@ def check_guide(guide_text):
     检查导航
     """
     guide_text = guide_text.lower()
-    return all(item not in guide_text for item in config_setting.guide_blacks)
+    return all(item not in guide_text for item in config_setting.guide_block_list)
 
 
 def check_company(company_text):
     """
     检查公司名称
     """
-    return all(item not in company_text for item in config_setting.company_blacks)
+    return all(item not in company_text for item in config_setting.company_block_list)
 
 
 driver.get("https://www.zhipin.com")
@@ -570,18 +628,21 @@ for cookie in cookies:
     driver.add_cookie(cookie)
 time.sleep(2)
 driver.get("https://www.zhipin.com")
+driver.get("https://www.zhipin.com/web/geek/job?query=")
+time.sleep(2)
+cookies = driver.get_cookies()
+for cookie in cookies:
+    if cookie["name"] == "__zp_stoken__":
+        requests_cookies = {"__zp_stoken__": cookie["value"]}
+requests_headers = {
+    "User-Agent": driver.execute_script("return navigator.userAgent"),
+}
 time.sleep(2)
 
-for city in config_setting.query_citys:
-    for query in config_setting.querys:
-        for salary in config_setting.salarys:
-            for i in range(config_setting.range_min, config_setting.range_max):
-                if (
-                    resume_submission(
-                        URL1 + query + URL7 + city + URL2 + salary + URL3 + str(i)
-                    )
-                    == -1
-                ):
-                    sys.exit()
+for city in config_setting.query_city_list:
+    for query in config_setting.query_list:
+        for salary in config_setting.salary_list:
+            for page in range(config_setting.page_min, config_setting.page_max):
+                query_url(URL1 + query + URL7 + city + URL2 + salary + URL3 + str(page))
 driver.quit()
 conn.close()

@@ -30,3 +30,9 @@ ENV HOME=/home/myuser
 ENV USER_ID=1000 GROUP_ID=1000 UMASK=000
 
 RUN chmod a+rwx /default
+
+WORKDIR /default/BossRS-helper
+
+RUN chmod -R 777 /default
+
+RUN chown -R myuser:myuser /default

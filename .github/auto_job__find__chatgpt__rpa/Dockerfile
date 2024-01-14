@@ -20,3 +20,17 @@ RUN pip install tiktoken faiss-cpu pypdf
 COPY auto_job__find__chatgpt__rpa/ /default/auto_job__find__chatgpt__rpa/
 
 COPY rootfs/ /
+
+RUN useradd -u 1000 -m myuser
+
+ENV HOME=/home/myuser
+
+ENV USER_ID=1000 GROUP_ID=1000 UMASK=000
+
+RUN chmod a+rwx /default
+
+WORKDIR /default/auto_job__find__chatgpt__rpa/auto_job_find
+
+RUN chmod -R 777 /default
+
+RUN chown -R myuser:myuser /default

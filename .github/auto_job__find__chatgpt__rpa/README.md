@@ -1,0 +1,1 @@
+sudo docker run --rm -p 5800:5800 -p 5900:5900 -e OPENAI_BASE_URL=https://api.openai.com/v1 -e OPENAI_API_KEY='' --mount type=bind,source=/path/to/resume,target=/default/auto_job__find__chatgpt__rpa/auto_job_find/resume azumide/auto_job_find_chatgpt_rpa:main

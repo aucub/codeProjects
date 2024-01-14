@@ -1,11 +1,11 @@
-name: auto_job__find__chatgpt__rpa
+name: BossRS-helper
 
 on:
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: auto_job__find__chatgpt__rpa
+  IMAGE_NAME: BossRS-helper
 
 jobs:
   build:
@@ -19,11 +19,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4.1.1
 
-      - name: Checkout repository
-        uses: actions/checkout@v4.1.1
-        with:
-          repository: "Frrrrrrrrank/auto_job__find__chatgpt__rpa"
-          path: "auto_job__find__chatgpt__rpa"
+      - run: |
+          mv .github/BossRS-helper/* ./
 
       - name: Install cosign
         if: github.event_name != 'pull_request'

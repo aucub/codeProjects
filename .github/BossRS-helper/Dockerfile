@@ -27,4 +27,6 @@ RUN useradd -u 1000 -m myuser
 
 ENV HOME=/home/myuser
 
-ENV USER_ID=1000 GROUP_ID=1000
+ENV USER_ID=1000 GROUP_ID=1000 UMASK=000
+
+RUN chmod a+rwx /default

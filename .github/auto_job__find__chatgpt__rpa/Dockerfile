@@ -15,7 +15,7 @@ COPY ./auto_job__find__chatgpt__rpa/auto_job_find/requirements.txt /default/auto
 
 RUN pip install -r /default/auto_job__find__chatgpt__rpa/auto_job_find/requirements.txt
 
-RUN pip install tiktoken faiss-cpu
+RUN pip install tiktoken faiss-cpu pypdf
 
 COPY auto_job__find__chatgpt__rpa/ /default/auto_job__find__chatgpt__rpa/
 

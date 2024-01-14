@@ -11,6 +11,7 @@ class Config:
     user_data_dir: str = ""
     cookie_path: str = "cookies/cookies.pkl"
     db_path: str = "rsinfo.db"
+    chrome_location: str = ""
     timeout: int = 10
     chat: bool = False
     chat_greet: bool = False

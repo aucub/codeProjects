@@ -1,4 +1,5 @@
 import datetime
+import os
 import pickle
 import sys
 import time
@@ -9,6 +10,7 @@ import requests
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
+from selenium.common.exceptions import TimeoutException
 import sqlite3
 import undetected_chromedriver as uc
 from chat import Chat
@@ -28,16 +30,18 @@ URL7 = "&city="
 
 load_dotenv()
 chrome_options = uc.ChromeOptions()
+chrome_location = str(os.getenv("CHROME_LOCATION"))
 if (
     len(config_setting.chrome_location) > 0
     and not config_setting.chrome_location.isspace()
-):
+) or (len(chrome_location) > 0 and not chrome_location.isspace()):
     chrome_options.binary_location = config_setting.chrome_location
 
 driver = uc.Chrome(headless=config_setting.headless, options=chrome_options)
 
 if len(config_setting.user_data_dir) > 0 and not config_setting.user_data_dir.isspace():
     driver.user_data_dir = config_setting.user_data_dir
+
 WAIT = WebDriverWait(driver, config_setting.timeout)
 
 conn = sqlite3.connect(config_setting.db_path)
@@ -52,19 +56,23 @@ def query_url(url):
     check_dialog()
     check_verify(url)
     try:
-        WAIT.until(
-            ec.presence_of_element_located(
-                (By.CSS_SELECTOR, "[class*='job-title clearfix']")
+        find_element_list = WAIT.until(
+            ec.any_of(
+                ec.presence_of_all_elements_located(
+                    (By.CLASS_NAME, "job-card-wrapper")
+                ),
+                ec.presence_of_element_located((By.CLASS_NAME, "job-empty-wrapper")),
             )
         )
+    except TimeoutException:
+        return 1
     except Exception:
         traceback.print_exc()
         return 1
-    job_element_list = driver.find_elements(
-        By.CSS_SELECTOR, "[class*='job-card-body clearfix']"
-    )
+    if not isinstance(find_element_list, list):
+        return 0
     url_list = []
-    for job_element in job_element_list:
+    for job_element in find_element_list:
         rsinfo = RsInfo()
         if is_ready_to_communicate(
             job_element.find_element(
@@ -81,7 +89,7 @@ def query_url(url):
         row = get_rsinfo(id)
         if row.id == id:
             if config_setting.skip_known:
-                time.sleep(0.7)
+                time.sleep(config_setting.sleep)
                 continue
             else:
                 rsinfo = row
@@ -124,15 +132,15 @@ def check_url_list(url_list):
 
 def detail(url_list):
     for url in url_list:
-        driver.get(url)
-        WAIT.until(
-            ec.presence_of_element_located(
-                (By.CSS_SELECTOR, "[class*='btn btn-startchat']")
-            )
-        )
-        check_dialog()
-        check_verify(url)
         try:
+            driver.get(url)
+            check_verify(url)
+            WAIT.until(
+                ec.presence_of_element_located(
+                    (By.CSS_SELECTOR, "[class*='btn btn-startchat']")
+                )
+            )
+            check_dialog()
             rsinfo = get_rsinfo(get_encryptJobId(url))
             rsinfo.guide = driver.find_element(
                 By.CSS_SELECTOR, "[class*='pos-bread city-job-guide']"
@@ -186,34 +194,53 @@ def startchat(url: str):
     rsinfo.communicate = "继续沟通"
     update_rsinfo(rsinfo)
     rsinfo.description = description
-    if config_setting.chat_greet:
-        try:
-            Chat.send_greet_to_chat_box(driver, Chat.generate_greet(rsinfo))
-            return
-        except Exception:
-            print(url)
-            traceback.print_exc()
     try:
-        WAIT.until(ec.presence_of_element_located((By.CLASS_NAME, "dialog-con")))
+        find_element = WAIT.until(
+            ec.any_of(
+                ec.presence_of_element_located((By.CLASS_NAME, "dialog-con")),
+                ec.presence_of_element_located((By.CSS_SELECTOR, "#chat-input")),
+            )
+        )
     except Exception:
         print(url)
         traceback.print_exc()
-    dialog_text = driver.find_element(By.CLASS_NAME, "dialog-con").text
-    if "已达上限" in dialog_text:
+        return
+    if "chat" in driver.current_url:
+        try:
+            send_greet_to_chat_box(Chat.generate_greet(rsinfo))
+        except Exception:
+            print(url)
+            traceback.print_exc()
+        return
+    if "已达上限" in find_element.text:
         sys.exit()
     check_dialog()
-    time.sleep(1)
+    time.sleep(config_setting.sleep)
+
+
+def send_greet_to_chat_box(greet):
+    chat_box = WAIT.until(
+        ec.presence_of_element_located((By.CSS_SELECTOR, "#chat-input"))
+    )
+    chat_box.clear()
+    chat_box.send_keys(greet)
+    time.sleep(config_setting.sleep)
+    driver.find_element(
+        By.CSS_SELECTOR,
+        "#container > div > div > div.chat-conversation > div.message-controls > div > div.chat-op > button",
+    ).click()
+    time.sleep(config_setting.sleep)
 
 
 def check_card(url: str):
-    parsed_url = urlparse(url)
-    query_params = parse_qs(parsed_url.query)
+    query_params = parse_qs(urlparse(url).query)
     lid = query_params.get("lid", [None])[0]
     security_id = query_params.get("securityId", [None])[0]
-    card_url = URL4 + security_id + URL5 + lid + URL6
     try:
         response = requests.get(
-            card_url, cookies=requests_cookies, headers=requests_headers
+            URL4 + security_id + URL5 + lid + URL6,
+            cookies=requests_cookies,
+            headers=requests_headers,
         )
         if response.status_code == 200:
             data = response.json()
@@ -230,11 +257,11 @@ def check_card(url: str):
             rsinfo.boss = data["zpData"]["jobCard"]["bossName"]
             rsinfo.boss_title = data["zpData"]["jobCard"]["bossTitle"]
             update_rsinfo(rsinfo)
-            time.sleep(0.7)
             return check_rsinfo(rsinfo, "card")
         else:
             print(url)
             print(response.text)
+            detail(url)
     except Exception:
         print(url)
         traceback.print_exc()
@@ -490,7 +517,7 @@ def check_description(description_text):
 
 def check_dialog():
     try:
-        time.sleep(1)
+        time.sleep(config_setting.sleep)
         dialog_elements = driver.find_elements(By.CLASS_NAME, "dialog-container")
         if dialog_elements:
             if (
@@ -502,21 +529,24 @@ def check_dialog():
                 )
                 if close_elements:
                     close_elements[-1].click()
-                    time.sleep(1)
+                    time.sleep(config_setting.sleep)
     except Exception:
         traceback.print_exc()
 
 
 def check_verify(url):
     try:
-        time.sleep(1)
+        time.sleep(config_setting.sleep)
         current_url = driver.current_url
         if "safe/verify-slider" in current_url:
             WebDriverWait(driver, 999).until(ec.url_changes(current_url))
-            time.sleep(3)
+            time.sleep(config_setting.sleep)
             driver.get(url)
-            time.sleep(6)
-        time.sleep(1)
+            time.sleep(config_setting.sleep)
+        time.sleep(config_setting.sleep)
+        if "403.html" in current_url or "error.html" in current_url:
+            print(driver.find_element(By.CLASS_NAME, "text").text)
+            sys.exit()
     except Exception:
         traceback.print_exc()
 
@@ -629,16 +659,34 @@ def check_company(company_text):
     return all(item not in company_text for item in config_setting.company_block_list)
 
 
+def stealth():
+    if config_setting.stealth:
+        if not os.path.isfile(config_setting.stealth_path):
+            response = requests.get(config_setting.stealth_url)
+            if response.status_code == 200:
+                with open(config_setting.stealth_path, "w") as f:
+                    f.write(response.text)
+        else:
+            print(
+                f"Failed to download {config_setting.stealth_url}. Status code: {response.status_code}"
+            )
+            return
+        with open(config_setting.stealth_path, "r") as f:
+            stealth_js = f.read()
+        driver.execute_cdp_cmd(
+            "Page.addScriptToEvaluateOnNewDocument", {"source": stealth_js}
+        )
+
+
 driver.get("https://www.zhipin.com")
-time.sleep(2)
+stealth()
 with open(config_setting.cookie_path, "rb") as f:
     cookies = pickle.load(f)
 for cookie in cookies:
     driver.add_cookie(cookie)
-time.sleep(2)
 driver.get("https://www.zhipin.com/web/geek/job?query=")
 check_verify("https://www.zhipin.com/web/geek/job?query=")
-time.sleep(2)
+time.sleep(config_setting.sleep)
 requests_cookies = {}
 cookies = driver.get_cookies()
 for cookie in cookies:
@@ -646,7 +694,6 @@ for cookie in cookies:
 requests_headers = {
     "User-Agent": driver.execute_script("return navigator.userAgent"),
 }
-time.sleep(2)
 
 for city in config_setting.query_city_list:
     for query in config_setting.query_list:

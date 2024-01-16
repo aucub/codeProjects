@@ -1,9 +1,6 @@
 import os
 import requests
 import traceback
-import time
-from selenium.webdriver.common.by import By
-import undetected_chromedriver as uc
 from rsinfo import RsInfo
 
 default_greet = "您好，不知道这个岗位是否还有在招人，我仔细查看了您发布的职位信息，觉得自己比较适合，希望能得到您的回复"
@@ -69,15 +66,15 @@ class Chat:
         8、避免使用任何非实际或者假设性的信息，不需要过往经历和身份，例如不需要“我是一名应届本科毕业生，我有3年经验，我是一位自动化测试工程师”这一类内容。
         9、避免使用任何与简历或职位描述矛盾的信息，避免使用简历中不存在的内容和不能匹配职位描述的简历内容，避免使用不能匹配简历内容的职位描述。
         10、注意职位描述可能存在的拼写错误，确保没有拼写错误出现在求职消息中。
-            职位名称: 
+        职位名称: 
             """
             + rsinfo.name
             + """
-            职位描述: 
+        职位描述: 
             """
             + rsinfo.description
             + """
-            简历内容:
+        简历内容:
             """
             + context
         )
@@ -87,18 +84,6 @@ class Chat:
         else:
             greet = default_greet
         return greet
-
-    def send_greet_to_chat_box(driver: uc.Chrome, greet):
-        time.sleep(2)
-        chat_box = driver.find_element(By.CSS_SELECTOR, "#chat-input")
-        chat_box.clear()
-        chat_box.send_keys(greet)
-        time.sleep(1)
-        driver.find_element(
-            By.CSS_SELECTOR,
-            "#container > div > div > div.chat-conversation > div.message-controls > div > div.chat-op > button",
-        ).click()
-        time.sleep(2)
 
 
 def main():

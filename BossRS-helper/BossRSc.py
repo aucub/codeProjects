@@ -67,7 +67,7 @@ def query_url(url):
     except TimeoutException:
         return 1
     except Exception:
-        traceback.print_exc()
+        # traceback.print_exc()
         return 1
     if not isinstance(find_element_list, list):
         return 0
@@ -133,6 +133,9 @@ def check_url_list(url_list):
 def detail(url_list):
     for url in url_list:
         try:
+            print("detail开始")
+            print(url)
+            print("detail结束")
             driver.get(url)
             check_verify(url)
             WAIT.until(
@@ -169,7 +172,7 @@ def detail(url_list):
                     rsinfo.res = rsinfo.res.splitlines()[-1]
             except Exception:
                 print(url)
-                traceback.print_exc()
+                # traceback.print_exc()
                 pass
             rsinfo.communicate = driver.find_element(
                 By.CSS_SELECTOR, "[class*='btn btn-startchat']"
@@ -180,10 +183,11 @@ def detail(url_list):
             if config_setting.chat:
                 if not Chat.check(rsinfo.description):
                     continue
-            startchat(url)
-        except Exception:
+            # startchat(url)
             print(url)
-            traceback.print_exc()
+        except Exception:
+            # print(url)
+            # traceback.print_exc()
             continue
 
 
@@ -239,7 +243,7 @@ def check_card(url: str):
     try:
         response = requests.get(
             URL4 + security_id + URL5 + lid + URL6,
-            cookies=requests_cookies,
+            #  cookies=requests_cookies,
             headers=requests_headers,
         )
         if response.status_code == 200:
@@ -259,12 +263,13 @@ def check_card(url: str):
             update_rsinfo(rsinfo)
             return check_rsinfo(rsinfo, "card")
         else:
-            print(url)
-            print(response.text)
-            detail(url)
+            # print(url)
+            # print(response.text)
+            return True
     except Exception:
-        print(url)
-        traceback.print_exc()
+        # print(url)
+        pass
+    # traceback.print_exc()
 
 
 def check_rsinfo(rsinfo: RsInfo, stage: str):
@@ -679,18 +684,18 @@ def stealth():
 
 
 driver.get("https://www.zhipin.com")
-stealth()
-with open(config_setting.cookie_path, "rb") as f:
-    cookies = pickle.load(f)
-for cookie in cookies:
-    driver.add_cookie(cookie)
-driver.get("https://www.zhipin.com/web/geek/job?query=")
-check_verify("https://www.zhipin.com/web/geek/job?query=")
-time.sleep(config_setting.sleep)
-requests_cookies = {}
-cookies = driver.get_cookies()
-for cookie in cookies:
-    requests_cookies[cookie["name"]] = cookie["value"]
+# # stealth()
+# with open(config_setting.cookie_path, "rb") as f:
+#     cookies = pickle.load(f)
+# for cookie in cookies:
+#     driver.add_cookie(cookie)
+# driver.get("https://www.zhipin.com/web/geek/job?query=")
+# check_verify("https://www.zhipin.com/web/geek/job?query=")
+# time.sleep(config_setting.sleep)
+# requests_cookies = {}
+# cookies = driver.get_cookies()
+# for cookie in cookies:
+#     requests_cookies[cookie["name"]] = cookie["value"]
 requests_headers = {
     "User-Agent": driver.execute_script("return navigator.userAgent"),
 }

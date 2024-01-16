@@ -11,10 +11,13 @@ class Config:
     user_data_dir: str = ""
     cookie_path: str = "cookies/cookies.pkl"
     db_path: str = "rsinfo.db"
+    stealth: bool = True
+    stealth_path: str = "stealth.min.js"
+    stealth_url: str = "https://raw.githubusercontent.com/requireCool/stealth.min.js/main/stealth.min.js"
     chrome_location: str = ""
-    timeout: int = 10
+    timeout: int = 15
+    sleep: float = 0.9
     chat: bool = False
-    chat_greet: bool = False
     skip_known: bool = False
     graduate: int = 23
     salary_max: int = 10  # 最大薪水

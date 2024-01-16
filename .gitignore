@@ -1,4 +1,8 @@
 *.pkl
 *.txt
-test/*
+test
 .env
+*.json
+*.xml
+*.lock
+*.html

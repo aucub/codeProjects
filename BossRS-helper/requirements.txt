@@ -1,5 +1,5 @@
 requests==2.31.0
-selenium==4.16.0
+selenium==4.17.2
 undetected-chromedriver==3.5.4
 toml==0.10.2
 attrs==23.2.0

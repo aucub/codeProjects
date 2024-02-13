@@ -1,6 +1,8 @@
 from ast import List
+import os
 from attr import dataclass
 import attr
+import requests
 import toml
 
 
@@ -53,9 +55,17 @@ class Config:
     salary_list: List = ["404", "403"]
     page_min: int = 1
     page_max: int = 6
+    max_get_proxy_times: int = 100
 
 
 def load_config() -> Config:
+    env_config_path = os.getenv("CONFIG_PATH")
+    if env_config_path:
+        response = requests.get(env_config_path)
+        response.raise_for_status()
+        print("load config from env_config_path")
+        with open("config.toml", "wb") as file:
+            file.write(response.content)
     with open("config.toml", "r") as f:
         config_dict = toml.load(f)
     return Config(**config_dict)

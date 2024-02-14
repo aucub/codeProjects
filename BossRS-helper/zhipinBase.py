@@ -9,6 +9,7 @@ import traceback
 import requests
 from seleniumbase import BaseCase
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
 from urllib3.exceptions import ProxyError, ConnectTimeoutError, MaxRetryError
 from requests.exceptions import ProxyError as requestsProxyError
@@ -28,6 +29,12 @@ URL5 = "&lid="
 URL6 = "&sessionId="
 URL7 = "&city="
 
+
+if len(config_setting.cf_worker) > 0 and not config_setting.cf_worker.isspace():
+    # URL1 = URL1.replace("www.zhipin.com", config_setting.cf_worker)
+    URL4 = URL4.replace("www.zhipin.com", config_setting.cf_worker)
+    print(f"Using {config_setting.cf_worker} as proxy worker")
+
 conn = sqlite3.connect(config_setting.db_path)
 cursor = conn.cursor()
 
@@ -39,25 +46,29 @@ class JobQuery(BaseCase):
         if self.get_proxy_times == config_setting.max_get_proxy_times:
             sys.exit(1)
         self.get_proxy_times += 1
-        for i in range(retries):
+        for _ in range(retries):
             try:
                 response = requests.get("https://proxypool-vwc3.onrender.com/random")
                 response.raise_for_status()
                 print(f"Got proxy: {response.text}")
-                return response.text
+                return "http://{}".format(response.text)
             except Exception as e:
-                print(f"An error occurred: {e}. Retrying in {retry_delay} seconds...")
+                print(
+                    f"Get proxy error occurred: {e}. Retrying in {retry_delay} seconds..."
+                )
                 time.sleep(retry_delay)
         return None
 
     def set_proxy(self):
-        env_proxy = os.getenv("HTTP_PROXY")
-        self.proxy_str = self.get_proxy()
+        env_proxy = os.getenv("PROXY_STR")
+        # self.proxy_str = self.get_proxy()
+        self.proxy_str = env_proxy
         self.requests_proxies = None
-        if not env_proxy:
+        if env_proxy:
+            print("使用代理：" + env_proxy)
             self.requests_proxies = {
-                "http": "http://{}".format(self.proxy_str),
-                "https": "http://{}".format(self.proxy_str),
+                "http": self.proxy_str,
+                "https": self.proxy_str,
             }
 
     def append_to_file(self, file_path, line_to_append):
@@ -67,7 +78,7 @@ class JobQuery(BaseCase):
     def test_query(self):
         self.get_proxy_times = 0
         self.set_default_timeout(config_setting.timeout)
-        self.set_proxy()
+        # self.set_proxy()
         wheels = self.load_state() or [[], [], [], 0]
         self.requests_headers = {
             "User-Agent": self.execute_script("return navigator.userAgent;"),
@@ -96,6 +107,7 @@ class JobQuery(BaseCase):
                                 + str(page)
                             )
                         except (TimeoutException, StaleElementReferenceException):
+                            traceback.print_exc()
                             continue
                         wheels[3] = page
                         self.save_state(wheels)
@@ -119,10 +131,11 @@ class JobQuery(BaseCase):
             self.wait_for_element_present(
                 ".job-card-wrapper", timeout=config_setting.timeout
             )
-            find_element_list = self.find_elements("[class*='job-card-wrapper']")
+            find_element_list = self.find_elements(".job-card-wrapper")
         except TimeoutException:
             return 1
         except Exception:
+            traceback.print_exc()
             self.check_dialog()
             self.check_verify()
             tb_str = traceback.format_exc()
@@ -130,44 +143,58 @@ class JobQuery(BaseCase):
             return 1
         url_list = []
         for job_element in find_element_list:
-            rsinfo = RsInfo()
-            job_info = job_element.find_element(
-                By.CSS_SELECTOR, "div.job-info.clearfix"
-            )
-            job_info_html = job_info.get_attribute(
-                "innerHTML",
-            )
-            if self.is_ready_to_communicate(job_info_html):
-                rsinfo.communicate = "立即沟通"
-            else:
-                rsinfo.communicate = "继续沟通"
-            url = job_element.find_element(
-                By.CSS_SELECTOR, " .job-card-left"
-            ).get_attribute("href")
-            id = self.get_encryptJobId(url)
-            row = self.get_rsinfo(id)
-            if row and row.id == id:
-                if config_setting.skip_known:
-                    self.sleep(config_setting.sleep)
-                    continue
+            job_element: WebElement
+            try:
+                rsinfo = RsInfo()
+                job_info = job_element.find_element(
+                    value="[class*='job-info clearfix']", by=By.CSS_SELECTOR
+                )
+                job_info_html = job_info.get_attribute(
+                    "innerHTML",
+                )
+                if self.is_ready_to_communicate(job_info_html):
+                    rsinfo.communicate = "立即沟通"
                 else:
-                    rsinfo = row
-            rsinfo.url = url.split("&securityId")[0]
-            rsinfo.name = job_element.find_element(By.CSS_SELECTOR, " .job-name").text
-            rsinfo.city = job_element.find_element(By.CSS_SELECTOR, " .job-area").text
-            rsinfo.company = job_element.find_element(
-                By.CSS_SELECTOR, " .company-name a"
-            ).text
-            rsinfo.industry = job_element.find_element(
-                By.CSS_SELECTOR, " .company-tag-list li"
-            ).text
-            rsinfo.datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            rsinfo.id = id
-            self.update_rsinfo(rsinfo)
-            if self.check_rsinfo(rsinfo, "query"):
-                url_list.append(url)
-            conn.commit()
-            self.url_list_process(url_list)
+                    rsinfo.communicate = "继续沟通"
+                url = job_element.find_element(
+                    value=" .job-card-left", by=By.CSS_SELECTOR
+                ).get_attribute("href")
+                id = self.get_encryptJobId(url)
+                row = self.get_rsinfo(id)
+                if row and row.id == id:
+                    if config_setting.skip_known:
+                        self.sleep(config_setting.sleep)
+                        continue
+                    else:
+                        rsinfo = row
+                rsinfo.url = url.split("&securityId")[0]
+                rsinfo.name = job_element.find_element(
+                    value=" .job-name", by=By.CSS_SELECTOR
+                ).text
+                rsinfo.city = job_element.find_element(
+                    value=" .job-area", by=By.CSS_SELECTOR
+                ).text
+                rsinfo.company = job_element.find_element(
+                    value=" .company-name a", by=By.CSS_SELECTOR
+                ).text
+                rsinfo.industry = job_element.find_element(
+                    value=" .company-tag-list    li", by=By.CSS_SELECTOR
+                ).text
+                rsinfo.datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                rsinfo.id = id
+                print(rsinfo)
+                self.update_rsinfo(rsinfo)
+                if self.check_rsinfo(rsinfo, "query"):
+                    url_list.append(url)
+            except Exception:
+                traceback.print_exc()
+                tb_str = traceback.format_exc()
+                self.append_to_file(
+                    "log.txt", f"异常信息：{tb_str}，page_url：{page_url}"
+                )
+                continue
+        conn.commit()
+        self.url_list_process(url_list)
 
     def check_dialog(self):
         self.sleep(config_setting.sleep)
@@ -183,13 +210,13 @@ class JobQuery(BaseCase):
             current_url = self.get_current_url()
             if "safe/verify-slider" in current_url:
                 time.sleep(config_setting.timeout)
-                print("安全问题退出")
-                sys.exit(1)
+                print("安全问题")
+                # sys.exit(1)
             time.sleep(config_setting.sleep)
             if "403.html" in current_url or "error.html" in current_url:
                 time.sleep(config_setting.timeout)
-                print("403退出")
-                sys.exit(1)
+                print("403或错误")
+                # sys.exit(1)
         except Exception:
             tb_str = traceback.format_exc()
             self.append_to_file("log.txt", f"异常信息：{tb_str}")
@@ -199,23 +226,34 @@ class JobQuery(BaseCase):
         lid = query_params.get("lid", [None])[0]
         security_id = query_params.get("securityId", [None])[0]
         try:
-            retry_count = 5
+            retry_count = config_setting.max_retry_times
+            retry_delay = config_setting.retry_delay
             while retry_count > 0:
                 try:
                     response = requests.get(
                         URL4 + security_id + URL5 + lid + URL6,
                         headers=self.requests_headers,
-                        proxies=self.requests_proxies,
+                        # proxies=self.requests_proxies,
                     )
-                    retry_count = 0
-                except Exception:
+                    if response.status_code == 200:
+                        data = response.json()
+                        print(response.text)
+                        print(response.url)
+                    else:
+                        raise Exception(response.text)
+                    if data["message"] != "Success":
+                        raise Exception(response.text)
+                    else:
+                        retry_count = 0
+                except Exception as e:
                     retry_count -= 1
+                    traceback.print_exc()
+                    time.sleep(retry_delay)
                     if retry_count == 0:
-                        self.set_proxy()
-                        traceback.print_exc()
+                        # self.set_proxy()
                         tb_str = traceback.format_exc()
                         self.append_to_file(
-                            "log.txt", f"异常信息：{tb_str}，url：{url}"
+                            "log.txt", f"异常信息：{tb_str}，{e}，url：{url}"
                         )
             if response.status_code == 200:
                 data = response.json()
@@ -236,10 +274,12 @@ class JobQuery(BaseCase):
             else:
                 return True
         except (ProxyError, ConnectTimeoutError, MaxRetryError, requestsProxyError):
-            self.set_proxy()
+            # self.set_proxy()
+            traceback.print_exc()
             tb_str = traceback.format_exc()
             self.append_to_file("log.txt", f"异常信息：{tb_str}，url：{url}")
         except Exception:
+            traceback.print_exc()
             tb_str = traceback.format_exc()
             self.append_to_file("log.txt", f"异常信息：{tb_str}，url：{url}")
 
@@ -259,11 +299,12 @@ class JobQuery(BaseCase):
     def detail(self, url_list):
         for url in url_list:
             try:
-                self.open(url)
+                rsinfo = self.get_rsinfo(self.get_encryptJobId(url))
+                self.open(rsinfo.url)
                 self.check_verify()
                 self.wait_for_element_present("[class*='btn btn-startchat']")
                 self.check_dialog()
-                rsinfo = self.get_rsinfo(self.get_encryptJobId(url))
+
                 rsinfo.guide = self.get_text("[class*='pos-bread city-job-guide']")
                 if len(rsinfo.guide) > 2:
                     rsinfo.guide = rsinfo.guide[2:]
@@ -282,6 +323,7 @@ class JobQuery(BaseCase):
                     if len(rsinfo.res.splitlines()) > 1:
                         rsinfo.res = rsinfo.res.splitlines()[-1]
                 except Exception:
+                    traceback.print_exc()
                     tb_str = traceback.format_exc()
                     self.append_to_file(
                         "log.txt",
@@ -297,6 +339,7 @@ class JobQuery(BaseCase):
                 self.append_to_file("job.txt", url)
                 print(f"已处理：\n{url}")
             except Exception:
+                traceback.print_exc()
                 print(f"异常：\n{url}")
                 self.append_to_file("job.txt", url)
                 tb_str = traceback.format_exc()

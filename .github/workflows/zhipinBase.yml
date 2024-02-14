@@ -1,0 +1,111 @@
+name: zhipinBase
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    env:
+      PY_COLORS: "1"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4.1.1
+        with:
+          lfs: true
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-wqy-zenhei
+          sudo apt-get install -y language-pack-zh-hans
+          sudo locale-gen zh_CN.UTF-8
+          sudo update-locale LANG=zh_CN.UTF-8
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip wheel setuptools
+          curl https://raw.githubusercontent.com/seleniumbase/SeleniumBase/master/requirements.txt --output requirementsSeleniumBase.txt
+          pip install -r requirementsSeleniumBase.txt
+          pip install -r BossRS-helper/requirements.txt
+      - name: Install Chrome
+        run: |
+          sudo apt install google-chrome-stable
+      - name: Check the console scripts interface
+        run: |
+          seleniumbase
+          sbase
+      - name: Install chromedriver
+        run: |
+          seleniumbase install chromedriver
+      - name: Make sure pytest is working
+        run: |
+          echo "def test_1(): pass" > nothing.py
+          pytest nothing.py
+      - name: Make sure nosetests is working
+        run: |
+          echo "def test_2(): pass" > nothing2.py
+          nosetests nothing2.py
+      - name: Run pytest BossRS-helper/zhipinBase.py
+        env:
+          STATE: ${{ vars.STATE }}
+          CONFIG_PATH: ${{ vars.CONFIG_PATH }}
+          PROXY_STR: ${{ vars.PROXY_STR }}
+        run: |
+          cd BossRS-helper
+          pytest zhipinBase.py --uc --browser=chrome --headless -v -s --junit-xml=junit/test-results.xml
+
+      # - name: Run pytest BossRS-helper/zhipinBase.py
+      #   env:
+      #     STATE: ${{ vars.STATE }}
+      #     CONFIG_PATH: ${{ vars.CONFIG_PATH }}
+      #     PROXY_STR: ${{ vars.PROXY_STR }}
+      #   run: |
+      #     cd BossRS-helper
+      #     if [ -n "$PROXY_STR" ]; then
+      #       echo "Use proxy"
+      #     else
+      #       pytest zhipinBase.py --uc --browser=chrome --headless -v -s --junit-xml=junit/test-results.xml
+      #       exit 0
+      #     fi
+      #     retry_count=0
+      #     max_retries=20
+      #     success=false
+
+      #     while [ $retry_count -lt $max_retries ] && [ $success == false ]; do
+      #       if [ -z "$PROXY_STR" ]; then
+      #         echo "Obtaining new proxy..."
+      #         PROXY_STR=$(curl -s https://proxypool-vwc3.onrender.com/random)
+      #         echo "Using proxy: $PROXY_STR"
+      #       fi
+
+      #       pytest zhipinBase.py --uc --browser=chrome --proxy="$PROXY_STR" --headless -v -s --junit-xml=junit/test-results.xml
+      #       exit_code=$?
+
+      #       if [ $exit_code -eq 0 ]; then
+      #         success=true
+      #       else
+      #         PROXY_STR=""
+      #         ((retry_count++))
+      #         echo "Test failed. Retrying... (Attempt: $retry_count)"
+      #       fi
+      #     done
+
+      #     if [ $success == false ]; then
+      #       echo "Tests failed after $max_retries retries."
+      #       exit 1
+      #     fi
+
+      - uses: actions/upload-artifact@v4.3.1
+        if: always()
+        with:
+          path: |
+            ./*.txt
+            ./*.xml
+            BossRS-helper/*.db
+            BossRS-helper/*.txt
+            BossRS-helper/*.json
+            BossRS-helper/*.xml
+            BossRS-helper/junit/*
+            BossRS-helper/latest_logs/*/*

@@ -8,7 +8,6 @@ import sqlite3
 import traceback
 import requests
 from seleniumbase import BaseCase
-from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
 from urllib3.exceptions import ProxyError, ConnectTimeoutError, MaxRetryError
 from requests.exceptions import ProxyError as requestsProxyError
@@ -20,17 +19,21 @@ BaseCase.main(__name__, __file__)
 
 config_setting = load_config()
 
-URL1 = "https://www.zhipin.com/web/geek/job?query="
+URL1 = "https://www.zhipin.com/wapi/zpgeek/search/joblist.json?scene=1&payType=&partTime=&stage=&jobType=&multiBusinessDistrict=&multiSubway=&pageSize=30&query="
 URL2 = config_setting.query_param + "&salary="
 URL3 = "&page="
 URL4 = "https://www.zhipin.com/wapi/zpgeek/job/card.json?securityId="
 URL5 = "&lid="
 URL6 = "&sessionId="
 URL7 = "&city="
+URL8 = "https://www.zhipin.com/job_detail/"
+URL9 = ".html"
+URL10 = "?lid="
+URL11 = "&securityId="
 
 
 if len(config_setting.cf_worker) > 0 and not config_setting.cf_worker.isspace():
-    # URL1 = URL1.replace("www.zhipin.com", config_setting.cf_worker)
+    URL1 = URL1.replace("www.zhipin.com", config_setting.cf_worker)
     URL4 = URL4.replace("www.zhipin.com", config_setting.cf_worker)
     print(f"Using {config_setting.cf_worker} as proxy worker")
 
@@ -118,94 +121,98 @@ class JobQuery(BaseCase):
         self.save_state(wheels)
 
     def query_and_process_jobs(self, page_url):
-        self.open(page_url)
-        self.check_dialog()
-        self.check_verify()
-        try:
-            self.wait_for_element_present(
-                ".job-card-wrapper", timeout=config_setting.timeout
-            )
-            find_element_list = self.find_elements("[class*='job-card-wrapper']")
-        except TimeoutException:
-            return 1
-        except Exception:
-            self.check_dialog()
-            self.check_verify()
-            tb_str = traceback.format_exc()
-            self.append_to_file("log.txt", f"异常信息：{tb_str}，page_url：{page_url}")
-            return 1
-        url_list = []
-        for job_element in find_element_list:
-            rsinfo = RsInfo()
-            job_info = job_element.find_element(
-                By.CSS_SELECTOR, "div.job-info.clearfix"
-            )
-            job_info_html = job_info.get_attribute(
-                "innerHTML",
-            )
-            if self.is_ready_to_communicate(job_info_html):
-                rsinfo.communicate = "立即沟通"
-            else:
-                rsinfo.communicate = "继续沟通"
-            url = job_element.find_element(
-                By.CSS_SELECTOR, " .job-card-left"
-            ).get_attribute("href")
-            id = self.get_encryptJobId(url)
-            row = self.get_rsinfo(id)
-            if row and row.id == id:
-                if config_setting.skip_known:
-                    self.sleep(config_setting.sleep)
-                    continue
+        retry_count = config_setting.max_retry_times
+        retry_delay = config_setting.retry_delay
+        while retry_count > 0:
+            try:
+                response = requests.get(
+                    url=page_url,
+                    headers=self.requests_headers,
+                    #  proxies=self.requests_proxies,
+                )
+                if response.status_code == 200:
+                    data = response.json()
                 else:
-                    rsinfo = row
-            rsinfo.url = url.split("&securityId")[0]
-            rsinfo.name = job_element.find_element(By.CSS_SELECTOR, " .job-name").text
-            rsinfo.city = job_element.find_element(By.CSS_SELECTOR, " .job-area").text
-            rsinfo.company = job_element.find_element(
-                By.CSS_SELECTOR, " .company-name a"
-            ).text
-            rsinfo.industry = job_element.find_element(
-                By.CSS_SELECTOR, " .company-tag-list li"
-            ).text
-            rsinfo.datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            rsinfo.id = id
-            self.update_rsinfo(rsinfo)
-            if self.check_rsinfo(rsinfo, "query"):
-                url_list.append(url)
-            conn.commit()
-            self.url_list_process(url_list)
-
-    def check_dialog(self):
-        self.sleep(config_setting.sleep)
-        if self.is_element_visible("div.dialog-container:last-child"):
-            dialog_text = self.get_text("div.dialog-container:last-child")
-            if "安全问题" in dialog_text or "沟通" in dialog_text:
-                self.click("div.dialog-container:last-child .close")
-                self.sleep(config_setting.sleep)
-
-    def check_verify(self):
-        try:
-            time.sleep(config_setting.sleep)
-            current_url = self.get_current_url()
-            if "safe/verify-slider" in current_url:
-                time.sleep(config_setting.timeout)
-                print("安全问题")
-                # sys.exit(1)
-            time.sleep(config_setting.sleep)
-            if "403.html" in current_url or "error.html" in current_url:
-                time.sleep(config_setting.timeout)
-                print("403或错误")
-                # sys.exit(1)
-        except Exception:
-            tb_str = traceback.format_exc()
-            self.append_to_file("log.txt", f"异常信息：{tb_str}")
+                    raise Exception(response.text)
+                if data["message"] != "Success":
+                    raise Exception(response.text)
+                else:
+                    retry_count = 0
+            except Exception as e:
+                retry_count -= 1
+                if retry_count == 0:
+                    # self.set_proxy()
+                    traceback.print_exc()
+                    tb_str = traceback.format_exc()
+                    self.append_to_file(
+                        "log.txt", f"异常信息：{tb_str}，{e}，url：{page_url}"
+                    )
+                    time.sleep(retry_delay)
+        if data["message"] == "Success":
+            jobList = data["zpData"]["jobList"]
+            url_list = []
+            for job in jobList:
+                try:
+                    rsinfo = RsInfo()
+                    rsinfo.id = job["encryptJobId"]
+                    if not job["contact"]:
+                        rsinfo.communicate = "立即沟通"
+                    else:
+                        rsinfo.communicate = "继续沟通"
+                    row = self.get_rsinfo(rsinfo.id)
+                    if row and row.id == rsinfo.id:
+                        if config_setting.skip_known:
+                            self.sleep(config_setting.sleep)
+                            continue
+                        else:
+                            rsinfo = row
+                    rsinfo.url = URL8 + rsinfo.id + URL9
+                    rsinfo.name = job["jobName"]
+                    rsinfo.city = job["cityName"]
+                    rsinfo.company = job["brandName"]
+                    rsinfo.industry = job["brandIndustry"]
+                    rsinfo.scale = job["brandScaleName"]
+                    rsinfo.address = (
+                        job["cityName"] + job["areaDistrict"] + job["businessDistrict"]
+                    )
+                    rsinfo.experience = job["jobExperience"]
+                    rsinfo.degree = job["jobDegree"]
+                    rsinfo.salary = job["salaryDesc"]
+                    rsinfo.boss = job["bossName"]
+                    rsinfo.boss_title = job["bossTitle"]
+                    rsinfo.update_date = datetime.datetime.fromtimestamp(
+                        job["lastModifyTime"] / 1000
+                    ).strftime("%Y-%m-%d")
+                    rsinfo.datetime = datetime.datetime.now().strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+                    print(rsinfo)
+                    self.update_rsinfo(rsinfo)
+                    if self.check_rsinfo(rsinfo, "query"):
+                        url_list.append(
+                            rsinfo.url
+                            + URL10
+                            + data["zpData"]["lid"]
+                            + URL11
+                            + job["securityId"]
+                            + URL6
+                        )
+                except Exception:
+                    tb_str = traceback.format_exc()
+                    self.append_to_file(
+                        "log.txt", f"异常信息：{tb_str}，page_url：{page_url}"
+                    )
+                    continue
+                conn.commit()
+                self.url_list_process(url_list)
 
     def check_card(self, url: str):
         query_params = parse_qs(urlparse(url).query)
         lid = query_params.get("lid", [None])[0]
         security_id = query_params.get("securityId", [None])[0]
         try:
-            retry_count = 5
+            retry_count = config_setting.max_retry_times
+            retry_delay = config_setting.retry_delay
             while retry_count > 0:
                 try:
                     response = requests.get(
@@ -213,17 +220,25 @@ class JobQuery(BaseCase):
                         headers=self.requests_headers,
                         #  proxies=self.requests_proxies,
                     )
-                    retry_count = 0
+                    if response.status_code == 200:
+                        data = response.json()
+                    else:
+                        raise Exception(response.text)
+                    if data["message"] != "Success":
+                        raise Exception(response.text)
+                    else:
+                        retry_count = 0
                     print(response.text)
                     print(response.url)
-                except Exception:
+                except Exception as e:
                     retry_count -= 1
+                    time.sleep(retry_delay)
                     if retry_count == 0:
                         # self.set_proxy()
                         traceback.print_exc()
                         tb_str = traceback.format_exc()
                         self.append_to_file(
-                            "log.txt", f"异常信息：{tb_str}，url：{url}"
+                            "log.txt", f"异常信息：{tb_str}，{e}，url：{url}"
                         )
             if response.status_code == 200:
                 data = response.json()
@@ -267,20 +282,14 @@ class JobQuery(BaseCase):
     def detail(self, url_list):
         for url in url_list:
             try:
-                self.open(url)
+                rsinfo = self.get_rsinfo(self.get_encryptJobId(url))
+                self.open(rsinfo.url)
                 self.check_verify()
                 self.wait_for_element_present("[class*='btn btn-startchat']")
                 self.check_dialog()
-                rsinfo = self.get_rsinfo(self.get_encryptJobId(url))
                 rsinfo.guide = self.get_text("[class*='pos-bread city-job-guide']")
                 if len(rsinfo.guide) > 2:
                     rsinfo.guide = rsinfo.guide[2:]
-                rsinfo.scale = self.get_text(".sider-company > p:nth-child(4)")
-                if "人" not in rsinfo.scale:
-                    rsinfo.scale = ""
-                rsinfo.update_date = self.get_text("p.gray")
-                if len(rsinfo.update_date) > 4:
-                    rsinfo.update_date = rsinfo.update_date[4:]
                 rsinfo.description = self.get_text(".job-detail-section")
                 try:
                     rsinfo.fund = self.get_text("[class*='company-fund']")
@@ -314,6 +323,31 @@ class JobQuery(BaseCase):
                 )
                 continue
 
+    def check_dialog(self):
+        self.sleep(config_setting.sleep)
+        if self.is_element_visible("div.dialog-container:last-child"):
+            dialog_text = self.get_text("div.dialog-container:last-child")
+            if "安全问题" in dialog_text or "沟通" in dialog_text:
+                self.click("div.dialog-container:last-child .close")
+                self.sleep(config_setting.sleep)
+
+    def check_verify(self):
+        try:
+            time.sleep(config_setting.sleep)
+            current_url = self.get_current_url()
+            if "safe/verify-slider" in current_url:
+                time.sleep(config_setting.timeout)
+                print("安全问题")
+                # sys.exit(1)
+            time.sleep(config_setting.sleep)
+            if "403.html" in current_url or "error.html" in current_url:
+                time.sleep(config_setting.timeout)
+                print("403或错误")
+                # sys.exit(1)
+        except Exception:
+            tb_str = traceback.format_exc()
+            self.append_to_file("log.txt", f"异常信息：{tb_str}")
+
     def check_rsinfo(slef, rsinfo: RsInfo, stage: str):
         if stage == "query":
             return (
@@ -322,23 +356,23 @@ class JobQuery(BaseCase):
                 and slef.check_city(rsinfo.city)
                 and slef.check_company(rsinfo.company)
                 and slef.check_industry(rsinfo.industry)
+                and slef.check_salary(rsinfo.salary)
+                and slef.check_experience(rsinfo.experience)
+                and slef.check_degree(rsinfo.degree)
+                and slef.check_boss_title(rsinfo.boss_title)
+                and slef.check_scale(rsinfo.scale)
+                and slef.check_update(rsinfo.update_date)
             )
         elif stage == "card":
             return (
                 slef.check_description(rsinfo.description)
                 and slef.check_active(rsinfo.active)
                 and slef.check_city(rsinfo.address)
-                and slef.check_salary(rsinfo.salary)
-                and slef.check_experience(rsinfo.experience)
-                and slef.check_degree(rsinfo.degree)
-                and slef.check_boss_title(rsinfo.boss_title)
             )
         elif stage == "detail":
             return (
                 slef.check_guide(rsinfo.guide)
-                and slef.check_scale(rsinfo.scale)
                 and slef.check_res(rsinfo.res)
-                and slef.check_update(rsinfo.update_date)
                 and slef.check_description(rsinfo.description)
                 and slef.check_offline(rsinfo.description, rsinfo.city)
                 and slef.check_fund(rsinfo.fund)

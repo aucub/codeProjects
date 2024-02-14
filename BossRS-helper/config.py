@@ -56,6 +56,9 @@ class Config:
     page_min: int = 1
     page_max: int = 6
     max_get_proxy_times: int = 100
+    cf_worker: str = ""
+    max_retry_times: int = 5
+    retry_delay: int = 5
 
 
 def load_config() -> Config:

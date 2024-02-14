@@ -1,0 +1,45 @@
+name: zhipinApi
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    env:
+      PY_COLORS: "1"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4.1.1
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-wqy-zenhei
+          sudo apt-get install -y language-pack-zh-hans
+          sudo locale-gen zh_CN.UTF-8
+          sudo update-locale LANG=zh_CN.UTF-8
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip wheel setuptools
+          pip install -r zhipin/requirements.txt
+      - name: Run zhipinApi.py
+        env:
+          STATE: ${{ vars.STATE }}
+          CONFIG_PATH: ${{ vars.CONFIG_PATH }}
+          DB_URL: ${{ secrets.DB_URL }}
+          PROXY_STR: ${{ vars.PROXY_STR }}
+        run: |
+          cd zhipin
+          python zhipinApi.py
+      - uses: actions/upload-artifact@v4.3.1
+        if: always()
+        with:
+          path: |
+            zhipin/*.txt
+            zhipin/*.json
+            zhipin/*.xml
+            zhipin/junit/*
+            zhipin/latest_logs/*/*

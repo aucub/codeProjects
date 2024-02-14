@@ -1,7 +1,7 @@
 import os
 import requests
 import traceback
-from rsinfo import RsInfo
+from jd import JD
 
 default_greet = "您好，不知道这个岗位是否还有在招人，我仔细查看了您发布的职位信息，觉得自己比较适合，希望能得到您的回复"
 
@@ -49,7 +49,7 @@ class Chat:
         except Exception:
             traceback.print_exc()
 
-    def generate_greet(rsinfo: RsInfo):
+    def generate_greet(jd: JD):
         with open("resume.txt", "r", encoding="utf-8") as file:
             context = file.read()
         prompt = (
@@ -68,11 +68,11 @@ class Chat:
         10、注意职位描述可能存在的拼写错误，确保没有拼写错误出现在求职消息中。
         职位名称: 
             """
-            + rsinfo.name
+            + jd.name
             + """
         职位描述: 
             """
-            + rsinfo.description
+            + jd.description
             + """
         简历内容:
             """
@@ -87,15 +87,15 @@ class Chat:
 
 
 def main():
-    rsinfo = RsInfo()
-    rsinfo.name = "项目助理"
-    rsinfo.description = """
+    jd = JD()
+    jd.name = "项目助理"
+    jd.description = """
     岗位职责:
     1、完成领导交办的工作。
     任职要求：
     1、富有责任感和团队协作精神。
     """
-    greet = Chat.generate_greet(rsinfo)
+    greet = Chat.generate_greet(jd)
     print(greet)
 
 

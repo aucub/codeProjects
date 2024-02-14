@@ -9,16 +9,10 @@ import toml
 @dataclass
 @attr.s(init=False)
 class Config:
-    headless: bool = False
+    cookies_path: str = ""
     user_data_dir: str = ""
-    cookie_path: str = "cookies/cookies.pkl"
-    db_path: str = "rsinfo.db"
-    stealth: bool = True
-    stealth_path: str = "stealth.min.js"
-    stealth_url: str = "https://raw.githubusercontent.com/requireCool/stealth.min.js/main/stealth.min.js"
-    chrome_location: str = ""
-    timeout: int = 15
-    sleep: float = 0.9
+    timeout: int = 25
+    sleep: float = 0.1
     chat: bool = False
     skip_known: bool = False
     graduate: int = 23
@@ -31,6 +25,18 @@ class Config:
         "本周",
         "7日",
     ]  # 活跃时间阻止名单
+    offline_list: List = [
+        "不支持在线",
+        "不支持线上",
+        "线下面试",
+        "线下笔试",
+        "现场面试",
+        "现场机考",
+        "不接受线上",
+        "未开放线上",
+        "现场coding",
+        "附近优先",
+    ]
     scale_block_list: List = ["-20"]  # 规模阻止名单
     degree_block_list: List = ["硕", "博"]  # 学历阻止名单
     experience_block_list: List = []  # 经验阻止名单
@@ -55,7 +61,7 @@ class Config:
     salary_list: List = ["404", "403"]
     page_min: int = 1
     page_max: int = 6
-    max_get_proxy_times: int = 100
+    cf_worker: str = ""
 
 
 def load_config() -> Config:
@@ -63,7 +69,7 @@ def load_config() -> Config:
     if env_config_path:
         response = requests.get(env_config_path)
         response.raise_for_status()
-        print("load config from env_config_path")
+        print(f"load config from {env_config_path}")
         with open("config.toml", "wb") as file:
             file.write(response.content)
     with open("config.toml", "r") as f:

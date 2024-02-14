@@ -102,6 +102,7 @@ class JobQuery(BaseCase):
                                 + str(page)
                             )
                         except (TimeoutException, StaleElementReferenceException):
+                            traceback.print_exc()
                             continue
                         wheels[3] = page
                         self.save_state(wheels)
@@ -129,6 +130,7 @@ class JobQuery(BaseCase):
         except TimeoutException:
             return 1
         except Exception:
+            traceback.print_exc()
             self.check_dialog()
             self.check_verify()
             tb_str = traceback.format_exc()
@@ -217,6 +219,7 @@ class JobQuery(BaseCase):
                     print(response.text)
                     print(response.url)
                 except Exception:
+                    traceback.print_exc()
                     retry_count -= 1
                     if retry_count == 0:
                         # self.set_proxy()
@@ -244,10 +247,12 @@ class JobQuery(BaseCase):
             else:
                 return True
         except (ProxyError, ConnectTimeoutError, MaxRetryError, requestsProxyError):
+            traceback.print_exc()
             # self.set_proxy()
             tb_str = traceback.format_exc()
             self.append_to_file("log.txt", f"异常信息：{tb_str}，url：{url}")
         except Exception:
+            traceback.print_exc()
             tb_str = traceback.format_exc()
             self.append_to_file("log.txt", f"异常信息：{tb_str}，url：{url}")
 
@@ -290,6 +295,7 @@ class JobQuery(BaseCase):
                     if len(rsinfo.res.splitlines()) > 1:
                         rsinfo.res = rsinfo.res.splitlines()[-1]
                 except Exception:
+                    traceback.print_exc()
                     tb_str = traceback.format_exc()
                     self.append_to_file(
                         "log.txt",
@@ -305,6 +311,7 @@ class JobQuery(BaseCase):
                 self.append_to_file("job.txt", url)
                 print(f"已处理：\n{url}")
             except Exception:
+                traceback.print_exc()
                 print(f"异常：\n{url}")
                 self.append_to_file("job.txt", url)
                 tb_str = traceback.format_exc()

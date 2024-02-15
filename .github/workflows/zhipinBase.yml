@@ -11,14 +11,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4.1.1
-        with:
-          lfs: true
       - run: |
           sudo apt-get update
           sudo apt-get install -y fonts-wqy-zenhei
           sudo apt-get install -y language-pack-zh-hans
           sudo locale-gen zh_CN.UTF-8
           sudo update-locale LANG=zh_CN.UTF-8
+          curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
+          sudo apt-get update && sudo apt-get install -y cloudflare-warp
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -28,7 +29,7 @@ jobs:
           python -m pip install --upgrade pip wheel setuptools
           curl https://raw.githubusercontent.com/seleniumbase/SeleniumBase/master/requirements.txt --output requirementsSeleniumBase.txt
           pip install -r requirementsSeleniumBase.txt
-          pip install -r BossRS-helper/requirements.txt
+          pip install -r zhipin/requirements.txt
       - name: Install Chrome
         run: |
           sudo apt install google-chrome-stable
@@ -47,65 +48,26 @@ jobs:
         run: |
           echo "def test_2(): pass" > nothing2.py
           nosetests nothing2.py
-      - name: Run pytest BossRS-helper/zhipinBase.py
+      - name: Run pytest zhipinBase.py
         env:
           STATE: ${{ vars.STATE }}
           CONFIG_PATH: ${{ vars.CONFIG_PATH }}
-          PROXY_STR: ${{ vars.PROXY_STR }}
+          DB_URL: ${{ secrets.DB_URL }}
+          PROXY_STR: socks5://127.0.0.1:40000
         run: |
-          cd BossRS-helper
-          pytest zhipinBase.py --uc --browser=chrome --headless -v -s --junit-xml=junit/test-results.xml
-
-      # - name: Run pytest BossRS-helper/zhipinBase.py
-      #   env:
-      #     STATE: ${{ vars.STATE }}
-      #     CONFIG_PATH: ${{ vars.CONFIG_PATH }}
-      #     PROXY_STR: ${{ vars.PROXY_STR }}
-      #   run: |
-      #     cd BossRS-helper
-      #     if [ -n "$PROXY_STR" ]; then
-      #       echo "Use proxy"
-      #     else
-      #       pytest zhipinBase.py --uc --browser=chrome --headless -v -s --junit-xml=junit/test-results.xml
-      #       exit 0
-      #     fi
-      #     retry_count=0
-      #     max_retries=20
-      #     success=false
-
-      #     while [ $retry_count -lt $max_retries ] && [ $success == false ]; do
-      #       if [ -z "$PROXY_STR" ]; then
-      #         echo "Obtaining new proxy..."
-      #         PROXY_STR=$(curl -s https://proxypool-vwc3.onrender.com/random)
-      #         echo "Using proxy: $PROXY_STR"
-      #       fi
-
-      #       pytest zhipinBase.py --uc --browser=chrome --proxy="$PROXY_STR" --headless -v -s --junit-xml=junit/test-results.xml
-      #       exit_code=$?
-
-      #       if [ $exit_code -eq 0 ]; then
-      #         success=true
-      #       else
-      #         PROXY_STR=""
-      #         ((retry_count++))
-      #         echo "Test failed. Retrying... (Attempt: $retry_count)"
-      #       fi
-      #     done
-
-      #     if [ $success == false ]; then
-      #       echo "Tests failed after $max_retries retries."
-      #       exit 1
-      #     fi
+          cd zhipin
+          warp-cli --accept-tos registration new
+          warp-cli --accept-tos mode proxy
+          warp-cli --accept-tos connect
+          export ALL_PROXY=socks5://127.0.0.1:40000
+          pytest zhipinBase.py --uc --browser=chrome --headless --proxy="$PROXY_STR" -v -s --junit-xml=junit/test-results.xml
 
       - uses: actions/upload-artifact@v4.3.1
         if: always()
         with:
           path: |
-            ./*.txt
-            ./*.xml
-            BossRS-helper/*.db
-            BossRS-helper/*.txt
-            BossRS-helper/*.json
-            BossRS-helper/*.xml
-            BossRS-helper/junit/*
-            BossRS-helper/latest_logs/*/*
+            zhipin/*.txt
+            zhipin/*.json
+            zhipin/*.xml
+            zhipin/junit/*
+            zhipin/latest_logs/*/*

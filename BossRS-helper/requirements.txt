@@ -1,8 +1,0 @@
-requests
-selenium
-undetected-chromedriver
-toml
-attrs
-python-dotenv
-selenium_driverless
-seleniumbase

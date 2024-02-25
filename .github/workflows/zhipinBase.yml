@@ -24,8 +24,6 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip wheel setuptools
-          curl https://raw.githubusercontent.com/seleniumbase/SeleniumBase/master/requirements.txt --output requirementsSeleniumBase.txt
-          pip install -r requirementsSeleniumBase.txt
           pip install -r zhipin/requirements.txt
       - name: Install Chrome
         run: |
@@ -53,7 +51,7 @@ jobs:
           PROXY_STR: ${{ vars.PROXY_STR }}
         run: |
           cd zhipin
-          pytest zhipinBase.py --uc --browser=chrome --headless -v -s --junit-xml=junit/test-results.xml
+          pytest zhipinBase.py --uc --browser=chrome --headless --chromium-arg="--proxy-server=$PROXY_STR"  -v -s --junit-xml=junit/test-results.xml
 
       - uses: actions/upload-artifact@v4.3.1
         if: always()

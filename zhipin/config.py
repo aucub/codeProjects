@@ -1,6 +1,7 @@
 from ast import List
 import os
 from attr import dataclass
+from captcha import CaptchaDistinguishType
 import attr
 import requests
 import toml
@@ -11,8 +12,14 @@ import toml
 class Config:
     cookies_path: str = ""
     user_data_dir: str = ""
+    captcha_image_path: str = "captcha"
+    download_captcha: bool = True
+    captcha_distinguish_type: CaptchaDistinguishType = (
+        CaptchaDistinguishType.CLASSIFICATION
+    )
     timeout: int = 25
     sleep: float = 0.1
+    sleep_long: float = 6.0
     chat: bool = False
     skip_known: bool = False
     graduate: int = 23

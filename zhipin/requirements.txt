@@ -6,3 +6,11 @@ toml
 attrs
 python-dotenv
 seleniumbase
+deprecated
+ddddocr
+Pillow
+opencv-python
+cv2-tools
+openai
+numpy
+clip-client

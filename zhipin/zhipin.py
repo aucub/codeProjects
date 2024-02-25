@@ -10,6 +10,7 @@ from jd import JD
 from urllib.parse import urlparse, parse_qs
 from config import load_config
 from dotenv import load_dotenv
+from _mysql_connector import MySQLInterfaceError
 
 load_dotenv()
 
@@ -28,6 +29,7 @@ class ZhiPin:
     URL10 = "?lid="
     URL11 = "&securityId="
     URL12 = "https://www.zhipin.com/wapi/zpgeek/search/joblist.json?scene=1&payType=&partTime=&stage=&jobType=&multiBusinessDistrict=&multiSubway=&pageSize=30&query="
+    URL13 = "https://www.zhipin.com/web/user/safe/verify-slider"
     db_url = urlparse(os.getenv("DB_URL"))
     db_string = parse_qs(db_url.query)
     conn = mysql.connector.connect(
@@ -71,6 +73,38 @@ class ZhiPin:
         with open(file_path, "a", encoding="utf-8", newline="") as file:
             file.write(f"{line_to_append}\n")
 
+    def iterate_job_parameters(self):
+        for city in self.config_setting.query_city_list:
+            if city in self.wheels[0]:
+                continue
+            for query in self.config_setting.query_list:
+                if query in self.wheels[1]:
+                    continue
+                for salary in self.config_setting.salary_list:
+                    if salary in self.wheels[2]:
+                        continue
+                    for page in range(
+                        self.config_setting.page_min, self.config_setting.page_max
+                    ):
+                        if page <= self.wheels[3]:
+                            continue
+                        self.execute_find_jobs(city, query, salary, page)
+                        self.wheels[3] = page
+                        self.save_state(self.wheels)
+                    self.wheels[3] = 0
+                    self.wheels[2].append(salary)
+                    self.save_state(self.wheels)
+                self.wheels[2] = []
+                self.wheels[1].append(query)
+                self.save_state(self.wheels)
+            self.wheels[1] = []
+            self.wheels[0].append(city)
+            self.save_state(self.wheels)
+        self.wheels[0] = []
+        self.save_state(self.wheels)
+        self.cursor.close()
+        self.conn.close()
+
     def query_jobs(self, page_url):
         url_list = []
         try:
@@ -84,9 +118,7 @@ class ZhiPin:
                 print(response.text)
                 data = response.json()
         except Exception as e:
-            traceback.print_exc()
-            tb_str = traceback.format_exc()
-            self.append_to_file("log.txt", f"异常信息：{tb_str}，{e}，url{page_url}")
+            self.handle_exception(e, f"，page_url：{page_url}")
             return url_list
         if data["message"] == "Success":
             jobList = data["zpData"]["jobList"]
@@ -98,7 +130,7 @@ class ZhiPin:
                     row = self.get_jd(jd.id)
                     if row and row.id == jd.id:
                         if self.config_setting.skip_known:
-                            self.sleep(self.config_setting.sleep)
+                            time.sleep(self.config_setting.sleep)
                             continue
                         else:
                             jd = row
@@ -130,50 +162,48 @@ class ZhiPin:
                             + job["securityId"]
                             + self.URL6
                         )
-                except Exception:
-                    traceback.print_exc()
-                    tb_str = traceback.format_exc()
-                    self.append_to_file(
-                        "log.txt", f"异常信息：{tb_str}，page_url：{page_url}"
-                    )
+                except Exception as e:
+                    self.handle_exception(e, f"，page_url：{page_url}")
                     continue
             self.conn.commit()
         return url_list
 
-    def check_card(self, url: str):
-        query_params = parse_qs(urlparse(url).query)
-        lid = query_params.get("lid", [None])[0]
-        security_id = query_params.get("securityId", [None])[0]
-        try:
-            response = requests.get(
-                self.URL4 + security_id + self.URL5 + lid + self.URL6,
-                proxies=self.requests_proxies,
-            )
-            if response.status_code != 200:
-                raise Exception(response.text)
-            else:
-                data = response.json()
-                print(data)
-            if data["message"] == "Success":
-                jd = self.get_jd(self.get_encryptJobId(url))
-                jd.url = url.split("&securityId")[0]
-                jd.description = data["zpData"]["jobCard"]["postDescription"]
-                jd.active = data["zpData"]["jobCard"]["activeTimeDesc"]
-                jd.address = data["zpData"]["jobCard"]["address"]
-                jd.id = data["zpData"]["jobCard"]["encryptJobId"]
-                jd.salary = data["zpData"]["jobCard"]["salaryDesc"]
-                jd.experience = data["zpData"]["jobCard"]["experienceName"]
-                jd.degree = data["zpData"]["jobCard"]["degreeName"]
-                jd.boss = data["zpData"]["jobCard"]["bossName"]
-                jd.boss_title = data["zpData"]["jobCard"]["bossTitle"]
-                self.update_jd(jd)
-                return self.check_jd(jd, "card")
-            else:
-                return True
-        except Exception:
-            traceback.print_exc()
-            tb_str = traceback.format_exc()
-            self.append_to_file("log.txt", f"异常信息：{tb_str}，url：{url}")
+    def check_card(self, url_list: list):
+        pass_list = []
+        for url in url_list:
+            query_params = parse_qs(urlparse(url).query)
+            lid = query_params.get("lid", [None])[0]
+            security_id = query_params.get("securityId", [None])[0]
+            try:
+                response = requests.get(
+                    self.URL4 + security_id + self.URL5 + lid + self.URL6,
+                    proxies=self.requests_proxies,
+                )
+                if response.status_code != 200:
+                    raise Exception(response.text)
+                else:
+                    data = response.json()
+                    print(data)
+                if data["message"] == "Success":
+                    jd = self.get_jd(self.get_encryptJobId(url))
+                    jd.url = url.split("&securityId")[0]
+                    jd.description = data["zpData"]["jobCard"]["postDescription"]
+                    jd.active = data["zpData"]["jobCard"]["activeTimeDesc"]
+                    jd.address = data["zpData"]["jobCard"]["address"]
+                    jd.id = data["zpData"]["jobCard"]["encryptJobId"]
+                    jd.salary = data["zpData"]["jobCard"]["salaryDesc"]
+                    jd.experience = data["zpData"]["jobCard"]["experienceName"]
+                    jd.degree = data["zpData"]["jobCard"]["degreeName"]
+                    jd.boss = data["zpData"]["jobCard"]["bossName"]
+                    jd.boss_title = data["zpData"]["jobCard"]["bossTitle"]
+                    self.update_jd(jd)
+                    if self.check_jd(jd, "card"):
+                        pass_list.append(url)
+            except Exception as e:
+                self.handle_exception(e, f"，url：{url}")
+                continue
+        self.conn.commit()
+        return pass_list
 
     def check_jd(slef, jd: JD, stage: str):
         if stage == "query":
@@ -209,70 +239,78 @@ class ZhiPin:
     def update_jd(self, jd: JD):
         if not jd.id:
             return
-        self.cursor.execute("SELECT * FROM jd WHERE id = %s", (jd.id,))
-        row = self.cursor.fetchone()
-        if row:
-            self.cursor.execute(
-                "UPDATE jd SET url=%s, name=%s, city=%s, address=%s, guide=%s, scale=%s, update_date=%s, salary=%s, experience=%s, degree=%s, company=%s, industry=%s, fund=%s, res=%s, boss=%s, boss_title=%s, active=%s, description=%s, communicated=%s, checked_date=%s WHERE id=%s",
-                (
-                    jd.url,
-                    jd.name,
-                    jd.city,
-                    jd.address,
-                    jd.guide,
-                    jd.scale,
-                    self.format_date(jd.update_date),
-                    jd.salary,
-                    jd.experience,
-                    jd.degree,
-                    jd.company,
-                    jd.industry,
-                    jd.fund,
-                    self.format_date(jd.res),
-                    jd.boss,
-                    jd.boss_title,
-                    jd.active,
-                    jd.description,
-                    int(jd.communicated),
-                    self.format_datetime(jd.checked_date),
-                    jd.id,
-                ),
-            )
-        else:
-            self.cursor.execute(
-                "INSERT INTO jd (url, id, name, city, address, guide, scale, update_date, salary, experience, degree, company, industry, fund, res, boss, boss_title, active, description, communicated, checked_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                (
-                    jd.url,
-                    jd.id,
-                    jd.name,
-                    jd.city,
-                    jd.address,
-                    jd.guide,
-                    jd.scale,
-                    self.format_date(jd.update_date),
-                    jd.salary,
-                    jd.experience,
-                    jd.degree,
-                    jd.company,
-                    jd.industry,
-                    jd.fund,
-                    self.format_date(jd.res),
-                    jd.boss,
-                    jd.boss_title,
-                    jd.active,
-                    jd.description,
-                    jd.communicated,
-                    self.format_datetime(jd.checked_date),
-                ),
-            )
+        try:
+            self.cursor.execute("SELECT * FROM jd WHERE id = %s", (jd.id,))
+            row = self.cursor.fetchone()
+            if row:
+                self.cursor.execute(
+                    "UPDATE jd SET url=%s, name=%s, city=%s, address=%s, guide=%s, scale=%s, update_date=%s,    salary=%s, experience=%s, degree=%s, company=%s, industry=%s, fund=%s, res=%s, boss=%s,    boss_title=%s, active=%s, description=%s, communicated=%s, checked_date=%s WHERE id=%s",
+                    (
+                        jd.url,
+                        jd.name,
+                        jd.city,
+                        jd.address,
+                        jd.guide,
+                        jd.scale,
+                        self.format_date(jd.update_date),
+                        jd.salary,
+                        jd.experience,
+                        jd.degree,
+                        jd.company,
+                        jd.industry,
+                        jd.fund,
+                        self.format_date(jd.res),
+                        jd.boss,
+                        jd.boss_title,
+                        jd.active,
+                        jd.description,
+                        int(jd.communicated),
+                        self.format_datetime(jd.checked_date),
+                        jd.id,
+                    ),
+                )
+            else:
+                self.cursor.execute(
+                    "INSERT INTO jd (url, id, name, city, address, guide, scale, update_date, salary, experience,   degree, company, industry, fund, res, boss, boss_title, active, description, communicated,    checked_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,  %s, %s, %s)",
+                    (
+                        jd.url,
+                        jd.id,
+                        jd.name,
+                        jd.city,
+                        jd.address,
+                        jd.guide,
+                        jd.scale,
+                        self.format_date(jd.update_date),
+                        jd.salary,
+                        jd.experience,
+                        jd.degree,
+                        jd.company,
+                        jd.industry,
+                        jd.fund,
+                        self.format_date(jd.res),
+                        jd.boss,
+                        jd.boss_title,
+                        jd.active,
+                        jd.description,
+                        jd.communicated,
+                        self.format_datetime(jd.checked_date),
+                    ),
+                )
+        except MySQLInterfaceError as e:
+            self.conn.reconnect()
+            self.handle_exception(e, f"，id：{jd.id}")
 
     def get_jd(self, id):
-        self.cursor.execute("SELECT * FROM jd WHERE id = %s", (id,))
-        row = self.cursor.fetchone()
-        if row:
-            return JD(*row)
-        else:
-            return JD()
+        try:
+            self.cursor.execute("SELECT * FROM jd WHERE id = %s", (id,))
+            row = self.cursor.fetchone()
+            if row:
+                return JD(*row)
+            else:
+                return JD()
+        except MySQLInterfaceError as e:
+            self.conn.reconnect()
+            self.handle_exception(e, f"，id：{id}")
 
     def get_encryptJobId(self, url):
         match = re.search(r"/+([^/]+)\.html", url)
@@ -337,7 +375,7 @@ class ZhiPin:
             low_salary = int(match.group(1))
             return low_salary < self.config_setting.salary_max
 
-    def check_description(self, description_text):
+    def check_description(self, description_text: str):
         """
         检查职位描述
         """
@@ -365,11 +403,12 @@ class ZhiPin:
             try:
                 if time.mktime(time.strptime(exp_date_text, date_format)) < time.time():
                     return False
-            except Exception:
+            except Exception as e:
+                self.handle_exception(e)
                 pass
             description_text = (
-                description_text[: description_text.index("截止日期 ")]
-                + description_text[description_text.index("截止日期 ") + 15 :]
+                description_text[: description_text.index("截止日期")]
+                + description_text[description_text.index("截止日期") + 15 :]
             )
         if self.config_setting.graduate != 0:
             graduate = self.config_setting.graduate
@@ -427,48 +466,60 @@ class ZhiPin:
 
     def parse_res(self, res_text):
         try:
-            res_text = res_text[-10:]
             date_format = "%Y-%m-%d"
-            return time.mktime(time.strptime(res_text, date_format))
-        except Exception:
+            return datetime.datetime.strptime(res_text, date_format).date()
+        except Exception as e:
+            self.handle_exception(e, res_text)
             return None
 
     def format_date(self, formatted_date: datetime.date):
         try:
+            if formatted_date is None:
+                return None
             return formatted_date.strftime("%Y-%m-%d")
-        except Exception:
+        except Exception as e:
+            self.handle_exception(e)
             return None
 
     def format_datetime(self, formatted_datetime: datetime.datetime):
         try:
+            if formatted_datetime is None:
+                return None
             return formatted_datetime.strftime("%Y-%m-%d %H:%M:%S")
-        except Exception:
+        except Exception as e:
+            self.handle_exception(e)
             return None
 
-    def check_res(self, res):
+    def check_res(self, res: datetime.date):
         """
         检查更新日期
         """
         try:
-            return res > (time.time() - self.config_setting.res)
-        except Exception:
+            return time.mktime(res.timetuple()) > (
+                time.time() - self.config_setting.res
+            )
+        except Exception as e:
+            self.handle_exception(e)
             return True
 
     def parse_update_date(self, update_text):
         try:
-            update_text = update_text[-10:]
             date_format = "%Y-%m-%d"
-            return time.mktime(time.strptime(update_text, date_format))
-        except Exception:
+            return datetime.datetime.strptime(update_text, date_format).date()
+        except Exception as e:
+            self.handle_exception(e, update_text)
             return None
 
-    def check_update_date(self, update_date):
+    def check_update_date(self, update_date: datetime.date):
         """
         检查更新日期
         """
         try:
-            return update_date > (time.time() - self.config_setting.update)
-        except Exception:
+            return time.mktime(update_date.timetuple()) > (
+                time.time() - self.config_setting.update
+            )
+        except Exception as e:
+            self.handle_exception(e)
             return True
 
     def is_ready_to_communicate(self, startchat_text):
@@ -566,12 +617,18 @@ class ZhiPin:
                     encoding="utf-8",
                 ) as f:
                     f.write(env_state)
-                return json.load(env_state)
+                return json.loads(env_state)
             with open(
                 "state.json",
                 "r",
                 encoding="utf-8",
             ) as f:
                 return json.load(f)
-        except (FileNotFoundError, Exception):
+        except Exception as e:
+            self.handle_exception(e)
             return [[], [], [], 0]
+
+    def handle_exception(self, exception, exc_value=""):
+        traceback.print_exc()
+        tb_str = traceback.format_exc()
+        self.append_to_file("log.txt", f"异常信息：{tb_str}，{exception}，{exc_value}")

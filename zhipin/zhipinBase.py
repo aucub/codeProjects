@@ -8,7 +8,7 @@ import time
 from urllib.parse import parse_qs, urlparse
 from PIL import Image
 import cv2
-from captcha import cracker, CaptchaDistinguishType
+from captcha import cracker
 import requests
 from zhipin import ZhiPin
 from seleniumbase import BaseCase
@@ -18,35 +18,43 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
 from jd import JD
+from chat import Chat
 
 BaseCase.main(__name__, __file__)
 
 
 class ZhiPinBase(BaseCase, ZhiPin):
     def init(self):
-        self.set_cookies()
         self.wheels = self.load_state()
         self.set_cf_worker()
         self.set_proxy()
-
-    def set_cookies(self):
-        if self.config_setting.cookies_path:
-            self.open(self.URL1)
-            self.load_cookies(self.config_setting.cookies_path)
-
-    def get_cookies(self):
-        if self.config_setting.cookies_path:
-            self.get_new_driver(self.config_setting.user_data_dir)
-            time.sleep(self.config_setting.timeout)
-            self.open(self.URL1)
-            self.save_cookies(self.config_setting.cookies_path)
-
-    def test_jobs(self):
-        self.init()
         self.set_default_timeout(self.config_setting.timeout)
         self.requests_headers = {
             "User-Agent": self.execute_script("return navigator.userAgent;"),
         }
+        self.WAIT = WebDriverWait(self.driver, self.config_setting.timeout)
+        if self.config_setting.cookies_path and not os.getenv("GITHUB_ACTIONS"):
+            self.cookies_driver = self.get_new_driver(
+                browser="chrome", headless=False, undetectable=True, switch_to=False
+            )
+            self.set_cookies()
+            self.chat = Chat()
+            self.COOKIES_WAIT = WebDriverWait(
+                self.cookies_driver, self.config_setting.timeout
+            )
+
+    def set_cookies(self):
+        original_driver = self.driver
+        self.driver = self.cookies_driver
+        self.open(self.URL1)
+        self.sleep(self.config_setting.sleep_long)
+        self.load_cookies(self.config_setting.cookies_path)
+        self.sleep(self.config_setting.sleep_long)
+        self.open(self.URL1)
+        self.driver = original_driver
+
+    def test_jobs(self):
+        self.init()
         self.iterate_job_parameters()
 
     def execute_find_jobs(self, city, query, salary, page):
@@ -71,11 +79,10 @@ class ZhiPinBase(BaseCase, ZhiPin):
         self.process_detail(pass_card_list)
 
     def query_jobs(self, page_url):
-        WAIT = WebDriverWait(self.driver, self.config_setting.timeout)
         self.open(page_url)
         url_list = []
         try:
-            element_list = WAIT.until(
+            element_list = self.WAIT.until(
                 ec.any_of(
                     ec.presence_of_all_elements_located(
                         (By.CLASS_NAME, "job-card-wrapper")
@@ -191,7 +198,8 @@ class ZhiPinBase(BaseCase, ZhiPin):
             if "safe/verify-slider" in current_url:
                 time.sleep(self.config_setting.timeout)
                 print("安全问题")
-                self.captcha()
+                while not self.captcha():
+                    self.sleep(self.config_setting.sleep_long)
                 time.sleep(self.config_setting.timeout)
                 return
             time.sleep(self.config_setting.sleep_long)
@@ -243,7 +251,7 @@ class ZhiPinBase(BaseCase, ZhiPin):
             tip_image=captcha_image_path + "/" + "tip_image.png",
             img_image=captcha_image_path + "/" + "img_image.png",
             path=captcha_image_path,
-            type=CaptchaDistinguishType.CLASSIFICATION,
+            type=self.config_setting.captcha_distinguish_type,
         )
         img = cv2.imread(captcha_image_path + "/" + "img_image.png")
         for click in click_lists:
@@ -298,8 +306,10 @@ class ZhiPinBase(BaseCase, ZhiPin):
                 self.update_jd(jd)
                 if self.check_jd(jd, "detail"):
                     self.append_to_file("job.txt", url)
+                    self.start_chat(url)
                 else:
                     self.append_to_file("detail.txt", url)
+                    self.start_chat(url)
             except Exception as e:
                 self.append_to_file("detail.txt", url)
                 self.handle_exception(e, f"，url：{url}")
@@ -307,3 +317,48 @@ class ZhiPinBase(BaseCase, ZhiPin):
                 self.check_verify()
                 continue
         self.conn.commit()
+
+    def start_chat(self, url: str):
+        self.cookies_driver.get(url)
+        description = self.cookies_driver.find_element(
+            By.CLASS_NAME, "job-sec-text"
+        ).text
+        self.cookies_driver.find_element(
+            By.CSS_SELECTOR, "[class*='btn btn-startchat']"
+        ).click()
+        jd = self.get_jd(self.get_encryptJobId(url))
+        jd.communicated = True
+        self.update_jd(jd)
+        jd.description = description
+        try:
+            find_element = self.COOKIES_WAIT.until(
+                ec.any_of(
+                    ec.presence_of_element_located((By.CLASS_NAME, "dialog-con")),
+                    ec.presence_of_element_located((By.CSS_SELECTOR, "#chat-input")),
+                )
+            )
+        except Exception as e:
+            self.handle_exception(e, f"，url：{url}")
+            return
+        if "chat" in self.cookies_driver.current_url and self.config_setting.chat:
+            try:
+                self.send_greet_to_chat_box(self.chat.generate_greet(jd))
+            except Exception as e:
+                self.handle_exception(e, f"，url：{url}")
+                return
+        if "已达上限" in find_element.text:
+            sys.exit(0)
+        time.sleep(self.config_setting.sleep)
+
+    def send_greet_to_chat_box(self, greet):
+        chat_box = self.COOKIES_WAIT.until(
+            ec.presence_of_element_located((By.CSS_SELECTOR, "#chat-input"))
+        )
+        chat_box.clear()
+        chat_box.send_keys(greet)
+        time.sleep(self.config_setting.sleep)
+        self.cookies_driver.find_element(
+            By.CSS_SELECTOR,
+            "#container > div > div > div.chat-conversation > div.message-controls > div > div.chat-op > button",
+        ).click()
+        time.sleep(self.config_setting.sleep)

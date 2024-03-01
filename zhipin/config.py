@@ -1,7 +1,6 @@
 from ast import List
 import os
 from attr import dataclass
-from captcha import CaptchaDistinguishType
 import attr
 import requests
 import toml
@@ -14,9 +13,7 @@ class Config:
     user_data_dir: str = ""
     captcha_image_path: str = "captcha"
     download_captcha: bool = True
-    captcha_distinguish_type: CaptchaDistinguishType = (
-        CaptchaDistinguishType.CLASSIFICATION
-    )
+    captcha_distinguish_type: int = 1
     timeout: int = 25
     sleep: float = 0.1
     sleep_long: float = 6.0
@@ -72,11 +69,11 @@ class Config:
 
 
 def load_config() -> Config:
-    env_config_path = os.getenv("CONFIG_PATH")
-    if env_config_path:
-        response = requests.get(env_config_path)
+    env_config_url = os.getenv("CONFIG_URL")
+    if env_config_url:
+        response = requests.get(env_config_url)
         response.raise_for_status()
-        print(f"load config from {env_config_path}")
+        print(f"load config from {env_config_url}")
         with open("config.toml", "wb") as file:
             file.write(response.content)
     with open("config.toml", "r") as f:

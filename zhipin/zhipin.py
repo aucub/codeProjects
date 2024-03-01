@@ -10,7 +10,6 @@ from jd import JD
 from urllib.parse import urlparse, parse_qs
 from config import load_config
 from dotenv import load_dotenv
-from _mysql_connector import MySQLInterfaceError
 
 load_dotenv()
 
@@ -60,7 +59,7 @@ class ZhiPin:
             print(f"Using {self.config_setting.cf_worker} as proxy worker")
 
     def set_proxy(self):
-        env_proxy = os.getenv("PROXY_STR")
+        env_proxy = os.getenv("PROXY_URL")
         self.requests_proxies = None
         if env_proxy:
             self.proxy_str = env_proxy
@@ -296,9 +295,16 @@ class ZhiPin:
                         self.format_datetime(jd.checked_date),
                     ),
                 )
-        except MySQLInterfaceError as e:
+        except mysql.connector.Error as e:
             self.conn.reconnect()
             self.handle_exception(e, f"，id：{jd.id}")
+
+    def conn_commit(self):
+        try:
+            self.conn.commit()
+        except mysql.connector.Error as e:
+            self.conn.reconnect()
+            self.handle_exception(e)
 
     def get_jd(self, id):
         try:
@@ -308,7 +314,7 @@ class ZhiPin:
                 return JD(*row)
             else:
                 return JD()
-        except MySQLInterfaceError as e:
+        except mysql.connector.Error as e:
             self.conn.reconnect()
             self.handle_exception(e, f"，id：{id}")
 

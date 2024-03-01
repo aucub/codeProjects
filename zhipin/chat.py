@@ -22,7 +22,7 @@ class Chat:
         """
             + description
         )
-        result = Chat.send(prompt)
+        result = self.send(prompt)
         if result:
             result = result.lower()
             if "true" in result:
@@ -73,7 +73,6 @@ class Chat:
         try:
             response = self.client.chat.completions.create(
                 model="gpt-3.5-turbo",
-                stream=False,
                 messages=[
                     {
                         "role": "user",
@@ -115,7 +114,7 @@ class Chat:
             """
             + context
         )
-        greet = Chat.send(prompt)
+        greet = self.send(prompt)
         if greet:
             greet = greet.replace("\n", " ").replace("  ", "")
         else:

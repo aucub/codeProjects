@@ -1,0 +1,21 @@
+name: Deploy
+
+on:
+  schedule:
+    - cron: "0 18 * * 3"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy
+    steps:
+      - uses: actions/checkout@v4.1.1
+        with:
+          repository: "Portkey-AI/gateway"
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3.4.1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy --project-name=portkey-ai-gateway

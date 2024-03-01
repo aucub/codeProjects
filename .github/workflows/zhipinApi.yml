@@ -28,9 +28,9 @@ jobs:
       - name: Run zhipinApi.py
         env:
           STATE: ${{ vars.STATE }}
-          CONFIG_PATH: ${{ vars.CONFIG_PATH }}
+          CONFIG_URL: ${{ vars.CONFIG_URL }}
           DB_URL: ${{ secrets.DB_URL }}
-          PROXY_STR: ${{ vars.PROXY_STR }}
+          PROXY_URL: ${{ vars.PROXY_URL }}
         run: |
           cd zhipin
           python zhipinApi.py

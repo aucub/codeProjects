@@ -46,12 +46,12 @@ jobs:
       - name: Run pytest zhipinBase.py
         env:
           STATE: ${{ vars.STATE }}
-          CONFIG_PATH: ${{ vars.CONFIG_PATH }}
+          CONFIG_URL: ${{ vars.CONFIG_URL }}
           DB_URL: ${{ secrets.DB_URL }}
-          PROXY_STR: ${{ vars.PROXY_STR }}
+          PROXY_URL: ${{ vars.PROXY_URL }}
         run: |
           cd zhipin
-          pytest zhipinBase.py --uc --browser=chrome --headless --chromium-arg="--proxy-server=$PROXY_STR"  -v -s --junit-xml=junit/test-results.xml
+          pytest zhipinBase.py --uc --browser=chrome --headless --chromium-arg="--proxy-server=$PROXY_URL"  -v -s --junit-xml=junit/test-results.xml
 
       - uses: actions/upload-artifact@v4.3.1
         if: always()

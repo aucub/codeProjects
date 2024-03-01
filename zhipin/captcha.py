@@ -34,20 +34,23 @@ def cosine_similarity(v1, v2):
 
 
 def image_classification(image_path):
-    with Image.open(image_path) as img:
-        byte_arr = io.BytesIO()
-        img.save(byte_arr, format="JPEG")
-        byte_arr = byte_arr.getvalue()
-    files = {"image": (image_path, byte_arr, "image/jpeg")}
-    url = os.getenv("IMAGE_CLASSIFICATION_URL")
-    response = requests.post(url, files=files)
+    with open(image_path, "rb") as img:
+        image_data = img.read()
+    headers = {"Authorization": f"Bearer {os.getenv('CF_API_TOKEN')}"}
+    data = {"image": list(image_data)}
+    response = requests.post(
+        os.getenv("CF_API_GATEWAY") + "@cf/microsoft/resnet-50",
+        headers=headers,
+        json=data,
+    )
+    response.raise_for_status()
     if response.ok:
-        return response.json()
+        return response.json()["result"]
     else:
         return None
 
 
-def ocr(image_path, path, sort: bool):
+def ocr(image_path, path, sort: bool = False):
     det = ddddocr.DdddOcr(det=True)
     with open(image_path, "rb") as f:
         image = f.read()
@@ -79,15 +82,17 @@ def calculate_similarity(data1, data2):
     return cosine_similarity(scoreVector1, scoreVector2)
 
 
-def cracker(tip_image, img_image, path, type: CaptchaDistinguishType):
+def cracker(tip_image, img_image, path, type: int):
     optimize_image(img_image, False)
     tip_poses = ocr(tip_image, path + "/" + "tip_", sort=True)
     tip_nums = len(tip_poses)
-    img_poses = ocr(img_image, path + "/" + "img_")
+    img_poses = ocr(img_image, path + "/" + "img_", sort=True)
     img_nums = len(img_poses)
     tip_results = []
     img_results = []
-    if type == CaptchaDistinguishType.CLASSIFICATION:
+    if type == CaptchaDistinguishType.CLASSIFICATION.value:
+        print("tip_nums: " + str(tip_nums))
+        print("img_nums: " + str(img_nums))
         for i in range(tip_nums):
             tip_result = image_classification(path + "/" + "tip_" + str(i) + ".jpg")
             if tip_result:
@@ -96,7 +101,7 @@ def cracker(tip_image, img_image, path, type: CaptchaDistinguishType):
             img_result = image_classification(path + "/" + "img_" + str(i) + ".jpg")
             if img_result:
                 img_results.append(img_result)
-    elif type == CaptchaDistinguishType.EMBEDDINGS:
+    elif type == CaptchaDistinguishType.EMBEDDINGS.value:
         tip_images = []
         for i in range(tip_nums):
             tip_images.append(path + "/" + "tip_" + str(i) + ".jpg")
@@ -114,13 +119,11 @@ def cracker(tip_image, img_image, path, type: CaptchaDistinguishType):
         for j in range(img_nums):
             if j in used_indices:
                 continue
-            if type == CaptchaDistinguishType.CLASSIFICATION:
-                print(tip_results[i])
-                print(img_results[j])
+            if type == CaptchaDistinguishType.CLASSIFICATION.value:
                 similarity_result = calculate_similarity(tip_results[i], img_results[j])
-            elif type == CaptchaDistinguishType.EMBEDDINGS:
+            elif type == CaptchaDistinguishType.EMBEDDINGS.value:
                 similarity_result = cosine_similarity(tip_results[i], img_results[j])
-            elif type == CaptchaDistinguishType.VISION:
+            elif type == CaptchaDistinguishType.VISION.value:
                 chat = Chat()
                 similarity_result = chat.compare_image(
                     path + "/" + "tip_" + str(i) + ".jpg",

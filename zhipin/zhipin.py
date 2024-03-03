@@ -4,7 +4,7 @@ import os
 import re
 import time
 import traceback
-import requests
+import httpx
 import mysql.connector
 from jd import JD
 from urllib.parse import urlparse, parse_qs
@@ -60,10 +60,10 @@ class ZhiPin:
 
     def set_proxy(self):
         env_proxy = os.getenv("PROXY_URL")
-        self.requests_proxies = None
+        self.proxies = None
         if env_proxy:
             self.proxy_str = env_proxy
-            self.requests_proxies = {
+            self.proxies = {
                 "http": self.proxy_str,
                 "https": self.proxy_str,
             }
@@ -107,9 +107,9 @@ class ZhiPin:
     def query_jobs(self, page_url):
         url_list = []
         try:
-            response = requests.get(
+            response = httpx.get(
                 url=page_url,
-                proxies=self.requests_proxies,
+                proxies=self.proxies,
             )
             if response.status_code != 200:
                 raise Exception(response.text)
@@ -174,9 +174,9 @@ class ZhiPin:
             lid = query_params.get("lid", [None])[0]
             security_id = query_params.get("securityId", [None])[0]
             try:
-                response = requests.get(
+                response = httpx.get(
                     self.URL4 + security_id + self.URL5 + lid + self.URL6,
-                    proxies=self.requests_proxies,
+                    proxies=self.proxies,
                 )
                 if response.status_code != 200:
                     raise Exception(response.text)

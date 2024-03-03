@@ -1,6 +1,4 @@
-import io
 import os
-from PIL import Image
 from clip_client import Client
 from enum import Enum
 import ddddocr

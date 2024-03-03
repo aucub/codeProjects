@@ -1,4 +1,5 @@
 requests
+httpx
 mysql-connector-python
 selenium
 undetected-chromedriver

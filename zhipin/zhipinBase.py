@@ -8,8 +8,8 @@ import time
 from urllib.parse import parse_qs, urlparse
 from PIL import Image
 import cv2
+import httpx
 from captcha import cracker
-import requests
 from zhipin import ZhiPin
 from seleniumbase import BaseCase
 from selenium.webdriver.common.by import By
@@ -29,13 +29,17 @@ class ZhiPinBase(BaseCase, ZhiPin):
         self.set_cf_worker()
         self.set_proxy()
         self.set_default_timeout(self.config_setting.timeout)
-        self.requests_headers = {
+        self.http_headers = {
             "User-Agent": self.execute_script("return navigator.userAgent;"),
         }
         self.WAIT = WebDriverWait(self.driver, self.config_setting.timeout)
         if self.config_setting.cookies_path and not os.getenv("GITHUB_ACTIONS"):
             self.cookies_driver = self.get_new_driver(
-                browser="chrome", headless=False, undetectable=True, switch_to=False
+                browser="chrome",
+                headless=False,
+                undetectable=True,
+                switch_to=False,
+                chromium_arg=None,
             )
             self.set_cookies()
             self.chat = Chat()
@@ -225,7 +229,7 @@ class ZhiPinBase(BaseCase, ZhiPin):
             time.sleep(self.config_setting.sleep_long)
             match = re.search(r"url\(\"(.*?)\"\)", style_attribute)
             image_url = match.group(1)
-            response = requests.get(image_url)
+            response = httpx.get(image_url)
             with open(captcha_image_path + "/" + "captcha.png", "wb") as file:
                 file.write(response.content)
             image = Image.open(captcha_image_path + "/" + "captcha.png")

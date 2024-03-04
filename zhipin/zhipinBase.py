@@ -310,10 +310,8 @@ class ZhiPinBase(BaseCase, ZhiPin):
                 self.update_jd(jd)
                 if self.check_jd(jd, "detail"):
                     self.append_to_file("job.txt", url)
-                    self.start_chat(url)
                 else:
                     self.append_to_file("detail.txt", url)
-                    self.start_chat(url)
             except Exception as e:
                 self.append_to_file("detail.txt", url)
                 self.handle_exception(e, f"，url：{url}")

@@ -69,8 +69,8 @@ class Config:
 
 
 def load_config() -> Config:
-    env_config_url = os.getenv("CONFIG_URL")
-    if env_config_url:
+    if os.getenv("CONFIG_URL"):
+        env_config_url = str(os.getenv("CONFIG_URL"))
         response = requests.get(env_config_url)
         response.raise_for_status()
         print(f"load config from {env_config_url}")

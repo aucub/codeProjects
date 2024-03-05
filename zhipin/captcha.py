@@ -5,7 +5,7 @@ import ddddocr
 import cv2
 from dotenv import load_dotenv
 import numpy as np
-import requests
+import httpx
 from chat import Chat
 
 load_dotenv()
@@ -36,8 +36,8 @@ def image_classification(image_path):
         image_data = img.read()
     headers = {"Authorization": f"Bearer {os.getenv('CF_API_TOKEN')}"}
     data = {"image": list(image_data)}
-    response = requests.post(
-        os.getenv("CF_API_GATEWAY") + "@cf/microsoft/resnet-50",
+    response = httpx.post(
+        str(os.getenv("CF_API_GATEWAY")) + "@cf/microsoft/resnet-50",
         headers=headers,
         json=data,
     )

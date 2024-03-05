@@ -9,16 +9,20 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    permissions: write-all
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - name: Clone repository
         uses: actions/checkout@v4.1.1
         with:
           repository: "zuisong/gemini-openai-proxy"
-      - name: Deploy to Deno Deploy
-        uses: denoland/deployctl@1.11.0
+      - uses: denoland/setup-deno@v1.1.4
         with:
-          project: gemini-openai-proxy
-          entrypoint: dist/main_deno.mjs
-          include: dist/main_deno.mjs
+          deno-version: vx.x.x
+      - run: deno install -qArf https://deno.land/x/deploy/deployctl.ts
+      - run: deployctl deploy --token=$DENO_DEPLOY_TOKEN --project=gemini-openai-proxy-$GITHUB_ACTOR --prod --region=us --entrypoint=dist/main_deno.mjs
+        env:
+          DENO_DEPLOY_TOKEN: ${{ secrets.DENO_DEPLOY_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}

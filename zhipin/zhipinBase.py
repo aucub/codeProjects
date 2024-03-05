@@ -16,7 +16,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
-from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
+from selenium.common.exceptions import (
+    TimeoutException,
+    StaleElementReferenceException,
+    NoSuchElementException,
+)
 from jd import JD
 from chat import Chat
 
@@ -25,15 +29,13 @@ BaseCase.main(__name__, __file__)
 
 class ZhiPinBase(BaseCase, ZhiPin):
     def init(self):
-        self.wheels = self.load_state()
-        self.set_cf_worker()
-        self.set_proxy()
+        ZhiPin.__init__(self)
         self.set_default_timeout(self.config_setting.timeout)
         self.http_headers = {
             "User-Agent": self.execute_script("return navigator.userAgent;"),
         }
         self.WAIT = WebDriverWait(self.driver, self.config_setting.timeout)
-        if self.config_setting.cookies_path and not os.getenv("GITHUB_ACTIONS"):
+        if self.config_setting.cookies_path and not os.getenv("CI"):
             self.cookies_driver = self.get_new_driver(
                 browser="chrome",
                 headless=False,
@@ -73,9 +75,12 @@ class ZhiPinBase(BaseCase, ZhiPin):
                 + self.URL3
                 + str(page)
             )
-        except (TimeoutException, StaleElementReferenceException) as e:
+        except (
+            TimeoutException,
+            StaleElementReferenceException,
+            NoSuchElementException,
+        ) as e:
             self.handle_exception(e)
-            pass
 
     def find_jobs(self, page_url):
         query_list = self.query_jobs(page_url)
@@ -97,7 +102,7 @@ class ZhiPinBase(BaseCase, ZhiPin):
                 )
             )
         except (TimeoutException, StaleElementReferenceException) as e:
-            self.handle_exception(e, f"，page_url：{page_url}")
+            self.handle_exception(e, f",page_url:{page_url}")
             self.check_dialog()
             self.check_verify()
             return url_list
@@ -145,9 +150,9 @@ class ZhiPinBase(BaseCase, ZhiPin):
                 if self.check_jd(jd, "query"):
                     url_list.append(url)
             except Exception as e:
-                self.handle_exception(e, f"，page_url：{page_url}")
+                self.handle_exception(e, f",page_url:{page_url},element:{element.text}")
                 continue
-        self.conn.commit()
+        self.conn_commit()
         return url_list
 
     def check_card(self, url_list):
@@ -182,25 +187,32 @@ class ZhiPinBase(BaseCase, ZhiPin):
                     if self.check_jd(jd, "card"):
                         pass_list.append(url)
             except Exception as e:
-                self.handle_exception(e, f"，url：{url}")
+                self.handle_exception(e, f",url:{url}")
                 continue
-        self.conn.commit()
+        self.conn_commit()
         return pass_list
 
-    def check_dialog(self):
+    def check_dialog(self, cookies_driver: bool = False):
+        if cookies_driver:
+            original_driver = self.driver
+            self.driver = self.cookies_driver
         self.sleep(self.config_setting.sleep)
         if self.is_element_visible("div.dialog-container:last-child"):
             dialog_text = self.get_text("div.dialog-container:last-child")
             if "安全问题" in dialog_text or "沟通" in dialog_text:
                 self.click("div.dialog-container:last-child .close")
                 self.sleep(self.config_setting.sleep)
+        if cookies_driver:
+            self.driver = original_driver
 
-    def check_verify(self):
+    def check_verify(self, cookies_driver: bool = False):
+        if cookies_driver:
+            original_driver = self.driver
+            self.driver = self.cookies_driver
         try:
             self.sleep(self.config_setting.sleep_long)
             current_url = self.get_current_url()
             if "safe/verify-slider" in current_url:
-                time.sleep(self.config_setting.timeout)
                 print("安全问题")
                 while not self.captcha():
                     self.sleep(self.config_setting.sleep_long)
@@ -213,6 +225,8 @@ class ZhiPinBase(BaseCase, ZhiPin):
                 sys.exit(1)
         except Exception as e:
             self.handle_exception(e)
+        if cookies_driver:
+            self.driver = original_driver
 
     def captcha(self):
         captcha_image_path = self.config_setting.captcha_image_path
@@ -228,6 +242,8 @@ class ZhiPinBase(BaseCase, ZhiPin):
             style_attribute = element.get_attribute("style")
             time.sleep(self.config_setting.sleep_long)
             match = re.search(r"url\(\"(.*?)\"\)", style_attribute)
+            if not match:
+                return False
             image_url = match.group(1)
             response = httpx.get(image_url)
             with open(captcha_image_path + "/" + "captcha.png", "wb") as file:
@@ -276,8 +292,12 @@ class ZhiPinBase(BaseCase, ZhiPin):
             "body > div.geetest_panel.geetest_wind > div.geetest_panel_box.geetest_no_logo.geetest_panelshowclick > div.geetest_panel_next > div > div > div.geetest_panel > a"
         )
         time.sleep(self.config_setting.sleep_long)
-        result = self.find_element("[class*='geetest_result_tip']").text
-        return "失败" not in result
+        try:
+            result = self.find_element("[class*='geetest_result_tip']").text
+            return "失败" not in result
+        except Exception as e:
+            self.handle_exception(e)
+            return True
 
     def process_detail(self, url_list):
         for url in url_list:
@@ -292,8 +312,8 @@ class ZhiPinBase(BaseCase, ZhiPin):
                 if "人" not in jd.scale:
                     jd.scale = ""
                 update_text = self.get_text("p.gray")
-                if "：" in update_text:
-                    jd.update_date = self.parse_update_date(update_text.split("：")[1])
+                if ":" in update_text:
+                    jd.update_date = self.parse_update_date(update_text.split(":")[1])
                 jd.description = self.get_text(".job-detail-section")
                 try:
                     jd.fund = self.get_text("[class*='company-fund']")
@@ -303,7 +323,7 @@ class ZhiPinBase(BaseCase, ZhiPin):
                     if len(res_text.splitlines()) > 1:
                         jd.res = self.parse_res(res_text.splitlines()[-1])
                 except Exception as e:
-                    self.handle_exception(e, f"，url：{url}")
+                    self.handle_exception(e, f",url:{url}")
                 jd.communicated = self.is_ready_to_communicate(
                     self.get_text("[class*='btn btn-startchat']")
                 )
@@ -314,14 +334,15 @@ class ZhiPinBase(BaseCase, ZhiPin):
                     self.append_to_file("detail.txt", url)
             except Exception as e:
                 self.append_to_file("detail.txt", url)
-                self.handle_exception(e, f"，url：{url}")
+                self.handle_exception(e, f",url:{url}")
                 self.check_dialog()
                 self.check_verify()
                 continue
-        self.conn.commit()
+        self.conn_commit()
 
     def start_chat(self, url: str):
         self.cookies_driver.get(url)
+        self.COOKIES_WAIT.until(By.CSS_SELECTOR, "[class*='btn btn-startchat']")
         description = self.cookies_driver.find_element(
             By.CLASS_NAME, "job-sec-text"
         ).text
@@ -340,13 +361,13 @@ class ZhiPinBase(BaseCase, ZhiPin):
                 )
             )
         except Exception as e:
-            self.handle_exception(e, f"，url：{url}")
+            self.handle_exception(e, f",url:{url}")
             return
         if "chat" in self.cookies_driver.current_url and self.config_setting.chat:
             try:
                 self.send_greet_to_chat_box(self.chat.generate_greet(jd))
             except Exception as e:
-                self.handle_exception(e, f"，url：{url}")
+                self.handle_exception(e, f",url:{url}")
                 return
         if "已达上限" in find_element.text:
             sys.exit(0)

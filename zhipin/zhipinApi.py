@@ -19,7 +19,6 @@ class ZhiPinApi(ZhiPin):
             )
         except Exception as e:
             self.handle_exception(e)
-            pass
 
     def find_jobs(self, page_url):
         query_list = self.query_jobs(page_url)

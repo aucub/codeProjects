@@ -42,21 +42,7 @@ class ZhiPin:
 
     def __init__(self) -> None:
         self.wheels = self.load_state()
-        self.set_cf_worker()
         self.set_proxy()
-
-    def set_cf_worker(self):
-        if self.config_setting.cf_worker:
-            self.URL1 = self.URL1.replace(
-                "www.zhipin.com", self.config_setting.cf_worker
-            )
-            self.URL4 = self.URL4.replace(
-                "www.zhipin.com", self.config_setting.cf_worker
-            )
-            self.URL12 = self.URL12.replace(
-                "www.zhipin.com", self.config_setting.cf_worker
-            )
-            print(f"Using {self.config_setting.cf_worker} as proxy worker")
 
     def set_proxy(self):
         env_proxy = os.getenv("PROXY_URL")
@@ -164,7 +150,7 @@ class ZhiPin:
                 except Exception as e:
                     self.handle_exception(e, f"，page_url：{page_url}")
                     continue
-            self.conn.commit()
+            self.conn_commit()
         return url_list
 
     def check_card(self, url_list: list):
@@ -201,7 +187,7 @@ class ZhiPin:
             except Exception as e:
                 self.handle_exception(e, f"，url：{url}")
                 continue
-        self.conn.commit()
+        self.conn_commit()
         return pass_list
 
     def check_jd(slef, jd: JD, stage: str):

@@ -31,6 +31,9 @@ jobs:
           CONFIG_URL: ${{ vars.CONFIG_URL }}
           DB_URL: ${{ secrets.DB_URL }}
           PROXY_URL: ${{ vars.PROXY_URL }}
+          CF_API_GATEWAY: ${{ secrets.CF_API_GATEWAY }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLIP_URL: ${{ secrets.CLIP_URL }}
         run: |
           cd zhipin
           python zhipinApi.py

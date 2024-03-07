@@ -1,5 +1,5 @@
 user_data_dir = ".config/google-chrome"
-cookies_path = "cookies.txt"
+cookies_path = ""
 cf_worker = ""
 timeout = 30
 sleep = 0.0

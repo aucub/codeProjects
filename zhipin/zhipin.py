@@ -45,13 +45,15 @@ class ZhiPin:
         self.set_proxy()
 
     def set_proxy(self):
+        os.environ["all_proxy"] = ""
+        os.environ["ALL_PROXY"] = ""
         env_proxy = os.getenv("PROXY_URL")
         self.proxies = None
         if env_proxy:
             self.proxy_str = env_proxy
             self.proxies = {
-                "http": self.proxy_str,
-                "https": self.proxy_str,
+                "http://": self.proxy_str,
+                "https://": self.proxy_str,
             }
 
     def append_to_file(self, file_path, line_to_append):
@@ -288,7 +290,10 @@ class ZhiPin:
     def conn_commit(self):
         try:
             self.conn.commit()
-        except mysql.connector.Error as e:
+        except (
+            mysql.connector.Error,
+            mysql.connector.errors.InterfaceError,
+        ) as e:
             self.conn.reconnect()
             self.handle_exception(e)
 

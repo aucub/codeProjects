@@ -1,8 +1,5 @@
-requests
 httpx
 mysql-connector-python
-selenium
-undetected-chromedriver
 toml
 attrs
 python-dotenv

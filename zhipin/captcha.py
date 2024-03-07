@@ -42,7 +42,7 @@ def image_classification(image_path):
         json=data,
     )
     response.raise_for_status()
-    if response.ok:
+    if response.is_success:
         return response.json()["result"]
     else:
         return None

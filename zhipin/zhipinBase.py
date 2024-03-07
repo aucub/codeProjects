@@ -293,11 +293,14 @@ class ZhiPinBase(BaseCase, ZhiPin):
         )
         time.sleep(self.config_setting.sleep_long)
         try:
-            result = self.find_element("[class*='geetest_result_tip']").text
+            result = self.find_element(
+                selector="[class*='geetest_result_tip']",
+                timeout=self.config_setting.sleep_long,
+            ).text
             return "失败" not in result
         except Exception as e:
             self.handle_exception(e)
-            return True
+            return "safe/verify-slider" not in self.get_current_url()
 
     def process_detail(self, url_list):
         for url in url_list:

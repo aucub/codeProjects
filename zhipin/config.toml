@@ -4,6 +4,7 @@ cf_worker = ""
 timeout = 30
 sleep = 0.0
 chat = false
+captcha_distinguish_type = 1
 skip_known = true
 graduate = 23
 salary_max = 10

@@ -74,3 +74,10 @@ jobs:
             zhipin/*.xml
             zhipin/junit/*
             zhipin/latest_logs/*/*
+      - uses: ncipollo/release-action@v1
+        if: always()
+        with:
+          artifacts: "zhipin/*.json"
+          allowUpdates: true
+          replacesArtifacts: true
+          tag: zhipin

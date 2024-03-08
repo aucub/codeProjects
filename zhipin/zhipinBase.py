@@ -9,6 +9,7 @@ from urllib.parse import parse_qs, urlparse
 from PIL import Image
 import cv2
 import httpx
+from parameterized import parameterized
 from captcha import cracker
 from zhipin import ZhiPin
 from seleniumbase import BaseCase
@@ -20,6 +21,7 @@ from selenium.common.exceptions import (
     TimeoutException,
     StaleElementReferenceException,
     NoSuchElementException,
+    ElementNotVisibleException
 )
 from jd import JD
 from chat import Chat
@@ -59,9 +61,50 @@ class ZhiPinBase(BaseCase, ZhiPin):
         self.open(self.URL1)
         self.driver = original_driver
 
-    def test_jobs(self):
+    @parameterized.expand(
+        [["SeleniumBase Commander", "Commander"]]
+        * int(os.environ.get("PYTEST_XDIST_WORKER_COUNT", 1))
+    )
+    def test_jobs(self, arg1, arg2):
         self.init()
-        self.iterate_job_parameters()
+        if "PYTEST_XDIST_WORKER" in os.environ:
+            self.iterate_job_parameters_xdist()
+        else:
+            self.iterate_job_parameters()
+
+    def iterate_job_parameters_xdist(self):
+        worker_str = os.environ.get("PYTEST_XDIST_WORKER")
+        match = re.search(r"\d+$", worker_str)
+        if match:
+            self.worker_id = int(match.group())
+        else:
+            self.worker_id = None
+        self.worker_count = int(os.environ.get("PYTEST_XDIST_WORKER_COUNT"))
+        self.executed_params = []
+        if os.path.exists("executed_params.json"):
+            with open("executed_params.json", "r") as f:
+                try:
+                    self.executed_params = json.load(f)
+                except json.JSONDecodeError:
+                    self.executed_params = []
+        for city in self.config_setting.query_city_list:
+            for query in self.config_setting.query_list:
+                for salary in self.config_setting.salary_list:
+                    for page in range(
+                        self.config_setting.page_min, self.config_setting.page_max
+                    ):
+                        params = (city, query, salary, page)
+                        if (
+                            params in self.executed_params
+                            or page % self.worker_count != self.worker_id
+                        ):
+                            continue
+                        self.execute_find_jobs(*params)
+                        self.executed_params.append(params)
+                        with open("executed_params.json", "w") as f:
+                            json.dump(self.executed_params, f)
+        self.cursor.close()
+        self.conn.close()
 
     def execute_find_jobs(self, city, query, salary, page):
         try:
@@ -223,12 +266,17 @@ class ZhiPinBase(BaseCase, ZhiPin):
                 time.sleep(self.config_setting.timeout)
                 print("403或错误")
                 sys.exit(1)
-        except Exception as e:
+        except (NoSuchElementException,TimeoutException,ElementNotVisibleException) as e:
             self.handle_exception(e)
         if cookies_driver:
             self.driver = original_driver
 
     def captcha(self):
+        if "PYTEST_XDIST_WORKER" in os.environ and self.worker_id != 0:
+            self.sleep(self.config_setting.timeout)
+            self.open(self.URL1)
+            self.sleep(self.config_setting.timeout)
+            return "safe/verify-slider" not in self.get_current_url()
         captcha_image_path = self.config_setting.captcha_image_path
         if os.path.exists(captcha_image_path):
             shutil.rmtree(captcha_image_path)

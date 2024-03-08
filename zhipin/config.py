@@ -12,7 +12,6 @@ class Config:
     cookies_path: str = ""
     user_data_dir: str = ""
     captcha_image_path: str = "captcha"
-    pool_size: int = os.cpu_count() * 0.75 or 1
     download_captcha: bool = True
     captcha_distinguish_type: int = 1
     timeout: int = 25

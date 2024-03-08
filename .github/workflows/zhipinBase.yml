@@ -2,6 +2,12 @@ name: zhipinBase
 
 on:
   workflow_dispatch:
+    inputs:
+      args:
+        description: "Use args"
+        required: false
+        default: " -n3 "
+        type: string
 
 jobs:
   build:
@@ -35,6 +41,7 @@ jobs:
       - name: Install chromedriver
         run: |
           seleniumbase install chromedriver
+          seleniumbase install uc_driver
       - name: Make sure pytest is working
         run: |
           echo "def test_1(): pass" > nothing.py
@@ -43,6 +50,9 @@ jobs:
         run: |
           echo "def test_2(): pass" > nothing2.py
           nosetests nothing2.py
+      - name: Set execute permissions
+        run: |
+          sudo chmod +x /opt/hostedtoolcache/Python/3.11.8/x64/lib/python3.11/site-packages/seleniumbase/drivers/uc_driver
       - name: Run pytest zhipinBase.py
         env:
           STATE: ${{ vars.STATE }}
@@ -54,8 +64,7 @@ jobs:
           CLIP_URL: ${{ secrets.CLIP_URL }}
         run: |
           cd zhipin
-          pytest zhipinBase.py --uc --browser=chrome --headless --chromium-arg="--proxy-server=$PROXY_URL"  -v -s --junit-xml=junit/test-results.xml
-
+          pytest zhipinBase.py --uc --browser=chrome --headless ${{ inputs.args }} --chromium-arg="--proxy-server=$PROXY_URL"  -v -s --junit-xml=junit/test-results.xml
       - uses: actions/upload-artifact@v4.3.1
         if: always()
         with:

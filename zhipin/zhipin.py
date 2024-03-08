@@ -6,6 +6,7 @@ import time
 import traceback
 import httpx
 import mysql.connector
+from mysql.connector.errors import Error as MySQLError
 from jd import JD
 from urllib.parse import urlparse, parse_qs
 from config import load_config
@@ -283,17 +284,14 @@ class ZhiPin:
                         self.format_datetime(jd.checked_date),
                     ),
                 )
-        except mysql.connector.Error as e:
+        except MySQLError as e:
             self.conn.reconnect()
             self.handle_exception(e, f"，id：{jd.id}")
 
     def conn_commit(self):
         try:
             self.conn.commit()
-        except (
-            mysql.connector.Error,
-            mysql.connector.errors.InterfaceError,
-        ) as e:
+        except MySQLError as e:
             self.conn.reconnect()
             self.handle_exception(e)
 
@@ -305,7 +303,7 @@ class ZhiPin:
                 return JD(*row)
             else:
                 return JD()
-        except mysql.connector.Error as e:
+        except MySQLError as e:
             self.conn.reconnect()
             self.handle_exception(e, f"，id：{id}")
 

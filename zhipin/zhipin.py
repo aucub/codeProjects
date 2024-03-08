@@ -6,7 +6,7 @@ import time
 import traceback
 import httpx
 import mysql.connector
-from mysql.connector.errors import Error as MySQLError
+from _mysql_connector import MySQLInterfaceError
 from jd import JD
 from urllib.parse import urlparse, parse_qs
 from config import load_config
@@ -259,7 +259,7 @@ class ZhiPin:
                 )
             else:
                 self.cursor.execute(
-                    "INSERT INTO jd (url, id, name, city, address, guide, scale, update_date, salary, experience,   degree, company, industry, fund, res, boss, boss_title, active, description, communicated,    checked_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,  %s, %s, %s)",
+                    "INSERT IGNORE INTO jd (url, id, name, city, address, guide, scale, update_date, salary, experience, degree, company, industry, fund, res, boss, boss_title, active, description, communicated, checked_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                     (
                         jd.url,
                         jd.id,
@@ -284,14 +284,14 @@ class ZhiPin:
                         self.format_datetime(jd.checked_date),
                     ),
                 )
-        except MySQLError as e:
+        except (mysql.connector.errors.Error, MySQLInterfaceError) as e:
             self.conn.reconnect()
             self.handle_exception(e, f"，id：{jd.id}")
 
     def conn_commit(self):
         try:
             self.conn.commit()
-        except MySQLError as e:
+        except (mysql.connector.errors.Error, MySQLInterfaceError) as e:
             self.conn.reconnect()
             self.handle_exception(e)
 
@@ -303,7 +303,7 @@ class ZhiPin:
                 return JD(*row)
             else:
                 return JD()
-        except MySQLError as e:
+        except (mysql.connector.errors.Error, MySQLInterfaceError) as e:
             self.conn.reconnect()
             self.handle_exception(e, f"，id：{id}")
 

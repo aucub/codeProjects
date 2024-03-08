@@ -25,6 +25,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip wheel setuptools
           pip install -r zhipin/requirements.txt
+      - uses: robinraju/release-downloader@v1.9
+        with:
+          tag: "zhipin"
+          fileName: "*.json"
+          out-file-path: "zhipin"
       - name: Run zhipinApi.py
         env:
           STATE: ${{ vars.STATE }}
@@ -46,3 +51,11 @@ jobs:
             zhipin/*.xml
             zhipin/junit/*
             zhipin/latest_logs/*/*
+      - uses: ncipollo/release-action@v1
+        if: always()
+        with:
+          artifacts: "zhipin/*.json"
+          allowUpdates: true
+          replacesArtifacts: true
+          tag: zhipin
+          prerelease: true

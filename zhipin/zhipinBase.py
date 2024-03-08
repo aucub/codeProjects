@@ -9,8 +9,10 @@ from urllib.parse import parse_qs, urlparse
 from PIL import Image
 import cv2
 import httpx
+from httpx import HTTPError
 from parameterized import parameterized
 from captcha import cracker
+from filelock import FileLock
 from zhipin import ZhiPin
 from seleniumbase import BaseCase
 from selenium.webdriver.common.by import By
@@ -21,7 +23,7 @@ from selenium.common.exceptions import (
     TimeoutException,
     StaleElementReferenceException,
     NoSuchElementException,
-    ElementNotVisibleException
+    ElementNotVisibleException,
 )
 from jd import JD
 from chat import Chat
@@ -68,6 +70,7 @@ class ZhiPinBase(BaseCase, ZhiPin):
     def test_jobs(self, arg1, arg2):
         self.init()
         if "PYTEST_XDIST_WORKER" in os.environ:
+            self.captcha_lock = FileLock("captcha.lock")
             self.iterate_job_parameters_xdist()
         else:
             self.iterate_job_parameters()
@@ -82,7 +85,7 @@ class ZhiPinBase(BaseCase, ZhiPin):
         self.worker_count = int(os.environ.get("PYTEST_XDIST_WORKER_COUNT"))
         self.executed_params = []
         if os.path.exists("executed_params.json"):
-            with open("executed_params.json", "r") as f:
+            with open("executed_params.json", "r", encoding="utf-8") as f:
                 try:
                     self.executed_params = json.load(f)
                 except json.JSONDecodeError:
@@ -101,8 +104,8 @@ class ZhiPinBase(BaseCase, ZhiPin):
                             continue
                         self.execute_find_jobs(*params)
                         self.executed_params.append(params)
-                        with open("executed_params.json", "w") as f:
-                            json.dump(self.executed_params, f)
+                        with open("executed_params.json", "w", encoding="utf-8") as f:
+                            json.dump(self.executed_params, f, ensure_ascii=False)
         self.cursor.close()
         self.conn.close()
 
@@ -252,31 +255,36 @@ class ZhiPinBase(BaseCase, ZhiPin):
         if cookies_driver:
             original_driver = self.driver
             self.driver = self.cookies_driver
-        try:
-            self.sleep(self.config_setting.sleep_long)
-            current_url = self.get_current_url()
-            if "safe/verify-slider" in current_url:
-                print("安全问题")
-                while not self.captcha():
-                    self.sleep(self.config_setting.sleep_long)
-                time.sleep(self.config_setting.timeout)
-                return
-            time.sleep(self.config_setting.sleep_long)
-            if "403.html" in current_url or "error.html" in current_url:
-                time.sleep(self.config_setting.timeout)
-                print("403或错误")
-                sys.exit(1)
-        except (NoSuchElementException,TimeoutException,ElementNotVisibleException) as e:
-            self.handle_exception(e)
+        self.sleep(self.config_setting.sleep_long)
+        current_url = self.get_current_url()
+        captcha_result = False
+        while "safe/verify-slider" in current_url and captcha_result is False:
+            print("安全问题")
+            try:
+                with self.captcha_lock:
+                    self.open(self.URL1)
+                    time.sleep(self.config_setting.sleep_long)
+                    current_url = self.get_current_url()
+                    if "safe/verify-slider" not in current_url:
+                        break
+                    captcha_result = self.captcha()
+                    pass
+            except (
+                NoSuchElementException,
+                TimeoutException,
+                ElementNotVisibleException,
+                HTTPError,
+            ) as e:
+                self.handle_exception(e)
+        time.sleep(self.config_setting.sleep_long)
+        if "403.html" in current_url or "error.html" in current_url:
+            time.sleep(self.config_setting.timeout)
+            print("403或错误")
+            sys.exit(1)
         if cookies_driver:
             self.driver = original_driver
 
     def captcha(self):
-        if "PYTEST_XDIST_WORKER" in os.environ and self.worker_id != 0:
-            self.sleep(self.config_setting.timeout)
-            self.open(self.URL1)
-            self.sleep(self.config_setting.timeout)
-            return "safe/verify-slider" not in self.get_current_url()
         captcha_image_path = self.config_setting.captcha_image_path
         if os.path.exists(captcha_image_path):
             shutil.rmtree(captcha_image_path)
@@ -348,7 +356,7 @@ class ZhiPinBase(BaseCase, ZhiPin):
             return "失败" not in result
         except Exception as e:
             self.handle_exception(e)
-            return "safe/verify-slider" not in self.get_current_url()
+            return False
 
     def process_detail(self, url_list):
         for url in url_list:

@@ -53,6 +53,14 @@ jobs:
       - name: Set execute permissions
         run: |
           sudo chmod +x /opt/hostedtoolcache/Python/3.11.8/x64/lib/python3.11/site-packages/seleniumbase/drivers/uc_driver
+      - uses: robinraju/release-downloader@v1.9
+        with:
+          tag: "zhipin"
+          fileName: "*.json"
+          out-file-path: "zhipin"
+      - run: |
+          chmod +x sh/wireguard.sh
+          sudo bash sh/wireguard.sh
       - name: Run pytest zhipinBase.py
         env:
           STATE: ${{ vars.STATE }}
@@ -74,3 +82,11 @@ jobs:
             zhipin/*.xml
             zhipin/junit/*
             zhipin/latest_logs/*/*
+      - uses: ncipollo/release-action@v1
+        if: always()
+        with:
+          artifacts: "zhipin/*.json"
+          allowUpdates: true
+          replacesArtifacts: true
+          tag: zhipin
+          prerelease: true

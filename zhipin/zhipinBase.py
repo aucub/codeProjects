@@ -11,6 +11,7 @@ import cv2
 import httpx
 from httpx import HTTPError
 from parameterized import parameterized
+import pytest
 from captcha import cracker
 from filelock import FileLock
 from zhipin import ZhiPin
@@ -39,7 +40,11 @@ class ZhiPinBase(BaseCase, ZhiPin):
             "User-Agent": self.execute_script("return navigator.userAgent;"),
         }
         self.WAIT = WebDriverWait(self.driver, self.config_setting.timeout)
-        if self.config_setting.cookies_path and not os.getenv("CI"):
+        if (
+            self.config_setting.cookies_name
+            and not os.getenv("CI")
+            and not os.getenv("PYTEST_XDIST_WORKER")
+        ):
             self.cookies_driver = self.get_new_driver(
                 browser="chrome",
                 headless=False,
@@ -58,7 +63,7 @@ class ZhiPinBase(BaseCase, ZhiPin):
         self.driver = self.cookies_driver
         self.open(self.URL1)
         self.sleep(self.config_setting.sleep_long)
-        self.load_cookies(self.config_setting.cookies_path)
+        self.load_cookies(self.config_setting.cookies_name)
         self.sleep(self.config_setting.sleep_long)
         self.open(self.URL1)
         self.driver = original_driver
@@ -401,7 +406,11 @@ class ZhiPinBase(BaseCase, ZhiPin):
 
     def start_chat(self, url: str):
         self.cookies_driver.get(url)
-        self.COOKIES_WAIT.until(By.CSS_SELECTOR, "[class*='btn btn-startchat']")
+        self.COOKIES_WAIT.until(
+            ec.presence_of_element_located(
+                (By.CSS_SELECTOR, "[class*='btn btn-startchat']")
+            )
+        )
         description = self.cookies_driver.find_element(
             By.CLASS_NAME, "job-sec-text"
         ).text
@@ -444,3 +453,35 @@ class ZhiPinBase(BaseCase, ZhiPin):
             "#container > div > div > div.chat-conversation > div.message-controls > div > div.chat-op > button",
         ).click()
         time.sleep(self.config_setting.sleep)
+
+    # pytest zhipinBase.py -m=communicate --env=production --uc --browser=chrome --headed -v -s --junit-xml=junit/test-results.xml
+    @pytest.mark.communicate
+    def test_communicate(self):
+        if not self.env == "production":
+            self.driver.quit()
+            pytest.skip("need production env to run")
+        self.init()
+        if os.path.exists("detail.txt"):
+            with open("detail.txt", "r") as f:
+                urls = f.readlines()
+                for url in urls:
+                    url = url.strip()
+                    try:
+                        self.start_chat(url)
+                    except Exception as e:
+                        self.handle_exception(e, f",url:{url}")
+                        self.check_dialog()
+                        self.check_verify(cookies_driver=True)
+                        continue
+        if os.path.exists("job.txt"):
+            with open("job.txt", "r") as f:
+                urls = f.readlines()
+                for url in urls:
+                    url = url.strip()
+                    try:
+                        self.start_chat(url)
+                    except Exception as e:
+                        self.handle_exception(e, f",url:{url}")
+                        self.check_dialog()
+                        self.check_verify(cookies_driver=True)
+                        continue

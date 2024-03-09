@@ -1,8 +1,9 @@
 user_data_dir = ".config/google-chrome"
-cookies_path = ""
+cookies_name = "cookies.txt"
 cf_worker = ""
 timeout = 40
 sleep = 0.0
+sleep_long = 12.0
 chat = false
 captcha_distinguish_type = 1
 skip_known = true

@@ -12,3 +12,4 @@ cv2-tools
 openai
 numpy
 clip-client
+undetected_chromedriver

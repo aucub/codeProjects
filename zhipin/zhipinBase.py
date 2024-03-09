@@ -69,10 +69,9 @@ class ZhiPinBase(BaseCase, ZhiPin):
         self.driver = original_driver
 
     @parameterized.expand(
-        [["SeleniumBase Commander", "Commander"]]
-        * int(os.environ.get("PYTEST_XDIST_WORKER_COUNT", 1))
+        [["SeleniumBase"]] * int(os.environ.get("PYTEST_XDIST_WORKER_COUNT", 1))
     )
-    def test_jobs(self, arg1, arg2):
+    def test_jobs(self, arg1):
         self.init()
         if "PYTEST_XDIST_WORKER" in os.environ:
             self.captcha_lock = FileLock("captcha.lock")
@@ -111,6 +110,8 @@ class ZhiPinBase(BaseCase, ZhiPin):
                         self.executed_params.append(params)
                         with open("executed_params.json", "w", encoding="utf-8") as f:
                             json.dump(self.executed_params, f, ensure_ascii=False)
+        if os.path.exists("executed_params.json"):
+            os.remove("executed_params.json")
         self.cursor.close()
         self.conn.close()
 
@@ -273,7 +274,6 @@ class ZhiPinBase(BaseCase, ZhiPin):
                     if "safe/verify-slider" not in current_url:
                         break
                     captcha_result = self.captcha()
-                    pass
             except (
                 NoSuchElementException,
                 TimeoutException,

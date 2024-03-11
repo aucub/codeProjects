@@ -25,6 +25,10 @@ from selenium.common.exceptions import (
     StaleElementReferenceException,
     NoSuchElementException,
     ElementNotVisibleException,
+    WebDriverException,
+)
+from seleniumbase.common.exceptions import (
+    WebDriverException as SeleniumBaseWebDriverException,
 )
 from jd import JD
 from chat import Chat
@@ -40,6 +44,7 @@ class ZhiPinBase(BaseCase, ZhiPin):
             "User-Agent": self.execute_script("return navigator.userAgent;"),
         }
         self.WAIT = WebDriverWait(self.driver, self.config_setting.timeout)
+        self.captcha_lock = FileLock("captcha.lock")
         if (
             self.config_setting.cookies_name
             and not os.getenv("CI")
@@ -74,7 +79,6 @@ class ZhiPinBase(BaseCase, ZhiPin):
     def test_jobs(self, arg1):
         self.init()
         if "PYTEST_XDIST_WORKER" in os.environ:
-            self.captcha_lock = FileLock("captcha.lock")
             self.iterate_job_parameters_xdist()
         else:
             self.iterate_job_parameters()
@@ -110,8 +114,8 @@ class ZhiPinBase(BaseCase, ZhiPin):
                         self.executed_params.append(params)
                         with open("executed_params.json", "w", encoding="utf-8") as f:
                             json.dump(self.executed_params, f, ensure_ascii=False)
-        if os.path.exists("executed_params.json"):
-            os.remove("executed_params.json")
+        with open("executed_params.json", "w", encoding="utf-8"):
+            pass
         self.cursor.close()
         self.conn.close()
 
@@ -279,8 +283,11 @@ class ZhiPinBase(BaseCase, ZhiPin):
                 TimeoutException,
                 ElementNotVisibleException,
                 HTTPError,
+                WebDriverException,
+                SeleniumBaseWebDriverException,
             ) as e:
                 self.handle_exception(e)
+                pass
         time.sleep(self.config_setting.sleep_long)
         if "403.html" in current_url or "error.html" in current_url:
             time.sleep(self.config_setting.timeout)
@@ -406,17 +413,17 @@ class ZhiPinBase(BaseCase, ZhiPin):
 
     def start_chat(self, url: str):
         self.cookies_driver.get(url)
-        self.COOKIES_WAIT.until(
+        communicate_element = self.COOKIES_WAIT.until(
             ec.presence_of_element_located(
                 (By.CSS_SELECTOR, "[class*='btn btn-startchat']")
             )
         )
+        if not self.is_ready_to_communicate(communicate_element.text):
+            return
         description = self.cookies_driver.find_element(
             By.CLASS_NAME, "job-sec-text"
         ).text
-        self.cookies_driver.find_element(
-            By.CSS_SELECTOR, "[class*='btn btn-startchat']"
-        ).click()
+        communicate_element.click()
         jd = self.get_jd(self.get_encryptJobId(url))
         jd.communicated = True
         self.update_jd(jd)

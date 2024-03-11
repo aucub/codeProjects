@@ -65,7 +65,6 @@ class Config:
     salary_list: List = ["404", "403"]
     page_min: int = 1
     page_max: int = 6
-    cf_worker: str = ""
 
 
 def load_config() -> Config:

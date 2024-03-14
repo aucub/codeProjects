@@ -40,6 +40,7 @@ CREATE TABLE `jd` (
   `description` text DEFAULT NULL,
   `communicated` tinyint(1) DEFAULT NULL,
   `checked_date` datetime DEFAULT NULL,
+  `level` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 

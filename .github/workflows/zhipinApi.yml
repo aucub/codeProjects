@@ -26,6 +26,7 @@ jobs:
           python -m pip install --upgrade pip wheel setuptools
           pip install -r zhipin/requirements.txt
       - uses: robinraju/release-downloader@v1.9
+        continue-on-error: true
         with:
           tag: "zhipin"
           fileName: "*.json"

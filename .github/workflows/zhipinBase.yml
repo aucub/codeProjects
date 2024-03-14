@@ -8,7 +8,7 @@ on:
       args:
         description: "Use args"
         required: false
-        default: " -n3 "
+        default: " -n4 "
         type: string
 
 jobs:
@@ -56,6 +56,7 @@ jobs:
         run: |
           sudo chmod +x /opt/hostedtoolcache/Python/3.11.8/x64/lib/python3.11/site-packages/seleniumbase/drivers/uc_driver
       - uses: robinraju/release-downloader@v1.9
+        continue-on-error: true
         with:
           tag: "zhipin"
           fileName: "*.json"

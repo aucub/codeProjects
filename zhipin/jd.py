@@ -1,3 +1,4 @@
+from enum import Enum
 from attr import attrib, attrs
 from datetime import date, datetime
 
@@ -25,3 +26,11 @@ class JD:
     description: str = attrib(default="")
     communicated: bool = attrib(default=False)
     checked_date: datetime = attrib(default=None)
+    level: str = attrib(default="")
+
+
+class Level(Enum):
+    LIST = "list"
+    CARD = "card"
+    DETAIL = "detail"
+    COMMUNICATE = "communicate"

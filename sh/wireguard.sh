@@ -1,7 +1,7 @@
 #!/bin/bash
 
 curl icanhazip.com
-curl https://warp-clash-api-vvzf.onrender.com
+curl -s https://warp-clash-api-vvzf.onrender.com >/dev/null
 # 安装WireGuard
 sudo apt-get update
 sudo apt-get install -y wireguard resolvconf

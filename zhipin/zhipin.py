@@ -140,6 +140,7 @@ class ZhiPin:
                         job["lastModifyTime"] / 1000
                     )
                     jd.checked_date = datetime.datetime.now()
+                    jd.level = "list"
                     self.update_jd(jd)
                     if self.check_jd(jd, "query"):
                         url_list.append(
@@ -184,6 +185,7 @@ class ZhiPin:
                     jd.degree = data["zpData"]["jobCard"]["degreeName"]
                     jd.boss = data["zpData"]["jobCard"]["bossName"]
                     jd.boss_title = data["zpData"]["jobCard"]["bossTitle"]
+                    jd.level = "card"
                     self.update_jd(jd)
                     if self.check_jd(jd, "card"):
                         pass_list.append(url)
@@ -232,7 +234,7 @@ class ZhiPin:
             row = self.cursor.fetchone()
             if row:
                 self.cursor.execute(
-                    "UPDATE jd SET url=%s, name=%s, city=%s, address=%s, guide=%s, scale=%s, update_date=%s,    salary=%s, experience=%s, degree=%s, company=%s, industry=%s, fund=%s, res=%s, boss=%s,    boss_title=%s, active=%s, description=%s, communicated=%s, checked_date=%s WHERE id=%s",
+                    "UPDATE jd SET url=%s, name=%s, city=%s, address=%s, guide=%s, scale=%s, update_date=%s,    salary=%s, experience=%s, degree=%s, company=%s, industry=%s, fund=%s, res=%s, boss=%s,    boss_title=%s, active=%s, description=%s, communicated=%s, checked_date=%s,  level=%s WHERE id=%s",
                     (
                         jd.url,
                         jd.name,
@@ -254,12 +256,13 @@ class ZhiPin:
                         jd.description,
                         int(jd.communicated),
                         self.format_datetime(jd.checked_date),
+                        jd.level,
                         jd.id,
                     ),
                 )
             else:
                 self.cursor.execute(
-                    "INSERT IGNORE INTO jd (url, id, name, city, address, guide, scale, update_date, salary, experience, degree, company, industry, fund, res, boss, boss_title, active, description, communicated, checked_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                    "INSERT IGNORE INTO jd (url, id, name, city, address, guide, scale, update_date, salary, experience, degree, company, industry, fund, res, boss, boss_title, active, description, communicated, checked_date,  level) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                     (
                         jd.url,
                         jd.id,
@@ -282,6 +285,7 @@ class ZhiPin:
                         jd.description,
                         jd.communicated,
                         self.format_datetime(jd.checked_date),
+                        jd.level,
                     ),
                 )
         except (mysql.connector.errors.Error, MySQLInterfaceError) as e:
@@ -306,6 +310,20 @@ class ZhiPin:
         except (mysql.connector.errors.Error, MySQLInterfaceError) as e:
             self.conn.reconnect()
             self.handle_exception(e, f"，id：{id}")
+
+    def get_jd_url_list(self, level: str):
+        try:
+            self.cursor.execute(
+                "SELECT url FROM jd WHERE level = %s AND communicated = 0", (level,)
+            )
+            rows = self.cursor.fetchall()
+            if rows:
+                return [row[0] for row in rows]
+            else:
+                return []
+        except (mysql.connector.errors.Error, MySQLInterfaceError) as e:
+            self.conn.reconnect()
+            self.handle_exception(e, f"，level：{level}")
 
     def get_encryptJobId(self, url):
         match = re.search(r"/+([^/]+)\.html", url)

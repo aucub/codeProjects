@@ -65,9 +65,7 @@ def ocr(image_path, path, sort: bool = False):
 
 
 def calculate_similarity(data1, data2):
-    # 创建一个包含两个图像所有标签的集合
     allLabels = set([r["label"] for r in data1] + [r["label"] for r in data2])
-    # 根据所有标签创建分数向量
     scoreVector1 = [
         next((item["score"] for item in data1 if item["label"] == label), 0)
         for label in allLabels
@@ -76,7 +74,6 @@ def calculate_similarity(data1, data2):
         next((item["score"] for item in data2 if item["label"] == label), 0)
         for label in allLabels
     ]
-    # 计算余弦相似度
     return cosine_similarity(scoreVector1, scoreVector2)
 
 
@@ -136,29 +133,17 @@ def cracker(tip_image, img_image, path, type: int):
 
 
 def optimize_image(image_path, gray: bool):
-    # 使用OpenCV加载图像
     img = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
-    # 检查图像通道数，如果是4通道（RGBA）则抛弃Alpha通道
     if img.shape[2] == 4:
         img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
     cv2.imwrite(image_path, img)
     if gray:
         image = cv2.imread(image_path)
         gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-        # 直方图均衡化增强对比度
         equalized_gray = cv2.equalizeHist(gray_image)
-
-        # 应用Canny边缘检测
         edges = cv2.Canny(equalized_gray, threshold1=100, threshold2=200)
-
-        # 应用形态学操作，例如开运算
         kernel = np.ones((5, 5), np.uint8)
         opening = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel)
-
-        # 尺寸归一化以匹配模型输入
         size = (224, 224)
         resized_image = cv2.resize(opening, size)
-
-        # 保存处理后的图像到原始路径
         cv2.imwrite(image_path, resized_image)

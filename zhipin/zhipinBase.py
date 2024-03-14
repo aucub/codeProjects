@@ -205,6 +205,7 @@ class ZhiPinBase(BaseCase, ZhiPin):
                 ).text
                 jd.checked_date = datetime.datetime.now()
                 jd.id = id
+                jd.level = "list"
                 print(jd)
                 self.update_jd(jd)
                 if self.check_jd(jd, "query"):
@@ -243,6 +244,7 @@ class ZhiPinBase(BaseCase, ZhiPin):
                     jd.degree = data["zpData"]["jobCard"]["degreeName"]
                     jd.boss = data["zpData"]["jobCard"]["bossName"]
                     jd.boss_title = data["zpData"]["jobCard"]["bossTitle"]
+                    jd.level = "card"
                     self.update_jd(jd)
                     if self.check_jd(jd, "card"):
                         pass_list.append(url)
@@ -413,11 +415,13 @@ class ZhiPinBase(BaseCase, ZhiPin):
                         jd.res = self.parse_res(res_text.splitlines()[-1])
                 except Exception as e:
                     self.handle_exception(e, f",url:{url}")
-                self.update_jd(jd)
                 if self.check_jd(jd, "detail"):
+                    jd.level = "communicate"
                     self.append_to_file("job.txt", url)
                 else:
+                    jd.level = "detail"
                     self.append_to_file("detail.txt", url)
+                self.update_jd(jd)
             except Exception as e:
                 self.append_to_file("detail.txt", url)
                 self.handle_exception(e, f",url:{url}")
@@ -489,17 +493,17 @@ class ZhiPinBase(BaseCase, ZhiPin):
             self.driver.quit()
             pytest.skip("need production env to run")
         self.init()
+        urls = set(url for url in self.get_jd_url_list("detail"))
+        urls.update(url for url in self.get_jd_url_list("communicate"))
         file_names = ["detail.txt", "job.txt"]
         for file_name in file_names:
             if os.path.exists(file_name):
                 with open(file_name, "r") as f:
-                    urls = f.readlines()
-                    for url in urls:
-                        url = url.strip()
-                        try:
-                            self.start_chat(url)
-                        except Exception as e:
-                            self.handle_exception(e, f",url:{url}")
-                            self.check_dialog(cookies_driver=True)
-                            self.check_verify(cookies_driver=True)
-                            continue
+                    urls.update(line.strip() for line in f)
+        for url in urls:
+            try:
+                self.start_chat(url)
+            except Exception as e:
+                self.handle_exception(e, f",url:{url}")
+                self.check_dialog(cookies_driver=True)
+                self.check_verify(cookies_driver=True)

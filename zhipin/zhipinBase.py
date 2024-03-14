@@ -91,13 +91,13 @@ class ZhiPinBase(BaseCase, ZhiPin):
         else:
             self.worker_id = None
         self.worker_count = int(os.environ.get("PYTEST_XDIST_WORKER_COUNT"))
-        self.executed_params = []
+        self.executed_params = set()
         if os.path.exists("executed_params.json"):
             with open("executed_params.json", "r", encoding="utf-8") as f:
                 try:
-                    self.executed_params = json.load(f)
+                    self.executed_params = set(tuple(i) for i in json.load(f))
                 except json.JSONDecodeError:
-                    self.executed_params = []
+                    pass
         for city in self.config_setting.query_city_list:
             for query in self.config_setting.query_list:
                 for salary in self.config_setting.salary_list:
@@ -111,9 +111,13 @@ class ZhiPinBase(BaseCase, ZhiPin):
                         ):
                             continue
                         self.execute_find_jobs(*params)
-                        self.executed_params.append(params)
+                        self.executed_params.add(params)
                         with open("executed_params.json", "w", encoding="utf-8") as f:
-                            json.dump(self.executed_params, f, ensure_ascii=False)
+                            json.dump(
+                                [list(i) for i in self.executed_params],
+                                f,
+                                ensure_ascii=False,
+                            )
         with open("executed_params.json", "w", encoding="utf-8"):
             pass
         self.cursor.close()
@@ -288,7 +292,9 @@ class ZhiPinBase(BaseCase, ZhiPin):
             ) as e:
                 self.handle_exception(e)
                 pass
+        self.open(self.URL1)
         time.sleep(self.config_setting.sleep_long)
+        current_url = self.get_current_url()
         if "403.html" in current_url or "error.html" in current_url:
             time.sleep(self.config_setting.timeout)
             print("403或错误")
@@ -375,7 +381,19 @@ class ZhiPinBase(BaseCase, ZhiPin):
             try:
                 jd = self.get_jd(self.get_encryptJobId(url))
                 self.open(jd.url)
-                self.wait_for_element_present("[class*='btn btn-startchat']")
+                communicate_element = self.WAIT.until(
+                    ec.any_of(
+                        ec.presence_of_element_located(
+                            (By.CSS_SELECTOR, "[class*='btn btn-more']")
+                        ),
+                        ec.presence_of_element_located(
+                            (By.CSS_SELECTOR, "[class*='btn btn-startchat']")
+                        ),
+                    )
+                )
+                jd.communicated = self.is_ready_to_communicate(communicate_element.text)
+                if not jd.communicated:
+                    continue
                 jd.guide = self.get_text("[class*='pos-bread city-job-guide']")
                 if len(jd.guide) > 2:
                     jd.guide = jd.guide[2:]
@@ -395,9 +413,6 @@ class ZhiPinBase(BaseCase, ZhiPin):
                         jd.res = self.parse_res(res_text.splitlines()[-1])
                 except Exception as e:
                     self.handle_exception(e, f",url:{url}")
-                jd.communicated = self.is_ready_to_communicate(
-                    self.get_text("[class*='btn btn-startchat']")
-                )
                 self.update_jd(jd)
                 if self.check_jd(jd, "detail"):
                     self.append_to_file("job.txt", url)
@@ -413,9 +428,15 @@ class ZhiPinBase(BaseCase, ZhiPin):
 
     def start_chat(self, url: str):
         self.cookies_driver.get(url)
+        jd = self.get_jd(self.get_encryptJobId(url))
         communicate_element = self.COOKIES_WAIT.until(
-            ec.presence_of_element_located(
-                (By.CSS_SELECTOR, "[class*='btn btn-startchat']")
+            ec.any_of(
+                ec.presence_of_element_located(
+                    (By.CSS_SELECTOR, "[class*='btn btn-more']")
+                ),
+                ec.presence_of_element_located(
+                    (By.CSS_SELECTOR, "[class*='btn btn-startchat']")
+                ),
             )
         )
         if not self.is_ready_to_communicate(communicate_element.text):
@@ -424,7 +445,6 @@ class ZhiPinBase(BaseCase, ZhiPin):
             By.CLASS_NAME, "job-sec-text"
         ).text
         communicate_element.click()
-        jd = self.get_jd(self.get_encryptJobId(url))
         jd.communicated = True
         self.update_jd(jd)
         jd.description = description
@@ -438,6 +458,7 @@ class ZhiPinBase(BaseCase, ZhiPin):
         except Exception as e:
             self.handle_exception(e, f",url:{url}")
             return
+        time.sleep(self.config_setting.sleep)
         if "chat" in self.cookies_driver.current_url and self.config_setting.chat:
             try:
                 self.send_greet_to_chat_box(self.chat.generate_greet(jd))
@@ -468,27 +489,17 @@ class ZhiPinBase(BaseCase, ZhiPin):
             self.driver.quit()
             pytest.skip("need production env to run")
         self.init()
-        if os.path.exists("detail.txt"):
-            with open("detail.txt", "r") as f:
-                urls = f.readlines()
-                for url in urls:
-                    url = url.strip()
-                    try:
-                        self.start_chat(url)
-                    except Exception as e:
-                        self.handle_exception(e, f",url:{url}")
-                        self.check_dialog()
-                        self.check_verify(cookies_driver=True)
-                        continue
-        if os.path.exists("job.txt"):
-            with open("job.txt", "r") as f:
-                urls = f.readlines()
-                for url in urls:
-                    url = url.strip()
-                    try:
-                        self.start_chat(url)
-                    except Exception as e:
-                        self.handle_exception(e, f",url:{url}")
-                        self.check_dialog()
-                        self.check_verify(cookies_driver=True)
-                        continue
+        file_names = ["detail.txt", "job.txt"]
+        for file_name in file_names:
+            if os.path.exists(file_name):
+                with open(file_name, "r") as f:
+                    urls = f.readlines()
+                    for url in urls:
+                        url = url.strip()
+                        try:
+                            self.start_chat(url)
+                        except Exception as e:
+                            self.handle_exception(e, f",url:{url}")
+                            self.check_dialog(cookies_driver=True)
+                            self.check_verify(cookies_driver=True)
+                            continue

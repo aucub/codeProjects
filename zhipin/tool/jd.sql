@@ -38,7 +38,7 @@ CREATE TABLE `jd` (
   `boss_title` varchar(100) DEFAULT NULL,
   `active` varchar(50) DEFAULT NULL,
   `description` text DEFAULT NULL,
-  `communicated` tinyint(1) DEFAULT NULL,
+  `communicated` tinyint(1) DEFAULT 0,
   `checked_date` datetime DEFAULT NULL,
   `level` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */

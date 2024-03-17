@@ -37,8 +37,10 @@ jobs:
           CONFIG_URL: ${{ vars.CONFIG_URL }}
           DB_URL: ${{ secrets.DB_URL }}
           PROXY_URL: ${{ vars.PROXY_URL }}
-          CF_API_GATEWAY: ${{ secrets.CF_API_GATEWAY }}
-          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           CLIP_URL: ${{ secrets.CLIP_URL }}
         run: |
           cd zhipin

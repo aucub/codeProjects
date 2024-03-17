@@ -5,6 +5,7 @@ import re
 import shutil
 import sys
 import time
+import atexit
 from urllib.parse import parse_qs, urlparse
 from PIL import Image
 import cv2
@@ -39,6 +40,7 @@ BaseCase.main(__name__, __file__)
 class ZhiPinBase(BaseCase, ZhiPin):
     def init(self):
         ZhiPin.__init__(self)
+        atexit.register(self.cleanup)
         self.set_default_timeout(self.config_setting.timeout)
         self.http_headers = {
             "User-Agent": self.execute_script("return navigator.userAgent;"),
@@ -72,6 +74,9 @@ class ZhiPinBase(BaseCase, ZhiPin):
         self.sleep(self.config_setting.sleep_long)
         self.open(self.URL1)
         self.driver = original_driver
+
+    def cleanup(self):
+        print("清理资源...")
 
     @parameterized.expand(
         [["SeleniumBase"]] * int(os.environ.get("PYTEST_XDIST_WORKER_COUNT", 1))
@@ -393,7 +398,9 @@ class ZhiPinBase(BaseCase, ZhiPin):
                         ),
                     )
                 )
-                jd.communicated = self.is_ready_to_communicate(communicate_element.text)
+                jd.communicated = not self.is_ready_to_communicate(
+                    communicate_element.text
+                )
                 if not jd.communicated:
                     continue
                 jd.guide = self.get_text("[class*='pos-bread city-job-guide']")

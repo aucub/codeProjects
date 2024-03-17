@@ -34,10 +34,15 @@ def cosine_similarity(v1, v2):
 def image_classification(image_path):
     with open(image_path, "rb") as img:
         image_data = img.read()
-    headers = {"Authorization": f"Bearer {os.getenv('CF_API_TOKEN')}"}
+    headers = {"Authorization": f"Bearer {os.getenv('CLOUDFLARE_API_TOKEN')}"}
     data = {"image": list(image_data)}
     response = httpx.post(
-        str(os.getenv("CF_API_GATEWAY")) + "@cf/microsoft/resnet-50",
+        str(
+            "https://api.cloudflare.com/client/v4/accounts/"
+            + os.getenv("CLOUDFLARE_ACCOUNT_ID")
+        )
+        + "/ai/run/"
+        + "@cf/microsoft/resnet-50",
         headers=headers,
         json=data,
     )

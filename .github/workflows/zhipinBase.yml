@@ -10,6 +10,11 @@ on:
         required: false
         default: " -n4 "
         type: string
+      proxy-url-traverse:
+        description: "Use all proxy-urls"
+        required: true
+        default: false
+        type: boolean
 
 jobs:
   build:
@@ -64,18 +69,28 @@ jobs:
       - run: |
           chmod +x sh/wireguard.sh
           sudo bash sh/wireguard.sh
+        if: ${{ !vars.PROXY_URL && inputs.proxy-url-traverse != 'true' }}
       - name: Run pytest zhipinBase.py
         env:
           STATE: ${{ vars.STATE }}
           CONFIG_URL: ${{ vars.CONFIG_URL }}
           DB_URL: ${{ secrets.DB_URL }}
           PROXY_URL: ${{ vars.PROXY_URL }}
-          CF_API_GATEWAY: ${{ secrets.CF_API_GATEWAY }}
-          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           CLIP_URL: ${{ secrets.CLIP_URL }}
         run: |
           cd zhipin
-          pytest zhipinBase.py --uc --browser=chrome --headless ${{ inputs.args }} --chromium-arg="--proxy-server=$PROXY_URL"  -v -s --junit-xml=junit/test-results.xml
+          if [ "${{ inputs.proxy-url-traverse }}" = "true" ]; then
+            while IFS= read -r PROXY_URL
+            do
+              pytest zhipinBase.py --uc --browser=chrome --headless ${{ inputs.args }} --chromium-arg="--proxy-server=$PROXY_URL"  -v -s --junit-xml=junit/test-results.xml || true
+            done < proxy-url.txt
+          else
+            pytest zhipinBase.py --uc --browser=chrome --headless ${{ inputs.args }} --chromium-arg="--proxy-server=$PROXY_URL"  -v -s --junit-xml=junit/test-results.xml
+          fi
       - uses: actions/upload-artifact@v4.3.1
         if: always()
         with:

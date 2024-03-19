@@ -15,7 +15,7 @@ from parameterized import parameterized
 import pytest
 from captcha import cracker
 from filelock import FileLock
-from zhipin import ZhiPin
+from zhipin import ZhiPin, VerifyException
 from seleniumbase import BaseCase
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -40,7 +40,7 @@ BaseCase.main(__name__, __file__)
 class ZhiPinBase(BaseCase, ZhiPin):
     def init(self):
         ZhiPin.__init__(self)
-        atexit.register(self.cleanup)
+        atexit.register(self.cleanup_Base)
         self.set_default_timeout(self.config_setting.timeout)
         self.http_headers = {
             "User-Agent": self.execute_script("return navigator.userAgent;"),
@@ -75,8 +75,11 @@ class ZhiPinBase(BaseCase, ZhiPin):
         self.open(self.URL1)
         self.driver = original_driver
 
-    def cleanup(self):
-        print("清理资源...")
+    def cleanup_Base(self):
+        if hasattr(self, "driver") and self.driver:
+            self.driver.quit()
+        if hasattr(self, "cookies_driver") and self.cookies_driver:
+            self.cookies_driver.quit()
 
     @parameterized.expand(
         [["SeleniumBase"]] * int(os.environ.get("PYTEST_XDIST_WORKER_COUNT", 1))
@@ -94,15 +97,10 @@ class ZhiPinBase(BaseCase, ZhiPin):
         if match:
             self.worker_id = int(match.group())
         else:
-            self.worker_id = None
+            sys.exit("Not Found worker_id")
         self.worker_count = int(os.environ.get("PYTEST_XDIST_WORKER_COUNT"))
         self.executed_params = set()
-        if os.path.exists("executed_params.json"):
-            with open("executed_params.json", "r", encoding="utf-8") as f:
-                try:
-                    self.executed_params = set(tuple(i) for i in json.load(f))
-                except json.JSONDecodeError:
-                    pass
+        self.executed_params_add(None)
         for city in self.config_setting.query_city_list:
             for query in self.config_setting.query_list:
                 for salary in self.config_setting.salary_list:
@@ -116,36 +114,53 @@ class ZhiPinBase(BaseCase, ZhiPin):
                         ):
                             continue
                         self.execute_find_jobs(*params)
-                        self.executed_params.add(params)
-                        with open("executed_params.json", "w", encoding="utf-8") as f:
-                            json.dump(
-                                [list(i) for i in self.executed_params],
-                                f,
-                                ensure_ascii=False,
-                            )
+                        self.executed_params_add(params)
         with open("executed_params.json", "w", encoding="utf-8"):
             pass
-        self.cursor.close()
-        self.conn.close()
+
+    def executed_params_add(self, params):
+        if not os.path.exists("executed_params.json"):
+            with open("executed_params.json", "w", encoding="utf-8") as f:
+                pass
+        with open("executed_params.json", "r+", encoding="utf-8") as f:
+            try:
+                old_executed_params = self.executed_params
+                self.executed_params = set(tuple(i) for i in json.load(f))
+            except json.JSONDecodeError:
+                self.executed_params = old_executed_params
+            if params:
+                self.executed_params.add(params)
+            f.seek(0)
+            f.truncate()
+            json.dump(
+                [list(i) for i in self.executed_params],
+                f,
+                ensure_ascii=False,
+            )
 
     def execute_find_jobs(self, city, query, salary, page):
-        try:
-            self.find_jobs(
-                self.URL1
-                + query
-                + self.URL7
-                + city
-                + self.URL2
-                + salary
-                + self.URL3
-                + str(page)
-            )
-        except (
-            TimeoutException,
-            StaleElementReferenceException,
-            NoSuchElementException,
-        ) as e:
-            self.handle_exception(e)
+        for _ in range(self.config_setting.max_retries):
+            try:
+                self.find_jobs(
+                    self.URL1
+                    + query
+                    + self.URL7
+                    + city
+                    + self.URL2
+                    + salary
+                    + self.URL3
+                    + str(page)
+                )
+                break
+            except (
+                TimeoutException,
+                StaleElementReferenceException,
+                NoSuchElementException,
+            ) as e:
+                self.handle_exception(e)
+                break
+            except VerifyException:
+                continue
 
     def find_jobs(self, page_url):
         query_list = self.query_jobs(page_url)
@@ -169,7 +184,7 @@ class ZhiPinBase(BaseCase, ZhiPin):
         except (TimeoutException, StaleElementReferenceException) as e:
             self.handle_exception(e, f",page_url:{page_url}")
             self.check_dialog()
-            self.check_verify()
+            self.check_verify(verify_exception=True)
             return url_list
         if not isinstance(element_list, list):
             return url_list
@@ -272,7 +287,9 @@ class ZhiPinBase(BaseCase, ZhiPin):
         if cookies_driver:
             self.driver = original_driver
 
-    def check_verify(self, cookies_driver: bool = False):
+    def check_verify(
+        self, cookies_driver: bool = False, verify_exception: bool = False
+    ):
         if cookies_driver:
             original_driver = self.driver
             self.driver = self.cookies_driver
@@ -308,6 +325,8 @@ class ZhiPinBase(BaseCase, ZhiPin):
             sys.exit(1)
         if cookies_driver:
             self.driver = original_driver
+        if verify_exception:
+            raise VerifyException()
 
     def captcha(self):
         captcha_image_path = self.config_setting.captcha_image_path
@@ -401,7 +420,7 @@ class ZhiPinBase(BaseCase, ZhiPin):
                 jd.communicated = not self.is_ready_to_communicate(
                     communicate_element.text
                 )
-                if not jd.communicated:
+                if jd.communicated:
                     continue
                 jd.guide = self.get_text("[class*='pos-bread city-job-guide']")
                 if len(jd.guide) > 2:
@@ -496,7 +515,7 @@ class ZhiPinBase(BaseCase, ZhiPin):
     # pytest zhipinBase.py -m=communicate --env=production --uc --browser=chrome --headed -v -s --junit-xml=junit/test-results.xml
     @pytest.mark.communicate
     def test_communicate(self):
-        if not self.env == "production":
+        if self.env != "production":
             self.driver.quit()
             pytest.skip("need production env to run")
         self.init()

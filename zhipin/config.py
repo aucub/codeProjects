@@ -17,6 +17,7 @@ class Config:
     timeout: int = 25
     sleep: float = 0.1
     sleep_long: float = 6.0
+    max_retries: int = 3
     chat: bool = False
     skip_known: bool = False
     graduate: int = 23

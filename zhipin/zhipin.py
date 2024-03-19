@@ -1,3 +1,4 @@
+import atexit
 import datetime
 import json
 import os
@@ -13,6 +14,13 @@ from config import load_config
 from dotenv import load_dotenv
 
 load_dotenv()
+
+
+class VerifyException(Exception):
+    """验证异常"""
+
+    def __init__(self, message=None):
+        self.message = message
 
 
 class ZhiPin:
@@ -41,7 +49,14 @@ class ZhiPin:
     )
     cursor = conn.cursor()
 
+    def cleanup(self):
+        if self.cursor:
+            self.cursor.close()
+        if self.conn:
+            self.conn.close()
+
     def __init__(self) -> None:
+        atexit.register(self.cleanup)
         self.wheels = self.load_state()
         self.set_proxy()
 
@@ -90,8 +105,6 @@ class ZhiPin:
             self.save_state(self.wheels)
         self.wheels[0] = []
         self.save_state(self.wheels)
-        self.cursor.close()
-        self.conn.close()
 
     def query_jobs(self, page_url):
         url_list = []

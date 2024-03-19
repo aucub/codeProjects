@@ -1,11 +1,11 @@
 user_data_dir = ".config/google-chrome"
 cookies_name = "cookies.txt"
-timeout = 35
+timeout = 36
 sleep = 0.0
-sleep_long = 8.0
+sleep_long = 9.0
 chat = true
 captcha_distinguish_type = 1
-skip_known = true
+skip_known = false
 graduate = 23
 salary_max = 10
 active_block_list = ["半年", "月内", "本月", "周内", "本周", "7日"]

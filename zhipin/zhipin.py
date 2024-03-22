@@ -296,7 +296,7 @@ class ZhiPin:
                         jd.boss_title,
                         jd.active,
                         jd.description,
-                        jd.communicated,
+                        int(jd.communicated),
                         self.format_datetime(jd.checked_date),
                         jd.level,
                     ),

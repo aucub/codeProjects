@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import random
 import re
 import shutil
 import sys
@@ -470,6 +471,8 @@ class ZhiPinBase(BaseCase, ZhiPin):
             )
         )
         if not self.is_ready_to_communicate(communicate_element.text):
+            jd.communicated = True
+            self.update_jd(jd)
             return
         description = self.cookies_driver.find_element(
             By.CLASS_NAME, "job-sec-text"
@@ -519,8 +522,8 @@ class ZhiPinBase(BaseCase, ZhiPin):
             self.driver.quit()
             pytest.skip("need production env to run")
         self.init()
-        urls = set(url for url in self.get_jd_url_list("detail"))
-        urls.update(url for url in self.get_jd_url_list("communicate"))
+        urls = set(url for url in self.get_jd_url_list("communicate"))
+        urls.update(url for url in self.get_jd_url_list("detail"))
         file_names = ["detail.txt", "job.txt"]
         for file_name in file_names:
             if os.path.exists(file_name):
@@ -529,7 +532,10 @@ class ZhiPinBase(BaseCase, ZhiPin):
         for url in urls:
             try:
                 self.start_chat(url)
+                if random.random() < 0.15:
+                    self.conn_commit()
             except Exception as e:
                 self.handle_exception(e, f",url:{url}")
                 self.check_dialog(cookies_driver=True)
                 self.check_verify(cookies_driver=True)
+        self.conn_commit()

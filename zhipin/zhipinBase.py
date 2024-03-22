@@ -116,18 +116,18 @@ class ZhiPinBase(BaseCase, ZhiPin):
                             continue
                         self.execute_find_jobs(*params)
                         self.executed_params_add(params)
-        with open("executed_params.json", "w", encoding="utf-8"):
-            pass
+        with open("executed_params.json", "w", encoding="utf-8") as f:
+            json.dump([], f, ensure_ascii=False)
 
     def executed_params_add(self, params):
         if not os.path.exists("executed_params.json"):
             with open("executed_params.json", "w", encoding="utf-8") as f:
-                pass
+                json.dump([], f, ensure_ascii=False)
         with open("executed_params.json", "r+", encoding="utf-8") as f:
             try:
                 old_executed_params = self.executed_params
                 self.executed_params = set(tuple(i) for i in json.load(f))
-            except json.JSONDecodeError:
+            except (json.JSONDecodeError, UnicodeDecodeError):
                 self.executed_params = old_executed_params
             if params:
                 self.executed_params.add(params)
@@ -468,9 +468,14 @@ class ZhiPinBase(BaseCase, ZhiPin):
                 ec.presence_of_element_located(
                     (By.CSS_SELECTOR, "[class*='btn btn-startchat']")
                 ),
+                ec.presence_of_element_located(
+                    (By.CSS_SELECTOR, "[class*='error-content']")
+                ),
             )
         )
-        if not self.is_ready_to_communicate(communicate_element.text):
+        if (
+            not self.is_ready_to_communicate(communicate_element.text)
+        ) or "页面不存在" in communicate_element.text:
             jd.communicated = True
             self.update_jd(jd)
             return

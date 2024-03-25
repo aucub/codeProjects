@@ -52,6 +52,8 @@ class ZhiPinBase(BaseCase, ZhiPin):
             self.config_setting.cookies_name
             and not os.getenv("CI")
             and not os.getenv("PYTEST_XDIST_WORKER")
+            and hasattr(self, "env")
+            and self.env == "production"
         ):
             self.cookies_driver = self.get_new_driver(
                 browser="chrome",

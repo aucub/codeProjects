@@ -10,6 +10,7 @@ import toml
 @attr.s(init=False)
 class Config:
     cookies_name: str = ""
+    query_cookies: bool = False
     user_data_dir: str = ""
     captcha_image_path: str = "captcha"
     download_captcha: bool = True

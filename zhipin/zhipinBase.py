@@ -32,7 +32,7 @@ from selenium.common.exceptions import (
 from seleniumbase.common.exceptions import (
     WebDriverException as SeleniumBaseWebDriverException,
 )
-from jd import JD
+from jd import JD, Level
 from chat import Chat
 
 BaseCase.main(__name__, __file__)
@@ -43,18 +43,12 @@ class ZhiPinBase(BaseCase, ZhiPin):
         ZhiPin.__init__(self)
         atexit.register(self.cleanup_Base)
         self.set_default_timeout(self.config_setting.timeout)
-        self.http_headers = {
-            "User-Agent": self.execute_script("return navigator.userAgent;"),
-        }
-        self.WAIT = WebDriverWait(self.driver, self.config_setting.timeout)
         self.captcha_lock = FileLock("captcha.lock")
-        if (
-            self.config_setting.cookies_name
-            and not os.getenv("CI")
-            and not os.getenv("PYTEST_XDIST_WORKER")
-            and hasattr(self, "env")
-            and self.env == "production"
+        if (self.config_setting.cookies_name or os.getenv("SAVED_COOKIES")) and (
+            os.getenv("PYTEST_MARK") == "communicate"
+            or self.config_setting.query_cookies
         ):
+            self.original_driver = self.driver
             self.cookies_driver = self.get_new_driver(
                 browser="chrome",
                 headless=False,
@@ -68,15 +62,35 @@ class ZhiPinBase(BaseCase, ZhiPin):
                 self.cookies_driver, self.config_setting.timeout
             )
 
-    def set_cookies(self):
-        original_driver = self.driver
-        self.driver = self.cookies_driver
+    def switch_driver(self, cookies_driver: bool):
+        if cookies_driver and hasattr(self, "cookies_driver"):
+            self.driver = self.cookies_driver
+        elif not cookies_driver and hasattr(self, "original_driver"):
+            self.driver = self.original_driver
+
+    def set_cookies(self, cookies_driver=True):
+        if cookies_driver:
+            self.switch_driver(True)
         self.open(self.URL1)
         self.sleep(self.config_setting.sleep_long)
+        if not os.path.exists("saved_cookies"):
+            os.makedirs("saved_cookies", exist_ok=True)
+        if not self.config_setting.cookies_name:
+            self.config_setting.cookies_name = "cookies.txt"
+        if not os.path.exists(self.config_setting.cookies_name) and os.getenv(
+            "SAVED_COOKIES"
+        ):
+            with open(
+                "saved_cookies/" + self.config_setting.cookies_name,
+                "w",
+                encoding="utf-8",
+            ) as f:
+                f.write(os.getenv("SAVED_COOKIES"))
         self.load_cookies(self.config_setting.cookies_name)
         self.sleep(self.config_setting.sleep_long)
         self.open(self.URL1)
-        self.driver = original_driver
+        if cookies_driver:
+            self.switch_driver(False)
 
     def cleanup_Base(self):
         if hasattr(self, "driver") and self.driver:
@@ -166,11 +180,16 @@ class ZhiPinBase(BaseCase, ZhiPin):
                 continue
 
     def find_jobs(self, page_url):
+        if self.config_setting.query_cookies:
+            self.switch_driver(True)
         query_list = self.query_jobs(page_url)
+        if self.config_setting.query_cookies:
+            self.switch_driver(False)
         pass_card_list = self.check_card(query_list)
         self.process_detail(pass_card_list)
 
     def query_jobs(self, page_url):
+        self.WAIT = WebDriverWait(self.driver, self.config_setting.timeout)
         self.open(page_url)
         url_list = []
         try:
@@ -208,11 +227,14 @@ class ZhiPinBase(BaseCase, ZhiPin):
                 id = self.get_encryptJobId(url)
                 row = self.get_jd(id)
                 if row and row.id == id:
-                    if self.config_setting.skip_known:
+                    jd = row
+                    if (
+                        self.config_setting.skip_known
+                        and jd.level
+                        and jd.level != Level.LIST.value
+                    ):
                         self.sleep(self.config_setting.sleep)
                         continue
-                    else:
-                        jd = row
                 jd.url = url.split("&securityId")[0]
                 jd.name = element.find_element(
                     value=" .job-name", by=By.CSS_SELECTOR
@@ -228,7 +250,7 @@ class ZhiPinBase(BaseCase, ZhiPin):
                 ).text
                 jd.checked_date = datetime.datetime.now()
                 jd.id = id
-                jd.level = "list"
+                jd.level = Level.LIST.value
                 print(jd)
                 self.update_jd(jd)
                 if self.check_jd(jd, "query"):
@@ -267,20 +289,21 @@ class ZhiPinBase(BaseCase, ZhiPin):
                     jd.degree = data["zpData"]["jobCard"]["degreeName"]
                     jd.boss = data["zpData"]["jobCard"]["bossName"]
                     jd.boss_title = data["zpData"]["jobCard"]["bossTitle"]
-                    jd.level = "card"
+                    jd.level = Level.CARD.value
                     self.update_jd(jd)
                     if self.check_jd(jd, "card"):
                         pass_list.append(url)
             except Exception as e:
+                pass_list.append(url)
                 self.handle_exception(e, f",url:{url}")
+                self.check_verify()
                 continue
         self.conn_commit()
         return pass_list
 
     def check_dialog(self, cookies_driver: bool = False):
         if cookies_driver:
-            original_driver = self.driver
-            self.driver = self.cookies_driver
+            self.switch_driver(True)
         self.sleep(self.config_setting.sleep)
         if self.is_element_visible("div.dialog-container:last-child"):
             dialog_text = self.get_text("div.dialog-container:last-child")
@@ -288,14 +311,13 @@ class ZhiPinBase(BaseCase, ZhiPin):
                 self.click("div.dialog-container:last-child .close")
                 self.sleep(self.config_setting.sleep)
         if cookies_driver:
-            self.driver = original_driver
+            self.switch_driver(False)
 
     def check_verify(
         self, cookies_driver: bool = False, verify_exception: bool = False
     ):
         if cookies_driver:
-            original_driver = self.driver
-            self.driver = self.cookies_driver
+            self.switch_driver(True)
         self.sleep(self.config_setting.sleep_long)
         current_url = self.get_current_url()
         captcha_result = False
@@ -327,7 +349,7 @@ class ZhiPinBase(BaseCase, ZhiPin):
             print("403或错误")
             sys.exit(1)
         if cookies_driver:
-            self.driver = original_driver
+            self.switch_driver(False)
         if verify_exception:
             raise VerifyException()
 
@@ -406,6 +428,7 @@ class ZhiPinBase(BaseCase, ZhiPin):
             return False
 
     def process_detail(self, url_list):
+        self.WAIT = WebDriverWait(self.driver, self.config_setting.timeout)
         for url in url_list:
             try:
                 jd = self.get_jd(self.get_encryptJobId(url))
@@ -445,10 +468,10 @@ class ZhiPinBase(BaseCase, ZhiPin):
                 except Exception as e:
                     self.handle_exception(e, f",url:{url}")
                 if self.check_jd(jd, "detail"):
-                    jd.level = "communicate"
+                    jd.level = Level.COMMUNICATE.value
                     self.append_to_file("job.txt", url)
                 else:
-                    jd.level = "detail"
+                    jd.level = Level.DETAIL.value
                     self.append_to_file("detail.txt", url)
                 self.update_jd(jd)
             except Exception as e:
@@ -522,12 +545,12 @@ class ZhiPinBase(BaseCase, ZhiPin):
         ).click()
         time.sleep(self.config_setting.sleep)
 
-    # pytest zhipinBase.py -m=communicate --env=production --uc --browser=chrome --headed -v -s --junit-xml=junit/test-results.xml
-    @pytest.mark.communicate
+    # PYTEST_MARK="communicate" pytest zhipinBase.py --uc --browser=chrome --headed -v -s --junit-xml=junit/test-results.xml
+    @pytest.mark.skipif(
+        os.getenv("PYTEST_MARK") != "communicate",
+        reason="need PYTEST_MARK=communicate env to run",
+    )
     def test_communicate(self):
-        if self.env != "production":
-            self.driver.quit()
-            pytest.skip("need production env to run")
         self.init()
         urls = set(url for url in self.get_jd_url_list("communicate"))
         urls.update(url for url in self.get_jd_url_list("detail"))
